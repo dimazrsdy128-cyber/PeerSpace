@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kelola Artikel — PeerSpace</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <style>
+    .content-body{padding:28px 32px 48px;flex:1;}
+
+    .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;}
+    .page-header h1{font-size:1.6rem;font-weight:700;color:#fff;margin:0 0 4px;}
+    .page-header p{color:#9b8ec4;font-size:.88rem;margin:0;}
+    .btn-new{
+      background:#8B2EFF;color:#fff;border:none;border-radius:10px;
+      padding:10px 20px;font-size:.875rem;font-weight:600;cursor:pointer;
+      display:inline-flex;align-items:center;gap:7px;text-decoration:none;
+      transition:opacity .18s;white-space:nowrap;
+    }
+    .btn-new:hover{opacity:.85;}
+
+    .toolbar{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap;align-items:center;}
+    .filter-btn{background:#16112b;border:1px solid #2a1f4e;color:#9b8ec4;border-radius:99px;padding:6px 16px;font-size:.8rem;cursor:pointer;transition:all .15s;}
+    .filter-btn.active,.filter-btn:hover{background:#8B2EFF22;border-color:#8B2EFF;color:#c084fc;}
+    .filter-btn.active{font-weight:600;color:#8B2EFF;}
+    .search-wrap{margin-left:auto;position:relative;}
+    .search-wrap input{background:#16112b;border:1px solid #2a1f4e;color:#e2d9f3;border-radius:99px;padding:7px 16px 7px 36px;font-size:.82rem;outline:none;width:210px;transition:border-color .18s;}
+    .search-wrap input:focus{border-color:#8B2EFF55;}
+    .search-wrap i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#7c6fa0;font-size:1rem;pointer-events:none;}
+
+    .article-list{display:flex;flex-direction:column;gap:14px;}
+    .article-item{
+      background:#16112b;border:1px solid #2a1f4e;border-radius:14px;
+      padding:18px 20px;display:flex;gap:16px;align-items:flex-start;
+      transition:border-color .18s, transform .15s;
+    }
+    .article-item:hover{border-color:#8B2EFF44;transform:translateY(-1px);}
+    .article-thumb{
+      width:72px;height:72px;border-radius:10px;flex-shrink:0;
+      background:#1a1530;overflow:hidden;display:flex;align-items:center;justify-content:center;
+      color:#5a4e7a;font-size:1.5rem;
+    }
+    .article-thumb img{width:100%;height:100%;object-fit:cover;}
+    .article-info{flex:1;min-width:0;}
+    .article-title{font-size:.95rem;font-weight:600;color:#e2d9f3;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .article-meta{font-size:.75rem;color:#7c6fa0;display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+    .article-meta i{font-size:.8rem;}
+    .article-excerpt{font-size:.8rem;color:#7c6fa0;margin-top:6px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+    .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:.71rem;font-weight:600;}
+    .badge-published{background:#10b9811a;color:#10b981;}
+    .badge-draft{background:#f59e0b1a;color:#f59e0b;}
+    .article-actions{display:flex;gap:8px;flex-shrink:0;align-items:center;}
+    .btn-icon{
+      background:#1a1530;border:1px solid #2a1f4e;color:#9b8ec4;
+      width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:all .15s;font-size:1rem;text-decoration:none;
+    }
+    .btn-icon:hover{background:#8B2EFF22;border-color:#8B2EFF44;color:#c084fc;}
+    .btn-icon.del:hover{background:#ef44441a;border-color:#ef444433;color:#ef4444;}
+
+    /* Skeleton */
+    .skeleton{background:linear-gradient(90deg,#1e1635 25%,#2a1f4e 50%,#1e1635 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:8px;}
+    @keyframes shimmer{to{background-position:-200% 0;}}
+    .empty-state{text-align:center;padding:64px;color:#5a4e7a;}
+    .empty-state i{font-size:3rem;display:block;margin-bottom:12px;}
+    .empty-state p{margin:0;font-size:.9rem;}
+
+    /* Modal */
+    .modal-overlay{position:fixed;inset:0;background:#00000088;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s;}
+    .modal-overlay.open{opacity:1;pointer-events:all;}
+    .modal{background:#16112b;border:1px solid #2a1f4e;border-radius:20px;width:100%;max-width:400px;transform:translateY(16px);transition:transform .2s;overflow:hidden;}
+    .modal-overlay.open .modal{transform:translateY(0);}
+    .modal-header{padding:20px 24px 14px;border-bottom:1px solid #1a1530;}
+    .modal-header h3{font-size:1rem;font-weight:700;color:#fff;margin:0;}
+    .modal-body{padding:18px 24px;font-size:.88rem;color:#9b8ec4;line-height:1.6;}
+    .modal-footer{padding:14px 24px;border-top:1px solid #1a1530;display:flex;gap:10px;justify-content:flex-end;}
+    .btn-danger{background:#ef4444;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:.85rem;font-weight:600;cursor:pointer;transition:opacity .18s;}
+    .btn-danger:hover{opacity:.85;}
+    .btn-ghost{background:#1a1530;color:#9b8ec4;border:1px solid #2a1f4e;border-radius:8px;padding:8px 16px;font-size:.85rem;cursor:pointer;}
+
+    /* Toast */
+    #toast-container{position:fixed;bottom:28px;right:28px;display:flex;flex-direction:column;gap:10px;z-index:9999;}
+    .toast{background:#1e1635;border:1px solid #2a1f4e;border-left:3px solid #8B2EFF;border-radius:10px;padding:12px 18px;color:#e2d9f3;font-size:.875rem;max-width:320px;box-shadow:0 8px 32px #00000060;animation:toastIn .25s ease;}
+    .toast.error{border-left-color:#ef4444;}.toast.success{border-left-color:#10b981;}
+    @keyframes toastIn{from{opacity:0;transform:translateY(12px);}}
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar" id="sidebar-container"></aside>
+  <div class="main-content">
+    <header class="topbar" id="navbar-container"></header>
+    <div class="content-wrapper">
+    <div class="content-body">
+
+      <div class="page-header">
+        <div>
+          <h1>Artikel Saya</h1>
+          <p>Kelola artikel yang kamu tulis untuk mahasiswa</p>
+        </div>
+        <a href="tulis-artikel.html" class="btn-new"><i class='bx bx-plus'></i>Tulis Artikel</a>
+      </div>
+
+      <div class="toolbar">
+        <button class="filter-btn active" data-filter="all">Semua</button>
+        <button class="filter-btn" data-filter="published">Terbit</button>
+        <button class="filter-btn" data-filter="draft">Draft</button>
+        <div class="search-wrap">
+          <i class='bx bx-search'></i>
+          <input type="text" id="search-input" placeholder="Cari judul artikel…" />
+        </div>
+      </div>
+
+      <!-- Skeleton ditaruh di sini via JS, bukan template literal -->
+      <div class="article-list" id="article-list">
+        <div class="article-item">
+          <div class="skeleton" style="width:72px;height:72px;border-radius:10px;flex-shrink:0"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+            <div class="skeleton" style="height:15px;width:60%"></div>
+            <div class="skeleton" style="height:12px;width:80%"></div>
+            <div class="skeleton" style="height:11px;width:90%"></div>
+          </div>
+        </div>
+        <div class="article-item">
+          <div class="skeleton" style="width:72px;height:72px;border-radius:10px;flex-shrink:0"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+            <div class="skeleton" style="height:15px;width:50%"></div>
+            <div class="skeleton" style="height:12px;width:75%"></div>
+            <div class="skeleton" style="height:11px;width:85%"></div>
+          </div>
+        </div>
+        <div class="article-item">
+          <div class="skeleton" style="width:72px;height:72px;border-radius:10px;flex-shrink:0"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+            <div class="skeleton" style="height:15px;width:65%"></div>
+            <div class="skeleton" style="height:12px;width:70%"></div>
+            <div class="skeleton" style="height:11px;width:88%"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    </div><!-- /content-wrapper -->
+  </div>
+</div>
+
+<!-- Delete confirm modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header"><h3>Hapus Artikel</h3></div>
+    <div class="modal-body">Artikel ini akan dihapus secara permanen. Lanjutkan?</div>
+    <div class="modal-footer">
+      <button class="btn-ghost" id="modal-cancel">Batal</button>
+      <button class="btn-danger" id="modal-confirm">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script type="module">
+import { supabase } from '../assets/js/supabase-client.js'
+
+// ── Auth guard ──
+const { data: { user } } = await supabase.auth.getUser()
+if (!user) { window.location.href = '../auth/login.html'; throw new Error() }
+const { data: profile } = await supabase.from('profiles').select('role,nama,avatar_url').eq('id', user.id).single()
+if (!profile || profile.role !== 'konselor') { window.location.href = '../mahasiswa/dashboard.html'; throw new Error() }
+
+// ── Load sidebar ──
+fetch('../shared/sidebar-konselor.html').then(r => r.text()).then(html => {
+  document.getElementById('sidebar-container').innerHTML = html
+  const logoutBtn = document.getElementById('btnLogout')
+  if (logoutBtn) logoutBtn.addEventListener('click', async (e) => {
+    e.preventDefault()
+    await supabase.auth.signOut({ scope: 'local' })
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// ── Load navbar + isi data user ──
+fetch('../shared/navbar.html').then(r => r.text()).then(async html => {
+  const container = document.getElementById('navbar-container')
+  container.innerHTML = html
+  const titleEl = container.querySelector('#topbarTitle')
+  if (titleEl) titleEl.textContent = 'Kelola Artikel'
+  const nameEl = container.querySelector('#navUserName')
+  const roleEl = container.querySelector('#navUserRole')
+  const avatarEl = container.querySelector('#navAvatar')
+  if (nameEl) nameEl.textContent = profile.nama || user.email
+  if (roleEl) roleEl.textContent = 'Konselor'
+  if (avatarEl) avatarEl.src = profile.avatar_url ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.nama || 'U')}&background=8B2EFF&color=fff`
+  const logoutBtn = container.querySelector('#btnLogout')
+  if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut({ scope: 'local' })
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// ── Helpers ──
+function toast(msg, type = 'info') {
+  const el = Object.assign(document.createElement('div'), { className: `toast ${type}`, textContent: msg })
+  document.getElementById('toast-container').appendChild(el)
+  setTimeout(() => el.remove(), 3500)
+}
+function stripHtml(html) { return (html || '').replace(/<[^>]+>/g, '') }
+
+// ── State ──
+let allArticles = [], currentFilter = 'all', searchQuery = '', deleteTargetId = null
+
+// ── Fetch articles — sesuai schema ──
+async function fetchArticles() {
+  const { data, error } = await supabase
+    .from('articles')
+    .select('id, judul, cover_url, konten, status, created_at, tags')
+    .eq('author_id', user.id)
+    .order('created_at', { ascending: false })
+
+  if (error) { toast('Gagal memuat artikel', 'error'); return }
+  allArticles = data ?? []
+  renderList()
+}
+
+// ── Render ──
+function renderList() {
+  const list = document.getElementById('article-list')
+  let items = [...allArticles]
+  if (currentFilter !== 'all') items = items.filter(a => a.status === currentFilter)
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase()
+    items = items.filter(a => a.judul?.toLowerCase().includes(q))
+  }
+
+  if (!items.length) {
+    list.innerHTML = `<div class="empty-state"><i class='bx bx-file-blank'></i><p>Belum ada artikel ditemukan.</p></div>`
+    return
+  }
+
+  list.innerHTML = items.map(a => {
+    const dateStr = new Date(a.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+    const badge = a.status === 'published'
+      ? `<span class="badge badge-published"><i class='bx bx-check-circle'></i>Terbit</span>`
+      : `<span class="badge badge-draft"><i class='bx bx-edit-alt'></i>Draft</span>`
+    const thumb = a.cover_url
+      ? `<img src="${a.cover_url}" alt="${a.judul}" onerror="this.style.display='none'">`
+      : `<i class='bx bx-image'></i>`
+    const firstTag = Array.isArray(a.tags) ? a.tags[0] : null
+    const excerpt = stripHtml(a.konten || '').slice(0, 120)
+    return `
+      <div class="article-item">
+        <div class="article-thumb">${thumb}</div>
+        <div class="article-info">
+          <div class="article-title">${a.judul ?? '(Tanpa Judul)'}</div>
+          <div class="article-meta">
+            ${badge}
+            ${firstTag ? `<span><i class='bx bx-tag'></i>${firstTag}</span>` : ''}
+            <span><i class='bx bx-calendar'></i>${dateStr}</span>
+          </div>
+          ${excerpt ? `<div class="article-excerpt">${excerpt}</div>` : ''}
+        </div>
+        <div class="article-actions">
+          <a href="tulis-artikel.html?id=${a.id}" class="btn-icon" title="Edit"><i class='bx bx-edit'></i></a>
+          <button class="btn-icon del" title="Hapus" data-id="${a.id}"><i class='bx bx-trash'></i></button>
+        </div>
+      </div>`
+  }).join('')
+
+  // Pasang event delete setelah render
+  list.querySelectorAll('.btn-icon.del').forEach(btn => {
+    btn.addEventListener('click', () => {
+      deleteTargetId = btn.dataset.id
+      document.getElementById('modal-overlay').classList.add('open')
+    })
+  })
+}
+
+// ── Modal delete ──
+document.getElementById('modal-cancel').addEventListener('click', () => {
+  document.getElementById('modal-overlay').classList.remove('open')
+})
+document.getElementById('modal-confirm').addEventListener('click', async () => {
+  if (!deleteTargetId) return
+  const { error } = await supabase.from('articles').delete().eq('id', deleteTargetId)
+  document.getElementById('modal-overlay').classList.remove('open')
+  if (error) { toast('Gagal menghapus artikel', 'error'); return }
+  allArticles = allArticles.filter(a => a.id !== deleteTargetId)
+  deleteTargetId = null
+  toast('Artikel dihapus', 'success')
+  renderList()
+})
+
+// ── Filter & search ──
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    currentFilter = btn.dataset.filter
+    renderList()
+  })
+})
+document.getElementById('search-input').addEventListener('input', e => {
+  searchQuery = e.target.value.trim()
+  renderList()
+})
+
+// ── Init ──
+await fetchArticles()
+</script>
+</body>
+</html>

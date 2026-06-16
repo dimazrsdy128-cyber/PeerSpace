@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Jadwal - PeerSpace</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        .booking-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 25px;
+            margin-top: 20px;
+            align-items: stretch;
+        }
+        .card-custom {
+            background: #141214;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        #bookingForm { display: flex; flex-direction: column; height: 100%; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; }
+        .form-input {
+            width: 100%; padding: 12px;
+            background: #0a0a0a;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            color: #fff; outline: none; box-sizing: border-box; transition: 0.3s;
+            font-family: inherit; font-size: 0.9rem;
+        }
+        .form-input:focus { border-color: var(--accent-purple); }
+        .btn-wrapper { margin-top: auto; padding-top: 20px; }
+        .btn-confirm {
+            width: 100%; padding: 15px;
+            background: var(--accent-purple);
+            border: none; border-radius: 12px;
+            color: white; font-weight: bold;
+            cursor: pointer; transition: 0.3s;
+            font-family: inherit; font-size: 0.95rem;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-confirm:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-2px); }
+        .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Calendar */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .month-nav { display: flex; gap: 10px; }
+        .nav-btn {
+            background: #1e1e1e; border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; width: 35px; height: 35px; border-radius: 10px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .calendar-days-row {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            text-align: center; font-size: 0.75rem; color: var(--accent-purple);
+            font-weight: bold; margin-bottom: 15px;
+        }
+        .calendar-main-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; flex-grow: 1; }
+        .day-cell {
+            aspect-ratio: 1; display: flex; align-items: center;
+            justify-content: center; border-radius: 12px;
+            font-size: 0.9rem; cursor: pointer; transition: 0.2s;
+        }
+        .day-ready { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); }
+        .day-ready:hover { border-color: var(--accent-purple); color: var(--accent-purple); }
+        .day-holiday { color: #ef4444; opacity: 0.5; cursor: not-allowed; }
+        .day-past { opacity: 0.15; cursor: not-allowed; }
+        .day-locked { color: #334155; cursor: not-allowed; }
+        .day-active { background: var(--accent-purple) !important; color: white !important; font-weight: bold; }
+        .legend {
+            display: flex; gap: 15px; margin-top: 25px; font-size: 0.7rem;
+            color: var(--text-secondary); border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px;
+        }
+
+        /* Alert */
+        .alert { padding: 12px 16px; border-radius: 12px; font-size: 0.88rem; margin-bottom: 16px; display: none; }
+        .alert-error   { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.3);  color: #f87171; }
+        .alert-success { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.3);  color: #4ade80; }
+
+        /* Konselor preview */
+        .konselor-preview {
+            background: rgba(139,46,255,0.08);
+            border: 1px solid rgba(139,46,255,0.2);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+        .konselor-preview img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .konselor-preview .kp-name { font-weight: 600; font-size: 0.9rem; }
+        .konselor-preview .kp-spek { font-size: 0.78rem; color: var(--text-secondary); }
+
+        @media (max-width: 992px) { .booking-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="app-wrapper">
+    <aside class="sidebar" id="sidebar-container"></aside>
+
+    <main class="main-content">
+        <header class="topbar" id="navbar-container"></header>
+
+        <div class="content-wrapper">
+            <div class="page-header-actions">
+                <div>
+                    <h2 style="font-size: 1.8rem;">Booking Jadwal</h2>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Pilih waktu yang nyaman untuk sesi konselingmu.</p>
+                </div>
+            </div>
+
+            <div id="alertError"   class="alert alert-error"></div>
+            <div id="alertSuccess" class="alert alert-success"></div>
+
+            <div class="booking-grid">
+
+                <!-- Form -->
+                <div class="card-custom">
+                    <form id="bookingForm">
+
+                        <!-- Preview konselor terpilih -->
+                        <div class="konselor-preview" id="konselorPreview">
+                            <img id="previewAvatar" src="" alt="">
+                            <div>
+                                <div class="kp-name" id="previewNama"></div>
+                                <div class="kp-spek" id="previewSpek"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Konselor</label>
+                            <select id="konselorSelect" class="form-input" required>
+                                <option value="">Memuat konselor...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Sesi</label>
+                            <select id="sesiSelect" class="form-input" required>
+                                <option value="Pagi">Pagi (08:00 - 10:00)</option>
+                                <option value="Siang">Siang (13:00 - 15:00)</option>
+                                <option value="Sore">Sore (16:00 - 18:00)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Keluhan / Topik Cerita <span style="color:var(--text-secondary)">(opsional)</span></label>
+                            <textarea id="keluhan" class="form-input" rows="5" placeholder="Tuliskan sedikit masalah atau topik yang ingin kamu ceritakan..."></textarea>
+                        </div>
+
+                        <input type="hidden" id="tanggalFinal">
+
+                        <div class="btn-wrapper">
+                            <button type="submit" class="btn-confirm" id="btnBooking">
+                                <i class='bx bx-calendar-check'></i> Konfirmasi Booking
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Kalender -->
+                <div class="card-custom">
+                    <div class="calendar-header">
+                        <div>
+                            <h3 id="displayCounselor" style="margin: 0; font-size: 1.1rem;">Pilih Tanggal</h3>
+                            <p id="displayMonth" style="margin: 5px 0 0 0; color: var(--accent-purple); font-weight: bold;"></p>
+                        </div>
+                        <div class="month-nav">
+                            <button class="nav-btn" id="btnPrev"><i class='bx bx-chevron-left'></i></button>
+                            <button class="nav-btn" id="btnNext"><i class='bx bx-chevron-right'></i></button>
+                        </div>
+                    </div>
+                    <div class="calendar-days-row">
+                        <div>SN</div><div>SL</div><div>RB</div><div>KM</div><div>JM</div><div>SB</div><div>MG</div>
+                    </div>
+                    <div class="calendar-main-grid" id="calendarGrid"></div>
+                    <div class="legend">
+                        <span><i class='bx bxs-circle' style="color: rgba(255,255,255,0.1)"></i> Tersedia</span>
+                        <span><i class='bx bxs-circle' style="color: #ef4444"></i> Libur</span>
+                        <span><i class='bx bxs-circle' style="color: var(--accent-purple)"></i> Dipilih</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<script type="module">
+  import { supabase } from '../assets/js/supabase-client.js'
+
+    // ── Guard ─────────────────────────────────────────────
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { window.location.href = '../auth/login.html'; throw new Error() }
+
+    // ── Load UI ───────────────────────────────────────────
+    const loadUI = (id, path) =>
+        fetch(path).then(r => r.text()).then(html => { document.getElementById(id).innerHTML = html })
+    loadUI('sidebar-container', '../shared/sidebar.html')
+    fetch('../shared/navbar.html').then(r => r.text()).then(async html => {
+    const container = document.getElementById('navbar-container')
+    container.innerHTML = html
+    const titleEl = container.querySelector('#topbarTitle')
+    if (titleEl) titleEl.textContent = 'Booking Sekarang'
+    const { data: profile } = await supabase.from('profiles').select('nama,role,avatar_url').eq('id', user.id).single()
+    if (profile) {
+        const nameEl = container.querySelector('#navUserName')
+        const roleEl = container.querySelector('#navUserRole')
+        const avatarEl = container.querySelector('#navAvatar')
+        if (nameEl) nameEl.textContent = profile.nama || user.email
+        if (roleEl) roleEl.textContent = { mahasiswa:'Mahasiswa', konselor:'Konselor', admin:'Admin' }[profile.role] || profile.role
+        if (avatarEl) avatarEl.src = profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.nama||'U')}&background=8B2EFF&color=fff`
+    }
+    const logoutBtn = container.querySelector('#btnLogout')
+    if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+        await supabase.auth.signOut({ scope: 'local' })
+        window.location.href = '../auth/login.html'
+    })
+    })
+
+    // ── Muat konselor dari Supabase ───────────────────────
+    let konselorList = []
+    const sel = document.getElementById('konselorSelect')
+
+    const { data: kData, error: kErr } = await supabase
+        .from('konselor')
+        .select('id, spesialisasi, bio, profiles!user_id(nama, avatar_url)')
+        .eq('is_available', true)
+        .order('rating', { ascending: false })
+
+    if (kErr || !kData || kData.length === 0) {
+        sel.innerHTML = '<option value="">Tidak ada konselor tersedia</option>'
+    } else {
+        konselorList = kData
+        sel.innerHTML = '<option value="">-- Pilih Konselor --</option>'
+        kData.forEach(k => {
+            const nama = k.profiles?.nama ?? 'Konselor'
+            const spek = (k.spesialisasi ?? []).join(', ')
+            sel.innerHTML += `<option value="${k.id}">${nama}${spek ? ' — ' + spek : ''}</option>`
+        })
+    }
+
+    // ── Preview konselor saat dipilih ─────────────────────
+    sel.addEventListener('change', () => {
+        const k = konselorList.find(x => x.id === sel.value)
+        const preview = document.getElementById('konselorPreview')
+        if (!k) { preview.style.display = 'none'; return }
+
+        const nama   = k.profiles?.nama ?? 'Konselor'
+        const spek   = (k.spesialisasi ?? []).join(', ')
+        const avatar = k.profiles?.avatar_url ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(nama)}&background=8B2EFF&color=fff`
+
+        document.getElementById('previewAvatar').src = avatar
+        document.getElementById('previewNama').textContent  = nama
+        document.getElementById('previewSpek').textContent  = spek
+        preview.style.display = 'flex'
+        renderCalendar()
+    })
+
+    // ── Kalender ──────────────────────────────────────────
+    let viewDate = new Date(); viewDate.setDate(1)
+    const today   = new Date(); today.setHours(0, 0, 0, 0)
+    const maxDate = new Date(today); maxDate.setDate(today.getDate() + 30)
+    const mNames  = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
+
+    function renderCalendar() {
+        const k = konselorList.find(x => x.id === sel.value)
+        document.getElementById('displayCounselor').textContent = k
+            ? `Jadwal ${k.profiles?.nama ?? 'Konselor'}`
+            : 'Pilih Tanggal'
+        document.getElementById('displayMonth').textContent =
+            `${mNames[viewDate.getMonth()]} ${viewDate.getFullYear()}`
+
+        const grid     = document.getElementById('calendarGrid')
+        grid.innerHTML = ''
+        const m        = viewDate.getMonth()
+        const y        = viewDate.getFullYear()
+        const firstDay = new Date(y, m, 1).getDay()
+        const total    = new Date(y, m + 1, 0).getDate()
+        const pad      = firstDay === 0 ? 6 : firstDay - 1
+
+        for (let i = 0; i < pad; i++) grid.appendChild(document.createElement('div'))
+
+        for (let d = 1; d <= total; d++) {
+            const dObj = new Date(y, m, d)
+            const el   = document.createElement('div')
+            el.className   = 'day-cell'
+            el.textContent = d
+
+            if (dObj < today)        el.classList.add('day-past')
+            else if (dObj.getDay() === 0) el.classList.add('day-holiday')
+            else if (dObj > maxDate) { el.classList.add('day-locked'); el.textContent = '·' }
+            else {
+                el.classList.add('day-ready')
+                el.addEventListener('click', () => {
+                    document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('day-active'))
+                    el.classList.add('day-active')
+                    const mm = String(m + 1).padStart(2, '0')
+                    const dd = String(d).padStart(2, '0')
+                    document.getElementById('tanggalFinal').value = `${y}-${mm}-${dd}`
+                })
+            }
+            grid.appendChild(el)
+        }
+    }
+
+    document.getElementById('btnPrev').addEventListener('click', () => {
+        viewDate.setMonth(viewDate.getMonth() - 1); renderCalendar()
+    })
+    document.getElementById('btnNext').addEventListener('click', () => {
+        viewDate.setMonth(viewDate.getMonth() + 1); renderCalendar()
+    })
+    renderCalendar()
+
+    // ── Submit booking ────────────────────────────────────
+    document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+        e.preventDefault()
+        const errEl      = document.getElementById('alertError')
+        const succEl     = document.getElementById('alertSuccess')
+        const btn        = document.getElementById('btnBooking')
+        const konselorId = document.getElementById('konselorSelect').value
+        const sesi       = document.getElementById('sesiSelect').value
+        const keluhan    = document.getElementById('keluhan').value.trim()
+        const tanggal    = document.getElementById('tanggalFinal').value
+
+        errEl.style.display  = 'none'
+        succEl.style.display = 'none'
+
+        if (!konselorId) { errEl.textContent = 'Pilih konselor terlebih dahulu.'; errEl.style.display = 'block'; return }
+        if (!tanggal)    { errEl.textContent = 'Pilih tanggal di kalender.';       errEl.style.display = 'block'; return }
+
+        btn.disabled     = true
+        btn.innerHTML    = '<i class="bx bx-loader-alt bx-spin"></i> Memproses...'
+
+        try {
+            // Cek apakah slot sudah ada booking lain
+            const { data: existing } = await supabase
+                .from('booking')
+                .select('id')
+                .eq('konselor_id', konselorId)
+                .eq('tanggal', tanggal)
+                .eq('sesi', sesi)
+                .in('status', ['pending', 'accepted'])
+
+            if (existing && existing.length > 0) {
+                errEl.textContent   = 'Slot ini sudah dipesan. Pilih tanggal atau sesi lain.'
+                errEl.style.display = 'block'
+                btn.disabled        = false
+                btn.innerHTML       = "<i class='bx bx-calendar-check'></i> Konfirmasi Booking"
+                return
+            }
+
+            // Buat booking
+            const { error: bErr } = await supabase.from('booking').insert({
+                mahasiswa_id: user.id,
+                konselor_id:  konselorId,
+                tanggal,
+                sesi,
+                keluhan:      keluhan || null,
+                status:       'pending'
+            })
+            if (bErr) throw bErr
+
+            succEl.textContent   = '✅ Booking berhasil diajukan! Menunggu konfirmasi konselor.'
+            succEl.style.display = 'block'
+            document.getElementById('bookingForm').reset()
+            document.getElementById('tanggalFinal').value = ''
+            document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('day-active'))
+            document.getElementById('konselorPreview').style.display = 'none'
+
+            setTimeout(() => window.location.href = 'dashboard.html', 2500)
+
+        } catch (err) {
+            errEl.textContent   = 'Booking gagal: ' + err.message
+            errEl.style.display = 'block'
+        } finally {
+            btn.disabled  = false
+            btn.innerHTML = "<i class='bx bx-calendar-check'></i> Konfirmasi Booking"
+        }
+    })
+</script>
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Quiz - Konselor Sebaya</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root {
+            --bg-dark: #000000;
+            --card-dark: #141214;
+            --border-dark: rgba(255,255,255,0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-purple: #8b5cf6;
+        }
+
+        body { background-color: var(--bg-dark); color: var(--text-main); margin: 0; font-family: 'Inter', sans-serif; }
+
+        /* Header Section Modern */
+        .header-wrapper {
+            background: linear-gradient(to right, #141214, #000000);
+            border: 1px solid var(--border-dark);
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-info h2 { font-size: 1.8rem; margin: 0; letter-spacing: -0.5px; }
+        .header-info p { color: var(--text-muted); font-size: 0.9rem; margin: 8px 0 0 0; }
+
+        .btn-create {
+            background: var(--accent-purple);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.2);
+        }
+
+        .btn-create:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(139, 92, 246, 0.4); }
+
+        /* View State */
+        #createQuizView { display: none; }
+
+        /* Grid Quiz List */
+        .quiz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .quiz-card {
+            background: var(--card-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-info h3 { margin: 0 0 6px 0; font-size: 1.05rem; }
+        .card-info span { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+
+        .btn-trash {
+            background: rgba(239, 68, 68, 0.1); color: #ef4444; border: none;
+            width: 42px; height: 42px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+
+        /* Form Builder Styling */
+        .form-box { background: var(--card-dark); border: 1px solid var(--border-dark); border-radius: 24px; padding: 35px; }
+        .form-input { 
+            width: 100%; padding: 14px; background: #000; border: 1px solid var(--border-dark); 
+            border-radius: 12px; color: #fff; outline: none; margin-top: 8px; box-sizing: border-box;
+        }
+
+        .quiz-question-card {
+            background: #000;
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border-dark);
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        /* Radio Kunci Jawaban */
+        input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent-purple);
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) { .header-wrapper { flex-direction: column; align-items: flex-start; } .btn-create { width: 100%; justify-content: center; } }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <aside class="sidebar" id="sidebar-container"></aside>
+
+        <main class="main-content">
+            <header class="topbar" id="navbar-container"></header>
+
+            <div class="content-wrapper">
+                
+                <div id="listQuizView">
+                    <div class="header-wrapper">
+                        <div class="header-info">
+                            <h2>Master Quiz</h2>
+                            <p>Uji pemahaman mahasiswa seputar kesehatan mental.</p>
+                        </div>
+                        <button class="btn-create" onclick="toggleQuizView('create')">
+                            <i class='bx bx-plus-circle'></i>
+                            Buat Quiz Baru
+                        </button>
+                    </div>
+
+                    <div class="quiz-grid">
+                        <div class="quiz-card">
+                            <div class="card-info">
+                                <h3>Tes Literasi Anxiety</h3>
+                                <span><i class='bx bx-list-check'></i> 10 Pertanyaan</span>
+                            </div>
+                            <button class="btn-trash" onclick="this.parentElement.remove()"><i class='bx bx-trash'></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="createQuizView">
+                    <div class="header-wrapper" style="margin-bottom: 25px;">
+                        <div class="header-info">
+                            <h2>Draft Master Quiz</h2>
+                            <p>Tentukan soal dan tandai satu kunci jawaban yang benar.</p>
+                        </div>
+                        <button class="btn-create" onclick="toggleQuizView('list')" style="background: #1e293b; box-shadow: none;">Batal</button>
+                    </div>
+
+                    <div class="form-box">
+                        <form id="quizForm">
+                            <div style="margin-bottom: 30px;">
+                                <label style="color: var(--text-muted); font-size: 0.85rem;">Judul Quiz</label>
+                                <input type="text" class="form-input" placeholder="Misal: Mengenal Ciri-Ciri Depresi" required>
+                            </div>
+
+                            <div id="quizQContainer">
+                                <div class="quiz-question-card">
+                                    <div style="margin-bottom: 20px;">
+                                        <label style="color: var(--text-muted); font-size: 0.85rem;">Pertanyaan 1</label>
+                                        <input type="text" class="form-input" placeholder="Tulis soal di sini..." required>
+                                    </div>
+                                    
+                                    <label style="color: var(--text-muted); font-size: 0.75rem;">Opsi Jawaban (Tandai yang Benar):</label>
+                                    
+                                    <div class="option-item">
+                                        <input type="radio" name="q1_correct" checked>
+                                        <input type="text" class="form-input" placeholder="Opsi A" required>
+                                    </div>
+                                    <div class="option-item">
+                                        <input type="radio" name="q1_correct">
+                                        <input type="text" class="form-input" placeholder="Opsi B" required>
+                                    </div>
+                                    <div class="option-item">
+                                        <input type="radio" name="q1_correct">
+                                        <input type="text" class="form-input" placeholder="Opsi C" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn-create" onclick="addQuizQ()" style="width: 100%; background: transparent; border: 1px dashed var(--accent-purple); color: var(--accent-purple); margin-top: 10px;">
+                                + Tambah Soal
+                            </button>
+
+                            <button type="submit" class="btn-create" style="width: 100%; margin-top: 35px; justify-content: center; padding: 18px;">
+                                Publikasikan Quiz
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // LOAD UI - PATH SIDEBAR KONSELOR FIX
+        const loadUI = (id, path, title) => {
+            fetch(path).then(res => res.text()).then(data => {
+                const container = document.getElementById(id);
+                const temp = document.createElement('div');
+                temp.innerHTML = data;
+
+                if(id === 'sidebar-container') {
+                    const old = temp.querySelector('.menu-item.active');
+                    if(old) old.classList.remove('active');
+                    // Set active ke kelola-quiz.html
+                    const now = temp.querySelector('a[href="kelola-quiz.html"]');
+                    if(now) now.parentElement.classList.add('active');
+                }
+
+                if(id === 'navbar-container' && temp.querySelector('.topbar-title')) {
+                    temp.querySelector('.topbar-title').innerText = title;
+                }
+
+                container.innerHTML = temp.innerHTML;
+            });
+        };
+
+        loadUI('sidebar-container', '../shared/sidebar-konselor.html');
+        loadUI('navbar-container', '../shared/navbar.html', 'Master Quiz');
+
+        function toggleQuizView(v) {
+            document.getElementById('listQuizView').style.display = (v === 'list') ? 'block' : 'none';
+            document.getElementById('createQuizView').style.display = (v === 'create') ? 'block' : 'none';
+            window.scrollTo(0, 0);
+        }
+
+        let qQuizIdx = 1;
+        function addQuizQ() {
+            qQuizIdx++;
+            const html = `
+                <div class="quiz-question-card">
+                    <i class='bx bx-x' onclick="this.parentElement.remove()" style="position:absolute; right:15px; top:15px; color:#ef4444; cursor:pointer; font-size:1.4rem;"></i>
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: var(--text-muted); font-size: 0.85rem;">Pertanyaan ${qQuizIdx}</label>
+                        <input type="text" class="form-input" required>
+                    </div>
+                    <label style="color: var(--text-muted); font-size: 0.75rem;">Opsi Jawaban:</label>
+                    <div class="option-item"><input type="radio" name="q${qQuizIdx}_correct" checked><input type="text" class="form-input" placeholder="Opsi A" required></div>
+                    <div class="option-item"><input type="radio" name="q${qQuizIdx}_correct"><input type="text" class="form-input" placeholder="Opsi B" required></div>
+                    <div class="option-item"><input type="radio" name="q${qQuizIdx}_correct"><input type="text" class="form-input" placeholder="Opsi C" required></div>
+                </div>`;
+            document.getElementById('quizQContainer').insertAdjacentHTML('beforeend', html);
+        }
+
+        document.getElementById('quizForm').onsubmit = (e) => {
+            e.preventDefault();
+            alert("Quiz Berhasil Terbit!");
+            toggleQuizView('list');
+        };
+    </script>
+</body>
+</html>

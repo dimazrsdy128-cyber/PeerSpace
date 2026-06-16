@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesi Konseling - PeerSpace</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root {
+            --bg-dark: #000;
+            --sidebar-mid: #0a0a0a;
+            --accent: #8b5cf6;
+            --border: rgba(255,255,255,0.08);
+            --sidebar-collapsed: 80px;
+            --sidebar-expanded: 260px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-dark);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-layout {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* --- SIDEBAR HOVER SYSTEM --- */
+        .sidebar-col {
+            width: var(--sidebar-collapsed);
+            background: #000;
+            border-right: 1px solid var(--border);
+            flex-shrink: 0;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-col:hover { width: var(--sidebar-expanded); }
+
+        .sidebar-col span {
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s;
+        }
+
+        .sidebar-col:hover span {
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: inline-block !important;
+        }
+
+        .sidebar-col .menu-link {
+            display: flex !important;
+            align-items: center !important;
+            padding: 12px 28px !important;
+            width: var(--sidebar-expanded);
+            gap: 15px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .sidebar-col .sidebar-logo {
+            display: flex !important;
+            align-items: center !important;
+            padding: 20px 28px !important;
+            gap: 15px;
+        }
+
+        /* --- LAYOUT KOLOM --- */
+        .selector-col {
+            width: 300px;
+            background: var(--sidebar-mid);
+            border-right: 1px solid var(--border);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .window-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #000;
+        }
+
+        .selector-header { padding: 25px; border-bottom: 1px solid var(--border); }
+        .chat-user { padding: 15px 20px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.02); transition: 0.2s; }
+        .chat-user:hover { background: rgba(255,255,255,0.03); }
+        .chat-user.active { background: rgba(139, 92, 246, 0.1); border-right: 3px solid var(--accent); }
+        .avatar { width: 38px; height: 38px; border-radius: 50%; background: #222; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; object-fit: cover; }
+
+        .top-nav { padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; min-height: 64px; }
+        .feed { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 6px; }
+        .bubble { max-width: 70%; padding: 12px 16px; border-radius: 18px; font-size: 0.9rem; line-height: 1.5; }
+        .bubble.in { align-self: flex-start; background: #1a1a1a; border-bottom-left-radius: 2px; }
+        .bubble.out { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 2px; }
+        .bubble-time { font-size: 0.68rem; color: #64748b; margin-bottom: 10px; }
+        .bubble-time.left  { align-self: flex-start; margin-left: 6px; }
+        .bubble-time.right { align-self: flex-end; margin-right: 6px; }
+
+        .chat-input-area { padding: 15px 25px; border-top: 1px solid var(--border); }
+        .bar-group { background: #111; border: 1px solid var(--border); border-radius: 50px; padding: 5px 5px 5px 20px; display: flex; align-items: center; gap: 10px; }
+        .bar-group input { flex: 1; background: transparent; border: none; color: #fff; outline: none; padding: 10px 0; }
+        .btn-send { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+        .empty-chat {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #64748b; gap: 8px; text-align: center; padding: 20px;
+        }
+        .empty-chat i { font-size: 2.5rem; color: #2a2a2a; }
+
+        /* Toast sederhana */
+        #toast-box {
+            position: fixed; bottom: 20px; right: 20px; z-index: 5000;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .toast-item {
+            background: #1a1a1a; border: 1px solid var(--border); border-left: 3px solid var(--accent);
+            border-radius: 8px; padding: 10px 16px; font-size: 0.85rem; color: #fff;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4); animation: toastIn .2s ease;
+        }
+        .toast-item.error { border-left-color: #ef4444; }
+        .toast-item.success { border-left-color: #22c55e; }
+        @keyframes toastIn { from { opacity:0; transform: translateY(10px);} }
+    </style>
+</head>
+<body>
+
+    <div class="app-layout">
+        <div class="sidebar-col" id="sidebar-inject"></div>
+
+        <div class="selector-col">
+            <div class="selector-header">
+                <h3 style="font-size: 1rem;">Sesi Aktif</h3>
+            </div>
+            <div class="list-container" id="sessionList">
+                <div style="padding:20px; color:#64748b; font-size:0.85rem; text-align:center;">
+                    Memuat sesi...
+                </div>
+            </div>
+        </div>
+
+        <div class="window-col">
+            <div class="top-nav" id="chatHeader" style="display:none;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img id="chatAvatar" class="avatar" style="width: 32px; height: 32px; font-size: 0.7rem;" src="" alt="">
+                    <span id="chatNama" style="font-weight: 700; font-size: 0.9rem;"></span>
+                </div>
+                <button id="btnAkhiri" onclick="window.endSession()" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:none; padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; cursor: pointer;">AKHIRI</button>
+            </div>
+
+            <div class="feed" id="chatFeed">
+                <div class="empty-chat" id="emptyChat">
+                    <i class='bx bx-message-rounded-dots'></i>
+                    <p>Pilih sesi mahasiswa di sebelah kiri untuk mulai chat.</p>
+                </div>
+            </div>
+
+            <div class="chat-input-area" id="inputArea" style="display:none;">
+                <div class="bar-group">
+                    <input type="text" id="chatMsg" placeholder="Tulis pesan konseling...">
+                    <button class="btn-send" id="btnSend"><i class='bx bxs-send'></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-box"></div>
+
+    <script type="module">
+        import { supabase } from '../assets/js/supabase-client.js'
+
+        // ── Toast sederhana ──
+        function toast(msg, type = 'info') {
+            const box = document.getElementById('toast-box')
+            const el  = document.createElement('div')
+            el.className = `toast-item ${type}`
+            el.textContent = msg
+            box.appendChild(el)
+            setTimeout(() => el.remove(), 3500)
+        }
+
+        // ── Auth guard ──
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) { window.location.href = '../auth/login.html'; throw new Error() }
+        const user = session.user
+
+        const { data: profile, error: profErr } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .maybeSingle()
+
+        if (profErr || !profile) { window.location.href = '../auth/login.html'; throw new Error() }
+
+        if (profile.role !== 'konselor') {
+            window.location.href = '../mahasiswa/dashboard.html'
+            throw new Error()
+        }
+
+        // ── Load sidebar & attach logout ──
+        const loadUI = (id, path) =>
+            fetch(path).then(r => r.text()).then(html => {
+                const el = document.getElementById(id)
+                if (el) el.innerHTML = html
+            })
+
+        await loadUI('sidebar-inject', '../shared/sidebar-konselor.html')
+
+        // Highlight menu aktif
+        const sidebarEl  = document.getElementById('sidebar-inject')
+        const activeLink = sidebarEl.querySelector('a[href="chat-konseling.html"]')
+        if (activeLink) activeLink.parentElement.classList.add('active')
+
+        // Pasang logout handler (script di fragment tidak dieksekusi)
+        const btnLogout = document.getElementById('btnLogout')
+        if (btnLogout) {
+            btnLogout.addEventListener('click', async (e) => {
+                e.preventDefault()
+                await supabase.auth.signOut({ scope: 'local' })
+                Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+                window.location.href = '../auth/login.html'
+            })
+        }
+
+        // ── Ambil row konselor (id konselor untuk filter booking) ──
+        // ASUMSI: tabel `konselor` punya kolom user_id yang merujuk ke profiles.id
+        // Kalau error "column does not exist", share struktur tabel `konselor` ya.
+        const { data: konselorRow, error: konselorErr } = await supabase
+            .from('konselor')
+            .select('id')
+            .eq('user_id', profile.id)
+            .maybeSingle()
+
+        if (konselorErr || !konselorRow) {
+            document.getElementById('sessionList').innerHTML = `
+                <div style="padding:20px; color:#ef4444; font-size:0.82rem; text-align:center;">
+                    Data konselor tidak ditemukan.<br>
+                    <span style="color:#64748b">${konselorErr?.message ?? ''}</span>
+                </div>`
+            throw new Error('konselor not found')
+        }
+        const konselorId = konselorRow.id
+
+        // ── State ──
+        let activeSessionId = null
+        let activeBookingId = null
+        let realtimeCh      = null
+
+        // ── Load daftar booking dengan status accepted ──
+        // ASUMSI: tabel `booking` punya kolom konselor_id, user_id (mahasiswa), tanggal, sesi, status
+        async function loadSessions() {
+            const list = document.getElementById('sessionList')
+            const { data: bookings, error } = await supabase
+                .from('booking')
+                .select(`
+                    id, tanggal, sesi, status, mahasiswa_id,
+                    profiles:mahasiswa_id ( nama, avatar_url )
+                `)
+                .eq('konselor_id', konselorId)
+                .eq('status', 'accepted')
+                .order('tanggal', { ascending: true })
+
+            if (error) {
+                list.innerHTML = `
+                    <div style="padding:20px; color:#ef4444; font-size:0.82rem; text-align:center;">
+                        Gagal memuat sesi.<br>
+                        <span style="color:#64748b">${error.message}</span>
+                    </div>`
+                return
+            }
+
+            if (!bookings?.length) {
+                list.innerHTML = `<div style="padding:20px; color:#64748b; font-size:0.85rem; text-align:center;">Belum ada sesi aktif.</div>`
+                return
+            }
+
+            list.innerHTML = bookings.map(b => {
+                const nama   = b.profiles?.nama || 'Mahasiswa'
+                const avatar = b.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(nama)}&background=222&color=fff`
+                const tgl    = b.tanggal ? new Date(b.tanggal).toLocaleDateString('id-ID') : ''
+                return `
+                <div class="chat-user" id="session-${b.id}" data-booking="${b.id}" data-user="${b.mahasiswa_id}" data-nama="${nama.replace(/"/g,'&quot;')}" data-avatar="${avatar}">
+                    <img src="${avatar}" class="avatar" onerror="this.src='https://ui-avatars.com/api/?name=M&background=222&color=fff'">
+                    <div>
+                        <h4 style="font-size:0.85rem;">${nama}</h4>
+                        <p style="font-size:0.7rem; color:#64748b;">${b.sesi ?? ''} ${tgl ? '· ' + tgl : ''}</p>
+                    </div>
+                </div>`
+            }).join('')
+
+            // Pasang klik handler
+            list.querySelectorAll('.chat-user').forEach(el => {
+                el.addEventListener('click', () => openSession(
+                    el.dataset.booking, el.dataset.user, el.dataset.nama, el.dataset.avatar
+                ))
+            })
+        }
+        await loadSessions()
+
+        // ── Buka sesi chat ──
+        async function openSession(bookingId, mahasiswaId, nama, avatar) {
+            if (realtimeCh) supabase.removeChannel(realtimeCh)
+
+            activeBookingId = bookingId
+
+            document.getElementById('chatNama').textContent = nama
+            document.getElementById('chatAvatar').src        = avatar
+            document.getElementById('chatHeader').style.display = 'flex'
+            document.getElementById('inputArea').style.display  = 'block'
+            document.getElementById('emptyChat')?.remove()
+
+            document.querySelectorAll('.chat-user').forEach(el => el.classList.remove('active'))
+            document.getElementById(`session-${bookingId}`)?.classList.add('active')
+
+            // ── Ambil/buat chat_sessions ──
+            // ASUMSI: chat_sessions(id, booking_id, status, created_at)
+            //         chat_messages(id, session_id, sender_id, isi, created_at)
+            let { data: chatSession, error: csErr } = await supabase
+                .from('chat_sessions')
+                .select('id')
+                .eq('booking_id', bookingId)
+                .maybeSingle()
+
+            if (csErr) {
+                toast('Gagal memuat sesi chat: ' + csErr.message, 'error')
+                return
+            }
+
+            if (!chatSession) {
+                const { data: newSession, error: insErr } = await supabase
+                    .from('chat_sessions')
+                    .insert({ booking_id: bookingId })
+                    .select('id')
+                    .single()
+
+                if (insErr) {
+                    toast('Gagal membuat sesi chat: ' + insErr.message, 'error')
+                    return
+                }
+                chatSession = newSession
+            }
+
+            activeSessionId = chatSession.id
+
+            // Load history pesan
+            const { data: msgs, error: msgErr } = await supabase
+                .from('chat_messages')
+                .select('id, sender_id, isi, created_at')
+                .eq('session_id', activeSessionId)
+                .order('created_at', { ascending: true })
+
+            if (msgErr) {
+                toast('Gagal memuat pesan: ' + msgErr.message, 'error')
+            } else {
+                renderFeed(msgs ?? [])
+            }
+
+            // Realtime: pesan baru dari mahasiswa
+            realtimeCh = supabase
+                .channel(`chat_${activeSessionId}`)
+                .on('postgres_changes', {
+                    event: 'INSERT', schema: 'public', table: 'chat_messages',
+                    filter: `session_id=eq.${activeSessionId}`
+                }, (payload) => {
+                    if (payload.new.sender_id !== profile.id) {
+                        appendBubble(payload.new.isi, 'in', payload.new.created_at)
+                    }
+                })
+                .subscribe()
+        }
+
+        function renderFeed(msgs) {
+            const feed = document.getElementById('chatFeed')
+            feed.innerHTML = ''
+            if (!msgs.length) {
+                feed.innerHTML = `<div class="empty-chat"><i class='bx bx-message-rounded-dots'></i><p>Belum ada pesan. Mulai percakapan!</p></div>`
+                return
+            }
+            msgs.forEach(m => {
+                const side = m.sender_id === profile.id ? 'out' : 'in'
+                appendBubble(m.isi, side, m.created_at)
+            })
+        }
+
+        function appendBubble(teks, side, ts) {
+            const feed = document.getElementById('chatFeed')
+            feed.querySelector('.empty-chat')?.remove()
+            const time = ts ? new Date(ts).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''
+            feed.insertAdjacentHTML('beforeend', `
+                <div class="bubble ${side}">${teks}</div>
+                <span class="bubble-time ${side === 'in' ? 'left' : 'right'}">${time}</span>`)
+            feed.scrollTop = feed.scrollHeight
+        }
+
+        // ── Kirim pesan ──
+        async function kirimPesan() {
+            const input = document.getElementById('chatMsg')
+            const teks  = input.value.trim()
+            if (!teks || !activeSessionId) return
+
+            const ts = new Date().toISOString()
+            appendBubble(teks, 'out', ts)
+            input.value = ''
+
+            const { error } = await supabase
+                .from('chat_messages')
+                .insert({ session_id: activeSessionId, sender_id: profile.id, isi: teks })
+
+            if (error) toast('Gagal kirim: ' + error.message, 'error')
+        }
+
+        document.getElementById('btnSend').addEventListener('click', kirimPesan)
+        document.getElementById('chatMsg').addEventListener('keypress', e => {
+            if (e.key === 'Enter') kirimPesan()
+        })
+
+        // ── Akhiri sesi ──
+        window.endSession = async () => {
+            if (!activeSessionId || !activeBookingId) return
+            if (!confirm('Selesaikan sesi ini?')) return
+
+            try {
+                if (realtimeCh) supabase.removeChannel(realtimeCh)
+
+                await supabase.from('chat_sessions')
+                    .update({ is_active: false, ended_at: new Date().toISOString() })
+                    .eq('id', activeSessionId)
+
+                const { error } = await supabase.from('booking')
+                    .update({ status: 'done' })
+                    .eq('id', activeBookingId)
+
+                if (error) throw error
+
+                toast('Sesi berhasil diselesaikan!', 'success')
+                setTimeout(() => window.location.href = 'riwayat.html', 1200)
+            } catch (err) {
+                toast('Gagal: ' + err.message, 'error')
+            }
+        }
+    </script>
+</body>
+</html> 

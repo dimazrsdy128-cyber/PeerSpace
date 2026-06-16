@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Permintaan Topik Forum — PeerSpace</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <style>
+    .content-area { max-width: 900px; }
+
+    .page-header { margin-bottom: 1.6rem; }
+    .page-header h1 { font-size: 1.7rem; font-weight: 800; color: #fff; margin: 0 0 .3rem; }
+    .page-header h1 span { color: #8B2EFF; }
+    .page-header p { color: rgba(255,255,255,.45); font-size: .9rem; margin: 0; }
+
+    .filter-tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
+    .tab-btn {
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      color: rgba(255,255,255,.55); padding: .5rem 1rem; border-radius: 8px;
+      font-size: .82rem; font-weight: 500; cursor: pointer; transition: all .18s;
+    }
+    .tab-btn:hover, .tab-btn.active {
+      background: rgba(139,46,255,.2); border-color: rgba(139,46,255,.45); color: #b86fff;
+    }
+
+    .req-card {
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px; padding: 1.3rem 1.4rem; margin-bottom: 1rem;
+    }
+    .req-top { display: flex; align-items: center; gap: .8rem; margin-bottom: .9rem; }
+    .req-avatar, .req-avatar-ph {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; object-fit: cover;
+      border: 1.5px solid rgba(139,46,255,.35);
+    }
+    .req-avatar-ph {
+      background: linear-gradient(135deg, #8B2EFF, #5a00cc); display: flex;
+      align-items: center; justify-content: center; font-size: .85rem; font-weight: 700; color: #fff;
+    }
+    .req-meta { flex: 1; }
+    .req-name { font-size: .85rem; font-weight: 600; color: rgba(255,255,255,.85); }
+    .req-time { font-size: .75rem; color: rgba(255,255,255,.35); }
+
+    .req-anon-badge {
+      background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.3);
+      color: #f59e0b; padding: .2rem .65rem; border-radius: 20px; font-size: .7rem; font-weight: 600;
+    }
+    .req-cat-badge {
+      background: rgba(139,46,255,.14); border: 1px solid rgba(139,46,255,.25);
+      color: #b86fff; padding: .18rem .65rem; border-radius: 20px; font-size: .72rem; font-weight: 600;
+    }
+    .req-status {
+      padding: .2rem .65rem; border-radius: 20px; font-size: .7rem; font-weight: 700;
+      text-transform: uppercase;
+    }
+    .req-status.pending  { background: rgba(245,158,11,.12); color: #f59e0b; border: 1px solid rgba(245,158,11,.3); }
+    .req-status.approved { background: rgba(16,185,129,.12); color: #10b981; border: 1px solid rgba(16,185,129,.3); }
+    .req-status.rejected { background: rgba(239,68,68,.12); color: #ef4444; border: 1px solid rgba(239,68,68,.3); }
+
+    .req-title { font-size: 1rem; font-weight: 700; color: #fff; margin: 0 0 .4rem; }
+    .req-body  { font-size: .87rem; color: rgba(255,255,255,.55); line-height: 1.6; margin: 0 0 1rem; white-space: pre-wrap; }
+    .req-note  { font-size: .8rem; color: rgba(255,255,255,.4); margin: 0 0 1rem; font-style: italic; }
+
+    .req-actions { display: flex; gap: .7rem; }
+    .btn-approve, .btn-reject {
+      border: none; border-radius: 9px; padding: .5rem 1.1rem; font-size: .83rem;
+      font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: .4rem;
+      transition: opacity .2s;
+    }
+    .btn-approve { background: linear-gradient(135deg, #8B2EFF, #6d00e8); color: #fff; }
+    .btn-reject  { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.35); color: #ef4444; }
+    .btn-approve:hover, .btn-reject:hover { opacity: .85; }
+    .btn-approve:disabled, .btn-reject:disabled { opacity: .4; cursor: not-allowed; }
+
+    @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+    .skeleton {
+      background: linear-gradient(90deg, rgba(255,255,255,.06) 25%, rgba(255,255,255,.11) 50%, rgba(255,255,255,.06) 75%);
+      background-size: 400px 100%; animation: shimmer 1.4s infinite; border-radius: 6px;
+    }
+    .sk-line { height: 11px; }
+    .sk-circle { border-radius: 50%; }
+
+    .empty-state, .error-state { text-align: center; padding: 3.5rem 2rem; color: rgba(255,255,255,.4); }
+    .empty-state i, .error-state i { font-size: 3rem; display: block; margin-bottom: .8rem; }
+    .empty-state i { color: rgba(139,46,255,.4); }
+    .error-state i { color: #ef4444; }
+    .retry-btn {
+      margin-top: .8rem; background: rgba(139,46,255,.2); border: 1px solid rgba(139,46,255,.4);
+      color: #b86fff; padding: .45rem 1.1rem; border-radius: 8px; cursor: pointer; font-size: .85rem;
+    }
+
+    @media (max-width: 640px) {
+      .content-area { padding: 1.2rem; }
+      .page-header h1 { font-size: 1.3rem; }
+      .req-actions { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar" id="sidebar-container"></aside>
+
+  <div class="main-content">
+    <header class="topbar" id="navbar-container"></header>
+
+    <div class="content-wrapper">
+    <div class="content-area">
+      <div class="page-header">
+        <h1>Permintaan <span>Topik Forum</span></h1>
+        <p>Review topik yang diajukan mahasiswa sebelum tayang di forum diskusi</p>
+      </div>
+
+      <div class="filter-tabs" id="filterTabs">
+        <button class="tab-btn active" data-status="pending">Menunggu</button>
+        <button class="tab-btn" data-status="approved">Disetujui</button>
+        <button class="tab-btn" data-status="rejected">Ditolak</button>
+        <button class="tab-btn" data-status="">Semua</button>
+      </div>
+
+      <div id="reqList"></div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { supabase } from '../assets/js/supabase-client.js'
+
+// ── Auth guard: hanya konselor/admin ──
+const { data: { user } } = await supabase.auth.getUser()
+if (!user) { window.location.href = '../auth/login.html'; throw new Error() }
+
+const { data: myProfile } = await supabase.from('profiles').select('nama, role, avatar_url').eq('id', user.id).single()
+if (!myProfile || !['konselor', 'admin'].includes(myProfile.role)) {
+  window.location.href = '../mahasiswa/forum.html'
+  throw new Error()
+}
+
+// ── Load sidebar & navbar ──
+fetch('../shared/sidebar.html').then(r => r.text()).then(html => {
+  const container = document.getElementById('sidebar-container')
+  container.innerHTML = html
+  container.querySelectorAll('a.menu-link').forEach(a => {
+    if (a.getAttribute('href') === 'forum-requests.html') a.closest('.menu-item')?.classList.add('active')
+  })
+  const btn = container.querySelector('#btnLogout')
+  if (btn) btn.addEventListener('click', async e => {
+    e.preventDefault()
+    await supabase.auth.signOut({ scope: 'local' })
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+    window.location.href = '../auth/login.html'
+  })
+}).catch(() => {})
+
+fetch('../shared/navbar.html').then(r => r.text()).then(html => {
+  const container = document.getElementById('navbar-container')
+  container.innerHTML = html
+  const titleEl = container.querySelector('#topbarTitle')
+  if (titleEl) titleEl.textContent = 'Permintaan Topik Forum'
+  const nameEl = container.querySelector('#navUserName')
+  const roleEl = container.querySelector('#navUserRole')
+  const avatarEl = container.querySelector('#navAvatar')
+  if (nameEl) nameEl.textContent = myProfile.nama || user.email
+  if (roleEl) roleEl.textContent = { mahasiswa:'Mahasiswa', konselor:'Konselor', admin:'Admin' }[myProfile.role] || myProfile.role
+  if (avatarEl) avatarEl.src = myProfile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(myProfile.nama||'U')}&background=8B2EFF&color=fff`
+  const logoutBtn = container.querySelector('#btnLogout')
+  if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut({ scope: 'local' })
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+    window.location.href = '../auth/login.html'
+  })
+}).catch(() => {})
+
+// ── Helpers ──
+function timeAgo (iso) {
+  const diff = Date.now() - new Date(iso)
+  const m = Math.floor(diff / 60000)
+  if (m < 1) return 'baru saja'
+  if (m < 60) return `${m} menit lalu`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h} jam lalu`
+  const d = Math.floor(h / 24)
+  if (d < 30) return `${d} hari lalu`
+  return new Date(iso).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })
+}
+
+function skeletonCard () {
+  return `
+  <div class="req-card" style="pointer-events:none">
+    <div class="req-top">
+      <div class="skeleton sk-circle" style="width:38px;height:38px;flex-shrink:0"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:.45rem">
+        <div class="skeleton sk-line" style="width:30%"></div>
+        <div class="skeleton sk-line" style="width:20%"></div>
+      </div>
+    </div>
+    <div class="skeleton sk-line" style="width:70%;height:14px;margin-bottom:.6rem"></div>
+    <div class="skeleton sk-line" style="width:90%"></div>
+  </div>`
+}
+
+let activeStatus = 'pending'
+
+async function fetchRequests () {
+  const list = document.getElementById('reqList')
+  list.innerHTML = Array(3).fill(0).map(skeletonCard).join('')
+
+  try {
+    let query = supabase
+      .from('forum_post_requests')
+      .select(`
+        id, judul, isi, is_anonim, tags, status, created_at, reviewed_at, reviewer_note,
+        requester_id, profiles:requester_id ( nama, avatar_url )
+      `)
+      .order('created_at', { ascending: false })
+
+    if (activeStatus) query = query.eq('status', activeStatus)
+
+    const { data, error } = await query
+    if (error) throw error
+
+    renderRequests(data || [])
+  } catch (err) {
+    console.error('Gagal memuat permintaan:', err)
+    list.innerHTML = `
+      <div class="error-state">
+        <i class='bx bx-error-circle'></i>
+        <p>Gagal memuat permintaan.</p>
+        <button class="retry-btn" onclick="fetchRequests()">Coba Lagi</button>
+      </div>`
+  }
+}
+window.fetchRequests = fetchRequests
+
+function renderRequests (requests) {
+  const list = document.getElementById('reqList')
+  list.innerHTML = ''
+
+  if (!requests.length) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <i class='bx bx-inbox'></i>
+        <p>Belum ada permintaan di kategori ini.</p>
+      </div>`
+    return
+  }
+
+  requests.forEach(req => {
+    const name      = req.profiles?.nama || 'Pengguna'
+    const initials  = name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()
+    const avatarHtml = req.profiles?.avatar_url
+      ? `<img class="req-avatar" src="${req.profiles.avatar_url}" alt="${name}" />`
+      : `<div class="req-avatar-ph">${initials}</div>`
+
+    const firstTag = (req.tags && req.tags.length) ? req.tags[0] : null
+
+    const card = document.createElement('div')
+    card.className = 'req-card'
+    card.innerHTML = `
+      <div class="req-top">
+        ${avatarHtml}
+        <div class="req-meta">
+          <div class="req-name">${name}</div>
+          <div class="req-time">${timeAgo(req.created_at)}</div>
+        </div>
+        ${req.is_anonim ? `<span class="req-anon-badge"><i class='bx bx-incognito'></i> minta anonim</span>` : ''}
+        ${firstTag ? `<span class="req-cat-badge">${firstTag}</span>` : ''}
+        <span class="req-status ${req.status}">${req.status}</span>
+      </div>
+      <p class="req-title">${req.judul}</p>
+      <p class="req-body">${req.isi}</p>
+      ${req.reviewer_note ? `<p class="req-note">Catatan: ${req.reviewer_note}</p>` : ''}
+      ${req.status === 'pending' ? `
+      <div class="req-actions">
+        <button class="btn-approve" data-id="${req.id}"><i class='bx bx-check'></i> Setujui & Publish</button>
+        <button class="btn-reject" data-id="${req.id}"><i class='bx bx-x'></i> Tolak</button>
+      </div>` : ''}
+    `
+    list.appendChild(card)
+
+    if (req.status === 'pending') {
+      card.querySelector('.btn-approve').addEventListener('click', e => approveRequest(req, e.currentTarget))
+      card.querySelector('.btn-reject').addEventListener('click', e => rejectRequest(req, e.currentTarget))
+    }
+  })
+}
+
+async function approveRequest (req, btn) {
+  if (!confirm(`Publish topik "${req.judul}" ke forum?`)) return
+  btn.disabled = true
+  const cardButtons = btn.closest('.req-actions').querySelectorAll('button')
+  cardButtons.forEach(b => b.disabled = true)
+
+  try {
+    const { data: newPost, error: postErr } = await supabase
+      .from('forum_posts')
+      .insert({
+        author_id: req.requester_id,
+        judul:     req.judul,
+        isi:       req.isi,
+        tags:      req.tags,
+        is_anonim: req.is_anonim,
+        status:    'active',
+      })
+      .select('id')
+      .single()
+    if (postErr) throw postErr
+
+    const { error: reqErr } = await supabase
+      .from('forum_post_requests')
+      .update({
+        status:             'approved',
+        reviewer_id:        user.id,
+        reviewed_at:        new Date().toISOString(),
+        published_post_id:  newPost.id,
+      })
+      .eq('id', req.id)
+    if (reqErr) throw reqErr
+
+    fetchRequests()
+  } catch (err) {
+    alert('Gagal approve: ' + (err.message || 'Coba lagi.'))
+    cardButtons.forEach(b => b.disabled = false)
+  }
+}
+
+async function rejectRequest (req, btn) {
+  const reason = prompt('Alasan menolak (opsional, akan terlihat oleh mahasiswa):') ?? ''
+  btn.disabled = true
+  const cardButtons = btn.closest('.req-actions').querySelectorAll('button')
+  cardButtons.forEach(b => b.disabled = true)
+
+  try {
+    const { error } = await supabase
+      .from('forum_post_requests')
+      .update({
+        status:        'rejected',
+        reviewer_id:   user.id,
+        reviewed_at:   new Date().toISOString(),
+        reviewer_note: reason || null,
+      })
+      .eq('id', req.id)
+    if (error) throw error
+
+    fetchRequests()
+  } catch (err) {
+    alert('Gagal menolak: ' + (err.message || 'Coba lagi.'))
+    cardButtons.forEach(b => b.disabled = false)
+  }
+}
+
+// ── Filter tabs ──
+document.getElementById('filterTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn')
+  if (!btn) return
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  activeStatus = btn.dataset.status
+  fetchRequests()
+})
+
+// ── Init ──
+fetchRequests()
+</script>
+</body>
+</html>

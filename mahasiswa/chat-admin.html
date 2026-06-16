@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hubungi Admin - Konselor Sebaya</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <aside class="sidebar" id="sidebar-container"></aside>
+        <main class="main-content">
+            <header class="topbar" id="navbar-container"></header>
+
+            <div class="content-wrapper">
+                <div style="max-width: 800px; margin: 0 auto;">
+                    <h2 style="margin-bottom: 24px;">Pusat Bantuan</h2>
+                    
+                    <div class="chat-wrapper">
+                        <div class="chat-header">
+                            <div class="chat-header-info">
+                                <div class="chat-avatar">
+                                    <i class='bx bx-headphone' style="font-size: 1.4rem; color: var(--text-primary);"></i>
+                                    <div class="status-dot"></div>
+                                </div>
+                                <div>
+                                    <h4 style="font-size: 1.05rem; margin-bottom: 2px;">Admin PeerSpace</h4>
+                                    <span style="font-size: 0.8rem; color: #22c55e;">Sedang Online</span>
+                                </div>
+                            </div>
+                            <button class="chat-btn-action" title="Opsi Obrolan"><i class='bx bx-dots-vertical-rounded'></i></button>
+                        </div>
+
+                        <div class="chat-body" id="chatBody">
+                            <div class="chat-message-group left">
+                                <div class="chat-bubble bubble-left">
+                                    Halo! Ada yang bisa kami bantu terkait penggunaan website Konselor Sebaya atau kendala saat booking jadwal?
+                                </div>
+                                <span class="chat-time">10:00 AM</span>
+                            </div>
+
+                            <div class="chat-message-group right">
+                                <div class="chat-bubble bubble-right">
+                                    Kak, aku mau tanya. Kalau jadwal yang aku mau ternyata konselornya berhalangan, apakah bakal di-reschedule otomatis?
+                                </div>
+                                <span class="chat-time">10:05 AM</span>
+                            </div>
+
+                            <div class="chat-message-group left">
+                                <div class="chat-bubble bubble-left">
+                                    Tentu. Jika konselor berhalangan, kamu akan menerima notifikasi di dashboard dan bisa memilih jadwal pengganti tanpa perlu mengisi form keluhan dari awal lagi. 😊
+                                </div>
+                                <span class="chat-time">10:06 AM</span>
+                            </div>
+                        </div>
+
+                        <form class="chat-footer" id="chatForm">
+                            <button type="button" class="chat-btn-action" title="Lampirkan File"><i class='bx bx-paperclip'></i></button>
+                            <input type="text" id="chatInput" class="chat-input-box" placeholder="Ketik pesan balasan..." autocomplete="off" required>
+                            <button type="submit" class="btn-send"><i class='bx bxs-send'></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 1. Fetch Sidebar dan geser warna ungu ke Chat Admin
+        fetch('../shared/sidebar.html')
+            .then(res => res.text())
+            .then(data => {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = data;
+                
+                // Copot warna ungu dari Dashboard
+                const activeItem = tempDiv.querySelector('.menu-item.active');
+                if(activeItem) activeItem.classList.remove('active');
+                
+                // Pasang warna ungu ke menu Hubungi Admin
+                const chatLink = tempDiv.querySelector('a[href="chat-admin.html"]');
+                if(chatLink) chatLink.parentElement.classList.add('active');
+
+                document.getElementById('sidebar-container').innerHTML = tempDiv.innerHTML;
+            });
+        // Dummy Chat Logic
+        document.getElementById('chatForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const message = input.value;
+            const chatBody = document.getElementById('chatBody');
+            
+            // Format waktu sekarang (Jam:Menit)
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // Tambah pesan kita (kanan)
+            chatBody.innerHTML += `
+                <div class="chat-message-group right">
+                    <div class="chat-bubble bubble-right">${message}</div>
+                    <span class="chat-time">${timeString}</span>
+                </div>
+            `;
+            input.value = '';
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            // Balasan otomatis admin (kiri) delay 1 detik
+            setTimeout(() => {
+                chatBody.innerHTML += `
+                    <div class="chat-message-group left">
+                        <div class="chat-bubble bubble-left">Baik, pesan kamu sudah kami terima. Admin akan segera menindaklanjuti kendala tersebut.</div>
+                        <span class="chat-time">${timeString}</span>
+                    </div>
+                `;
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

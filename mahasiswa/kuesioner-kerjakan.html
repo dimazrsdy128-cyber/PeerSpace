@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Isi Kuesioner — PeerSpace</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-primary: #0f0f17;
+      --bg-secondary: #141214;
+      --text-primary: #fff;
+      --text-secondary: #71717a;
+      --accent-purple: #8b5cf6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg-primary); color: var(--text-primary); font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+    .app-wrapper { display: flex; width: 100%; height: 100vh; }
+    .sidebar { width: var(--sidebar-w, 80px); background: #000; border-right: 1px solid rgba(255,255,255,.08); flex-shrink: 0; overflow: hidden; transition: width .3s ease; }
+    .sidebar:hover { width: var(--sidebar-expanded, 260px); }
+    .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-primary); }
+    .topbar { background: var(--bg-secondary); border-bottom: 1px solid rgba(255,255,255,.08); padding: 0 2.5rem; height: 64px; display: flex; align-items: center; flex-shrink: 0; }
+    .content-wrapper { flex: 1; overflow-y: auto; padding: 2rem 2.5rem; }
+
+    @media (max-width: 768px) { .content-wrapper { padding: 1.2rem; } }
+
+
+    /* ── Back ── */
+    .back-btn {
+      display: inline-flex; align-items: center; gap: .4rem;
+      color: rgba(255,255,255,.5); font-size: .85rem; cursor: pointer;
+      text-decoration: none; margin-bottom: 1.4rem; transition: color .18s;
+    }
+    .back-btn:hover { color: #b86fff; }
+
+    /* ── Kuesioner header ── */
+    .k-header {
+      background: linear-gradient(135deg, rgba(139,46,255,.15), rgba(255,255,255,.03));
+      border: 1px solid rgba(139,46,255,.2);
+      border-radius: 16px; padding: 1.6rem; margin-bottom: 1.6rem;
+    }
+    .k-header h1 { font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0 0 .4rem; }
+    .k-header p  { font-size: .88rem; color: rgba(255,255,255,.5); margin: 0 0 1rem; line-height: 1.6; }
+    .k-header-meta { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .k-meta-chip {
+      display: flex; align-items: center; gap: .3rem;
+      font-size: .78rem; color: rgba(255,255,255,.45);
+    }
+    .k-meta-chip i { font-size: .95rem; color: #8B2EFF; }
+
+    /* ── Progress bar ── */
+    .progress-wrap { margin-bottom: 1.8rem; }
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-size: .8rem; color: rgba(255,255,255,.4); margin-bottom: .5rem;
+    }
+    .progress-bar {
+      height: 6px; background: rgba(255,255,255,.08); border-radius: 10px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #8B2EFF, #b86fff);
+      border-radius: 10px; transition: width .4s ease;
+    }
+
+    /* ── Soal card ── */
+    .soal-card {
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px; padding: 1.5rem; margin-bottom: 1.2rem;
+      transition: border-color .2s;
+    }
+    .soal-card.answered { border-color: rgba(139,46,255,.3); }
+
+    .soal-num-row {
+      display: flex; align-items: center; gap: .7rem; margin-bottom: 1rem;
+    }
+    .soal-num-badge {
+      background: rgba(139,46,255,.2); color: #b86fff;
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .82rem; font-weight: 700; flex-shrink: 0;
+    }
+    .soal-text { font-size: .97rem; font-weight: 700; color: #fff; margin: 0; line-height: 1.5; }
+
+    /* Tipe: pilihan ganda */
+    .opsi-group { display: flex; flex-direction: column; gap: .55rem; }
+    .opsi-label {
+      display: flex; align-items: center; gap: .8rem;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 10px; padding: .7rem 1rem; cursor: pointer;
+      transition: all .18s;
+    }
+    .opsi-label:hover { border-color: rgba(139,46,255,.35); background: rgba(139,46,255,.07); }
+    .opsi-label input[type="radio"] { display: none; }
+    .opsi-label.selected {
+      border-color: rgba(139,46,255,.6); background: rgba(139,46,255,.15);
+    }
+    .opsi-dot {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.25); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .18s, background .18s;
+    }
+    .opsi-label.selected .opsi-dot {
+      border-color: #8B2EFF; background: #8B2EFF;
+    }
+    .opsi-dot-inner {
+      width: 8px; height: 8px; border-radius: 50%; background: #fff;
+      opacity: 0; transition: opacity .18s;
+    }
+    .opsi-label.selected .opsi-dot-inner { opacity: 1; }
+    .opsi-text { font-size: .9rem; color: rgba(255,255,255,.75); }
+
+    /* Tipe: skala */
+    .skala-group {
+      display: flex; gap: .6rem; flex-wrap: wrap;
+    }
+    .skala-btn {
+      width: 46px; height: 46px; border-radius: 12px;
+      border: 1.5px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.6); font-size: .95rem; font-weight: 700;
+      cursor: pointer; transition: all .18s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .skala-btn:hover   { border-color: rgba(139,46,255,.4); color: #b86fff; }
+    .skala-btn.selected{
+      background: rgba(139,46,255,.2); border-color: #8B2EFF; color: #fff;
+    }
+    .skala-labels {
+      display: flex; justify-content: space-between;
+      font-size: .73rem; color: rgba(255,255,255,.35); margin-top: .4rem;
+    }
+
+    /* Tipe: ya/tidak */
+    .ya-tidak-group { display: flex; gap: .8rem; }
+    .yn-btn {
+      flex: 1; padding: .65rem;
+      border-radius: 10px; border: 1.5px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.04); color: rgba(255,255,255,.6);
+      font-size: .9rem; font-weight: 600; cursor: pointer;
+      transition: all .18s; text-align: center;
+    }
+    .yn-btn:hover { border-color: rgba(139,46,255,.35); }
+    .yn-btn.selected { background: rgba(139,46,255,.2); border-color: #8B2EFF; color: #fff; }
+
+    /* Tipe: teks bebas */
+    .teks-input {
+      width: 100%; padding: .75rem 1rem;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px; color: #fff; font-size: .9rem; font-family: inherit;
+      resize: vertical; min-height: 90px; transition: border-color .2s;
+      box-sizing: border-box;
+    }
+    .teks-input:focus { outline: none; border-color: #8B2EFF; }
+    .teks-input::placeholder { color: rgba(255,255,255,.25); }
+
+    /* ── Submit area ── */
+    .submit-area {
+      background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07);
+      border-radius: 16px; padding: 1.4rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem; margin-top: 1rem;
+    }
+    .submit-info { font-size: .85rem; color: rgba(255,255,255,.45); }
+    .submit-info strong { color: #fff; }
+    .btn-submit-final {
+      background: linear-gradient(135deg, #8B2EFF, #6d00e8);
+      border: none; color: #fff; border-radius: 11px;
+      padding: .7rem 1.8rem; font-size: .95rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: .5rem;
+      transition: opacity .2s, transform .15s;
+    }
+    .btn-submit-final:hover:not(:disabled) { opacity: .88; transform: scale(1.02); }
+    .btn-submit-final:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    /* ── Selesai screen ── */
+    .done-screen {
+      text-align: center; padding: 3.5rem 2rem;
+      display: none;
+    }
+    .done-screen.show { display: block; }
+    .done-icon {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: rgba(34,197,94,.15); border: 2px solid rgba(34,197,94,.3);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.2rem;
+      font-size: 2.2rem; color: #22c55e;
+    }
+    .done-screen h2 { font-size: 1.4rem; font-weight: 800; color: #fff; margin: 0 0 .5rem; }
+    .done-screen p  { color: rgba(255,255,255,.5); margin: 0 0 1.8rem; }
+    .btn-back-list {
+      background: linear-gradient(135deg, #8B2EFF, #6d00e8);
+      border: none; color: #fff; border-radius: 11px;
+      padding: .7rem 1.8rem; font-size: .9rem; font-weight: 700;
+      cursor: pointer; text-decoration: none; display: inline-flex;
+      align-items: center; gap: .4rem;
+    }
+
+    /* ── Review mode ── */
+    .review-banner {
+      background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.25);
+      border-radius: 12px; padding: .75rem 1.1rem;
+      display: flex; align-items: center; gap: .6rem;
+      color: #fde68a; font-size: .87rem; margin-bottom: 1.4rem;
+    }
+    .review-banner i { font-size: 1.1rem; }
+
+    /* ── Skeleton ── */
+    @keyframes shimmer {
+      0%   { background-position: -400px 0; }
+      100% { background-position:  400px 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg,
+        rgba(255,255,255,.06) 25%, rgba(255,255,255,.11) 50%, rgba(255,255,255,.06) 75%);
+      background-size: 400px 100%; animation: shimmer 1.4s infinite; border-radius: 6px;
+    }
+    .sk-line { height: 11px; }
+
+    @media (max-width: 640px) { .content-area { padding: 1.2rem; } }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar" id="sidebar-container"></aside>
+  <main class="main-content">
+    <header class="topbar" id="navbar-container"></header>
+    <div class="content-wrapper" id="contentWrapper">
+      <a href="kuesioner-list.html" class="back-btn">
+        <i class='bx bx-arrow-back'></i> Kembali ke Daftar
+      </a>
+
+      <!-- Loading skeleton -->
+      <div id="loadingSection">
+        <div class="skeleton sk-line" style="width:60%;height:20px;margin-bottom:1rem"></div>
+        <div class="skeleton sk-line" style="width:85%;margin-bottom:.5rem"></div>
+        <div class="skeleton sk-line" style="width:70%;margin-bottom:1.8rem"></div>
+        ${Array(3).fill(0).map(() => `
+        <div class="soal-card" style="pointer-events:none;margin-bottom:1.2rem">
+          <div class="skeleton sk-line" style="width:70%;height:14px;margin-bottom:1rem"></div>
+          <div class="skeleton sk-line" style="height:42px;border-radius:10px;margin-bottom:.5rem"></div>
+          <div class="skeleton sk-line" style="height:42px;border-radius:10px;margin-bottom:.5rem"></div>
+          <div class="skeleton sk-line" style="height:42px;border-radius:10px"></div>
+        </div>`).join('')}
+      </div>
+
+      <!-- Konten utama -->
+      <div id="mainSection" style="display:none">
+        <div id="reviewBanner" class="review-banner" style="display:none">
+          <i class='bx bx-show'></i>
+          Mode review — kamu sudah pernah mengisi kuesioner ini.
+        </div>
+        <div class="k-header" id="kHeader"></div>
+        <div class="progress-wrap" id="progressWrap"></div>
+        <div id="soalSection"></div>
+        <div class="submit-area" id="submitArea">
+          <div class="submit-info" id="submitInfo"></div>
+          <button class="btn-submit-final" id="btnSubmit" disabled>
+            <i class='bx bx-check-double'></i> Kirim Jawaban
+          </button>
+        </div>
+      </div>
+
+      <!-- Done screen -->
+      <div class="done-screen" id="doneScreen">
+        <div class="done-icon"><i class='bx bx-check'></i></div>
+        <h2>Kuesioner Selesai! 🎉</h2>
+        <p>Terima kasih sudah mengisi kuesioner ini.<br>Jawabanmu sudah tercatat.</p>
+        <a href="kuesioner-list.html" class="btn-back-list">
+          <i class='bx bx-list-ul'></i> Kembali ke Daftar
+        </a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+import { supabase } from '../assets/js/supabase-client.js'
+
+const { data: { user } } = await supabase.auth.getUser()
+if (!user) { window.location.href = '../auth/login.html'; throw new Error() }
+
+const loadUI = (id, path) =>
+  fetch(path).then(r => r.text()).then(html => {
+    const el = document.getElementById(id)
+    if (el) el.innerHTML = html
+  }).catch(() => {})
+
+await loadUI('sidebar-container', '../shared/sidebar.html')
+await loadUI('navbar-container',  '../shared/navbar.html')
+
+// Set navbar user info + logout handler
+const navContainer = document.getElementById('navbar-container')
+const titleEl = navContainer?.querySelector('#topbarTitle')
+if (titleEl) titleEl.textContent = 'Kuesioner'
+
+const { data: profile } = await supabase
+  .from('profiles')
+  .select('*')
+  .eq('id', user.id)
+  .maybeSingle()
+
+const nameEl = navContainer?.querySelector('#navUserName')
+const roleEl = navContainer?.querySelector('#navUserRole')
+const avatarEl = navContainer?.querySelector('#navAvatar')
+if (nameEl) nameEl.textContent = profile?.nama || user.email
+if (roleEl) roleEl.textContent = { mahasiswa:'Mahasiswa', konselor:'Konselor', admin:'Admin' }[profile?.role] || profile?.role
+if (avatarEl) avatarEl.src = profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.nama||'U')}&background=8B2EFF&color=fff`
+
+const logoutBtn = navContainer?.querySelector('#btnLogout')
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', async (e) => {
+    e.preventDefault()
+    await supabase.auth.signOut({ scope: 'local' })
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+    window.location.href = '../auth/login.html'
+  })
+}
+
+// Set sidebar logout handler juga
+const sidebarLogoutBtn = document.getElementById('btnLogout')
+if (sidebarLogoutBtn && sidebarLogoutBtn !== logoutBtn) {
+  sidebarLogoutBtn.addEventListener('click', async (e) => {
+    e.preventDefault()
+    await supabase.auth.signOut({ scope: 'local' })
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+    window.location.href = '../auth/login.html'
+  })
+}
+
+const params     = new URLSearchParams(location.search)
+const kuesionerId = params.get('id')
+const isReview   = params.get('review') === '1'
+
+if (!kuesionerId) { window.location.href = 'kuesioner-list.html'; throw new Error() }
+
+// ── State ──
+let soalList   = []
+let jawaban    = {}   // { soal_id: value }
+let reviewData = {}   // { soal_id: value } jika mode review
+
+// ── Fetch data ──
+async function init () {
+  try {
+    // Fetch kuesioner
+    const { data: k, error: kErr } = await supabase
+    .from('kuesioner')
+    .select('id, judul, deskripsi')
+    .eq('id', kuesionerId)
+    .single()
+    if (kErr) throw kErr
+
+    // Fetch soal
+    const { data: soal, error: soalErr } = await supabase
+      .from('kuesioner_soal')
+      .select('id, pertanyaan, tipe_soal, opsi_jawaban, poin_opsi, nomor')
+      .eq('kuesioner_id', kuesionerId)
+      .order('nomor', { ascending: true })
+    if (soalErr) throw soalErr
+
+    soalList = (soal || []).map(s => ({
+      id: s.id,
+      pertanyaan: s.pertanyaan,
+      tipe: s.tipe_soal,
+      urutan: s.nomor,
+      opsi: s.opsi_jawaban ? (typeof s.opsi_jawaban === 'string' ? JSON.parse(s.opsi_jawaban) : s.opsi_jawaban) : [],
+      poinOpsi: s.poin_opsi ? (typeof s.poin_opsi === 'string' ? JSON.parse(s.poin_opsi) : s.poin_opsi) : {}
+    }))
+
+    // Fetch hasil sebelumnya jika review mode
+    if (isReview) {
+      const { data: hasil } = await supabase
+        .from('kuesioner_hasil')
+        .select('jawaban')
+        .eq('kuesioner_id', kuesionerId)
+        .eq('mahasiswa_id', user.id)
+        .single()
+      reviewData = hasil?.jawaban || {}
+    }
+
+    document.title = `${k.judul} — PeerSpace`
+    document.getElementById('loadingSection').style.display = 'none'
+    document.getElementById('mainSection').style.display    = 'block'
+
+    renderHeader(k)
+    renderSoal()
+    if (isReview) {
+      document.getElementById('reviewBanner').style.display = 'flex'
+      document.getElementById('submitArea').style.display   = 'none'
+    }
+  } catch (err) {
+    console.error(err)
+    document.getElementById('loadingSection').innerHTML = `
+      <div style="text-align:center;padding:3rem;color:rgba(255,255,255,.4)">
+        <i class='bx bx-error-circle' style="font-size:3rem;color:#ef4444;display:block;margin-bottom:.8rem"></i>
+        <p>Gagal memuat kuesioner.</p>
+        <button onclick="location.reload()" style="margin-top:.8rem;background:rgba(139,46,255,.2);border:1px solid rgba(139,46,255,.4);color:#b86fff;padding:.45rem 1.1rem;border-radius:8px;cursor:pointer">Coba Lagi</button>
+      </div>`
+  }
+}
+
+function renderHeader (k) {
+  const konselor = '—' // placeholder, karena kolom konselor dihapus sementara
+  const katLabel = { mental_health:'Mental Health', akademik:'Akademik', sosial:'Sosial', umum:'Umum' }
+  document.getElementById('kHeader').innerHTML = `
+    <h1>${k.judul}</h1>
+    ${k.deskripsi ? `<p>${k.deskripsi}</p>` : ''}
+    <div class="k-header-meta">
+      <span class="k-meta-chip"><i class='bx bx-list-ul'></i>${soalList.length} pertanyaan</span>
+      <span class="k-meta-chip"><i class='bx bx-user'></i>${konselor}</span>
+      <span class="k-meta-chip"><i class='bx bx-tag'></i>${katLabel[k.kategori] || 'Umum'}</span>
+    </div>`
+}
+
+function renderSoal () {
+  const sec = document.getElementById('soalSection')
+  sec.innerHTML = soalList.map((s, i) => {
+    const prefill = isReview ? reviewData[s.id] : null
+    return buildSoalCard(s, i, prefill)
+  }).join('')
+
+  // Event listeners untuk setiap soal
+  soalList.forEach(s => {
+    if (s.tipe === 'pilihan_ganda') {
+      sec.querySelectorAll(`.opsi-label[data-soal="${s.id}"]`).forEach(lbl => {
+        lbl.addEventListener('click', () => {
+          if (isReview) return
+          sec.querySelectorAll(`.opsi-label[data-soal="${s.id}"]`).forEach(l => l.classList.remove('selected'))
+          lbl.classList.add('selected')
+          jawaban[s.id] = lbl.dataset.val
+          updateProgress()
+        })
+      })
+    } else if (s.tipe === 'likert') {
+      sec.querySelectorAll(`.skala-btn[data-soal="${s.id}"]`).forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (isReview) return
+          sec.querySelectorAll(`.skala-btn[data-soal="${s.id}"]`).forEach(b => b.classList.remove('selected'))
+          btn.classList.add('selected')
+          jawaban[s.id] = btn.dataset.val
+          updateProgress()
+        })
+      })
+    } else if (s.tipe === 'ya_tidak') {
+      sec.querySelectorAll(`.yn-btn[data-soal="${s.id}"]`).forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (isReview) return
+          sec.querySelectorAll(`.yn-btn[data-soal="${s.id}"]`).forEach(b => b.classList.remove('selected'))
+          btn.classList.add('selected')
+          jawaban[s.id] = btn.dataset.val
+          updateProgress()
+        })
+      })
+    } else if (s.tipe === 'teks') {
+      const ta = sec.querySelector(`.teks-input[data-soal="${s.id}"]`)
+      if (ta) {
+        if (isReview) { ta.disabled = true; ta.style.opacity = '.6' }
+        ta.addEventListener('input', () => {
+          jawaban[s.id] = ta.value.trim()
+          const card = ta.closest('.soal-card')
+          if (jawaban[s.id]) card.classList.add('answered')
+          else card.classList.remove('answered')
+          updateProgress()
+        })
+      }
+    }
+
+    // Pre-fill untuk review
+    if (isReview && prefill !== null) {
+      jawaban[s.id] = prefill
+    }
+  })
+
+  updateProgress()
+}
+
+function buildSoalCard (s, i, prefill = null) {
+  let answerHtml = ''
+
+  if (s.tipe === 'pilihan_ganda') {
+    answerHtml = `<div class="opsi-group">${
+      s.opsi.map(op => {
+        const sel = prefill === op ? 'selected' : ''
+        return `<label class="opsi-label ${sel}" data-soal="${s.id}" data-val="${op}">
+          <input type="radio" name="${s.id}" value="${op}" />
+          <div class="opsi-dot"><div class="opsi-dot-inner"></div></div>
+          <span class="opsi-text">${op}</span>
+        </label>`
+      }).join('')
+    }</div>`
+
+  } else if (s.tipe === 'likert') {
+    answerHtml = `
+      <div class="skala-group">
+        ${[1,2,3,4,5].map(n => `
+          <button class="skala-btn ${prefill == n ? 'selected' : ''}"
+            data-soal="${s.id}" data-val="${n}">${n}</button>`).join('')}
+      </div>
+      <div class="skala-labels">
+        <span>Sangat Tidak Setuju</span><span>Sangat Setuju</span>
+      </div>`
+
+  } else if (s.tipe === 'ya_tidak') {
+    answerHtml = `
+      <div class="ya-tidak-group">
+        <button class="yn-btn ${prefill === 'Ya' ? 'selected' : ''}" data-soal="${s.id}" data-val="Ya">
+          <i class='bx bx-check'></i> Ya
+        </button>
+        <button class="yn-btn ${prefill === 'Tidak' ? 'selected' : ''}" data-soal="${s.id}" data-val="Tidak">
+          <i class='bx bx-x'></i> Tidak
+        </button>
+      </div>`
+
+  } else {
+    answerHtml = `<textarea class="teks-input" data-soal="${s.id}"
+      placeholder="Tulis jawabanmu di sini..." rows="3">${prefill || ''}</textarea>`
+  }
+
+  const answered = prefill !== null && prefill !== ''
+  return `
+  <div class="soal-card ${answered ? 'answered' : ''}" id="card-${s.id}">
+    <div class="soal-num-row">
+      <div class="soal-num-badge">${i+1}</div>
+      <p class="soal-text">${s.pertanyaan}</p>
+    </div>
+    ${answerHtml}
+  </div>`
+}
+
+// ── Progress ──
+function updateProgress () {
+  const total    = soalList.length
+  const answered = soalList.filter(s => jawaban[s.id] !== undefined && jawaban[s.id] !== '').length
+  const pct      = total ? Math.round((answered / total) * 100) : 0
+
+  document.getElementById('progressWrap').innerHTML = `
+    <div class="progress-label">
+      <span>${answered} dari ${total} pertanyaan dijawab</span>
+      <span>${pct}%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width:${pct}%"></div>
+    </div>`
+
+  const btnSubmit = document.getElementById('btnSubmit')
+  const infoEl    = document.getElementById('submitInfo')
+  btnSubmit.disabled = answered < total
+
+  if (answered === total) {
+    infoEl.innerHTML = `<strong style="color:#22c55e">✓ Semua pertanyaan sudah dijawab!</strong>`
+  } else {
+    infoEl.innerHTML = `<strong>${total - answered}</strong> pertanyaan belum dijawab`
+  }
+
+  // Mark cards answered
+  soalList.forEach(s => {
+    const card = document.getElementById(`card-${s.id}`)
+    if (!card) return
+    if (jawaban[s.id] !== undefined && jawaban[s.id] !== '')
+      card.classList.add('answered')
+    else card.classList.remove('answered')
+  })
+}
+
+// ── Submit ──
+document.getElementById('btnSubmit').addEventListener('click', async () => {
+  const btn = document.getElementById('btnSubmit')
+  btn.disabled = true
+  btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Mengirim...`
+
+  try {
+    // Cek apakah sudah pernah isi
+    const { data: existing } = await supabase
+      .from('kuesioner_hasil')
+      .select('id').eq('kuesioner_id', kuesionerId).eq('mahasiswa_id', user.id).limit(1)
+
+    if (existing?.length) {
+      alert('Kamu sudah pernah mengisi kuesioner ini.')
+      window.location.href = 'kuesioner-list.html'
+      return
+    }
+
+    // Hitung skor_total: rata-rata dari poin pilihan_ganda + nilai likert.
+    // ya_tidak & teks tidak ikut dihitung sebagai skor angka.
+    let scoreSum = 0
+    let scoreCount = 0
+    soalList.forEach(s => {
+      const val = jawaban[s.id]
+      if (val === undefined || val === '') return
+      if (s.tipe === 'pilihan_ganda') {
+        const poin = s.poinOpsi?.[val]
+        if (poin !== undefined && poin !== null) {
+          scoreSum += Number(poin)
+          scoreCount++
+        }
+      } else if (s.tipe === 'likert') {
+        scoreSum += Number(val)
+        scoreCount++
+      }
+    })
+    const skorTotal = scoreCount > 0 ? scoreSum / scoreCount : null
+
+    const { error } = await supabase.from('kuesioner_hasil').insert({
+      kuesioner_id: kuesionerId,
+      mahasiswa_id: user.id,
+      jawaban:      jawaban,
+      skor_total:   skorTotal,
+    })
+    if (error) throw error
+
+    // Show done screen
+    document.getElementById('mainSection').style.display = 'none'
+    document.getElementById('doneScreen').classList.add('show')
+  } catch (err) {
+    console.error(err)
+    alert('Gagal mengirim jawaban: ' + (err.message || 'Coba lagi'))
+    btn.disabled = false
+    btn.innerHTML = `<i class='bx bx-check-double'></i> Kirim Jawaban`
+  }
+})
+
+init()
+</script>
+</body>
+</html>

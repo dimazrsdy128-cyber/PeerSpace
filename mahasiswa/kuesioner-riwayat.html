@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Asesmen - PeerSpace</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root {
+            --bg-dark: #000000;
+            --card-dark: #141214;
+            --border-dark: rgba(255,255,255,0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-purple: #8b5cf6;
+        }
+
+        body { background-color: var(--bg-dark); color: var(--text-main); margin: 0; font-family: 'Inter', sans-serif; }
+
+        .header-section { margin-bottom: 35px; }
+        .header-section h2 { font-size: 1.8rem; margin: 0; }
+        
+        .history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+
+        .history-card {
+            background: var(--card-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: 0.3s;
+        }
+
+        .history-card:hover { border-color: var(--accent-purple); }
+
+        .icon-box {
+            width: 50px; height: 50px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; background: rgba(34, 197, 94, 0.1); color: #22c55e;
+        }
+
+        .info-box { flex: 1; }
+        .info-box h3 { margin: 0 0 5px 0; font-size: 1rem; }
+        .info-box p { margin: 0; font-size: 0.8rem; color: var(--text-muted); }
+
+        .score-tag {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--accent-purple);
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <aside class="sidebar" id="sidebar-container"></aside>
+
+        <main class="main-content">
+            <header class="topbar" id="navbar-container"></header>
+
+            <div class="content-wrapper">
+                <div class="header-section">
+                    <h2>Riwayat Asesmen</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Daftar kuesioner dan quiz yang telah kamu selesaikan.</p>
+                </div>
+
+                <div class="history-grid">
+                    <div class="history-card">
+                        <div class="icon-box">
+                            <i class='bx bx-check-double'></i>
+                        </div>
+                        <div class="info-box">
+                            <h3>Tes Literasi Anxiety</h3>
+                            <p>Selesai pada: 10 Mei 2026</p>
+                        </div>
+                        <div class="score-tag">Skor: 90/100</div>
+                    </div>
+
+                    <div class="history-card">
+                        <div class="icon-box">
+                            <i class='bx bx-check-double'></i>
+                        </div>
+                        <div class="info-box">
+                            <h3>Survei Kesehatan Mental</h3>
+                            <p>Selesai pada: 08 Mei 2026</p>
+                        </div>
+                        <div class="score-tag" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">Submitted</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Load UI
+        fetch('../shared/sidebar.html').then(r => r.text()).then(d => {
+            const temp = document.createElement('div'); temp.innerHTML = d;
+            const active = temp.querySelector('.menu-item.active'); if(active) active.classList.remove('active');
+            const link = temp.querySelector('a[href="kuesioner-riwayat.html"]'); 
+            if(link) link.parentElement.classList.add('active');
+            document.getElementById('sidebar-container').innerHTML = temp.innerHTML;
+        });
+
+        fetch('../shared/navbar.html').then(r => r.text()).then(d => {
+            const temp = document.createElement('div'); temp.innerHTML = d;
+            temp.querySelector('.topbar-title').innerText = 'Arsip & Riwayat';
+            document.getElementById('navbar-container').innerHTML = temp.innerHTML;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesi Konseling (Konselor) - PeerSpace</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <div class="app-wrapper">
+        <aside class="sidebar" id="sidebar-container"></aside>
+        
+        <main class="main-content">
+            <header class="topbar" id="navbar-container"></header>
+
+            <div class="content-wrapper" style="display: flex; gap: 0; padding: 0; height: calc(100vh - 70px); overflow: hidden;">
+                
+                <div style="flex-grow: 1; display: flex; flex-direction: column; padding: 20px;">
+                    <div class="session-status-bar" style="background: rgba(139, 46, 255, 0.1); color: var(--accent-purple); border-color: rgba(139, 46, 255, 0.2);">
+                        <span><i class='bx bx-user'></i> Pasien: <strong>Adila (Mahasiswa)</strong></span>
+                        <span><i class='bx bx-stopwatch'></i> Durasi Sesi: 00:15:22</span>
+                    </div>
+
+                    <div class="chat-wrapper" style="height: 100%;">
+                        <div class="chat-header">
+                            <div class="chat-header-info">
+                                <div class="chat-avatar">
+                                    <img src="https://ui-avatars.com/api/?name=Adila&background=8B2EFF&color=fff" style="width: 100%; border-radius: 50%;">
+                                    <div class="status-dot"></div>
+                                </div>
+                                <div>
+                                    <h4 style="margin-bottom: 2px;">Adila</h4>
+                                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Online | Sesi Aktif</span>
+                                </div>
+                            </div>
+                            <button class="end-session-btn" onclick="endSession()">Selesaikan Sesi</button>
+                        </div>
+
+                        <div class="chat-body" id="chatBody">
+                            <div class="chat-message-group left">
+                                <div class="chat-bubble bubble-left">Halo Kak Riski, saya ingin konsultasi soal manajemen waktu kuliah...</div>
+                                <span class="chat-time">09:10 AM</span>
+                            </div>
+                        </div>
+
+                        <form class="chat-footer" id="chatForm">
+                            <button type="button" class="chat-btn-action"><i class='bx bx-plus-circle'></i></button>
+                            <input type="text" id="chatInput" class="chat-input-box" placeholder="Balas pesan Adila..." autocomplete="off">
+                            <button type="submit" class="btn-send"><i class='bx bxs-send'></i></button>
+                        </form>
+                    </div>
+                </div>
+
+                <aside class="counselor-notes">
+                    <h4 style="margin-bottom: 15px; font-size: 0.9rem;"><i class='bx bx-note'></i> Catatan Internal</h4>
+                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 10px;">Catatan ini tidak akan dilihat oleh mahasiswa.</p>
+                    <textarea class="form-control" style="flex-grow: 1; font-size: 0.85rem; resize: none; background: #111;" placeholder="Tulis diagnosa atau poin penting di sini..."></textarea>
+                    <button class="btn-primary" style="margin-top: 15px; width: 100%; font-size: 0.8rem;" onclick="saveNotes()">Simpan Catatan</button>
+                </aside>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Load Sidebar khusus Konselor
+        fetch('../shared/sidebar-konselor.html').then(res => res.text()).then(data => {
+            document.getElementById('sidebar-container').innerHTML = data;
+        });
+
+        // Load Navbar
+        fetch('../shared/navbar.html').then(res => res.text()).then(data => {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data;
+            tempDiv.querySelector('.topbar-title').innerText = 'Ruang Konseling';
+            document.getElementById('navbar-container').innerHTML = tempDiv.innerHTML;
+        });
+
+        // Chat Logic
+        const chatForm = document.getElementById('chatForm');
+        const chatInput = document.getElementById('chatInput');
+        const chatBody = document.getElementById('chatBody');
+
+        chatForm.onsubmit = (e) => {
+            e.preventDefault();
+            if(chatInput.value.trim() === "") return;
+
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            chatBody.innerHTML += `
+                <div class="chat-message-group right">
+                    <div class="chat-bubble bubble-right">${chatInput.value}</div>
+                    <span class="chat-time">${time}</span>
+                </div>
+            `;
+            chatInput.value = "";
+            chatBody.scrollTop = chatBody.scrollHeight;
+        };
+
+        function endSession() {
+            if(confirm("Selesaikan sesi ini? Pastikan Anda sudah menyimpan semua catatan penting.")) {
+                alert("Sesi telah berakhir. Laporan sesi akan diarsip.");
+                window.location.href = "dashboard.html";
+            }
+        }
+
+        function saveNotes() {
+            alert("Catatan berhasil disimpan ke dalam arsip medis pasien.");
+        }
+    </script>
+</body>
+</html>

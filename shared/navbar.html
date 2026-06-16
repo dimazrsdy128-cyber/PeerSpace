@@ -1,0 +1,51 @@
+<div class="topbar-title" id="topbarTitle">Dashboard</div>
+<div class="user-profile">
+    <div class="user-info" style="text-align: right;">
+        <div style="font-size: 0.9rem; font-weight: 600;" id="navUserName">—</div>
+        <div style="font-size: 0.75rem; color: var(--text-secondary);" id="navUserRole">—</div>
+    </div>
+    <img id="navAvatar"
+         src="https://ui-avatars.com/api/?name=U&background=8B2EFF&color=fff"
+         alt="Profile" style="cursor:pointer">
+    <button id="btnLogout" title="Logout" style="
+        background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25);
+        color: #f87171; border-radius: 8px; padding: .4rem .7rem;
+        cursor: pointer; font-size: .85rem; margin-left: .5rem;
+        transition: background .2s;">
+        <i class='bx bx-log-out'></i>
+    </button>
+</div>
+
+<script type="module">
+    import { supabase } from '../assets/js/supabase-client.js'
+
+    // Isi nama & role dari DB
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('nama, role, avatar_url')
+            .eq('id', user.id)
+            .single()
+
+        if (profile) {
+            document.getElementById('navUserName').textContent = profile.nama || user.email
+            document.getElementById('navUserRole').textContent =
+                { mahasiswa: 'Mahasiswa', konselor: 'Konselor', admin: 'Admin' }[profile.role] || profile.role
+
+            if (profile.avatar_url) {
+                document.getElementById('navAvatar').src = profile.avatar_url
+            } else {
+                const name = encodeURIComponent(profile.nama || 'U')
+                document.getElementById('navAvatar').src =
+                    `https://ui-avatars.com/api/?name=${name}&background=8B2EFF&color=fff`
+            }
+        }
+    }
+
+    // Logout
+    document.getElementById('btnLogout').addEventListener('click', async () => {
+        await supabase.auth.signOut()
+        window.location.href = '../auth/login.html'
+    })
+</script>

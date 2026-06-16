@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Thread - PeerSpace</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root {
+            --bg-dark: #000;
+            --card-light: #121212;
+            --border-soft: rgba(255, 255, 255, 0.08);
+            --accent-purple: #8b5cf6;
+            --text-dim: #71767b;
+        }
+
+        body { 
+            background: var(--bg-dark); 
+            color: #e7e9ea; 
+            font-family: 'Inter', sans-serif; 
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Nav Header Sleek */
+        .thread-nav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(15px);
+            padding: 12px 20px;
+            display: flex; align-items: center; gap: 20px;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .btn-back { color: #fff; font-size: 1.4rem; cursor: pointer; transition: 0.3s; background: none; border: none; padding: 0; display: flex; align-items: center; }
+        .btn-back:hover { color: var(--accent-purple); transform: translateX(-3px); }
+
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 120px;
+        }
+
+        /* Thread Item */
+        .thread-item {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-soft);
+            transition: background 0.3s ease;
+            display: flex; gap: 14px;
+        }
+
+        .thread-item:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Postingan Utama (OP) Big Style */
+        .op-container {
+            padding: 25px 20px;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .avatar {
+            width: 42px; height: 42px; border-radius: 50%;
+            object-fit: cover; border: 2px solid transparent;
+        }
+
+        .op-container .avatar { width: 50px; height: 50px; border-color: var(--accent-purple); }
+
+        .user-info { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .user-name { font-weight: 700; color: #fff; }
+        .handle { color: var(--text-dim); font-size: 0.9rem; }
+
+        .badge-expert {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-purple);
+            font-size: 0.65rem; padding: 2px 8px; border-radius: 20px;
+            font-weight: 800; text-transform: uppercase;
+        }
+
+        .content { font-size: 1rem; color: #d1d5db; margin-top: 10px; word-wrap: break-word; white-space: pre-wrap; }
+        .op-container .content { font-size: 1.25rem; color: #fff; line-height: 1.4; }
+
+        /* Interaction Buttons */
+        .thread-actions {
+            display: flex; gap: 35px; margin-top: 15px;
+            color: var(--text-dim);
+        }
+
+        .action {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.85rem; cursor: pointer; transition: 0.2s; user-select: none;
+        }
+        .action:hover { color: var(--accent-purple); }
+        .action.liked { color: #ef4444; }
+        .action.disabled { cursor: default; pointer-events: none; }
+        .action i { font-size: 1.1rem; }
+
+        /* Reply Input Bar (Modern Floating) */
+        .reply-wrapper {
+            position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%); width: 90%; max-width: 600px;
+            background: #161616;
+            border: 1px solid var(--border-soft);
+            border-radius: 30px;
+            padding: 8px 16px;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+
+        .reply-input {
+            flex: 1; background: transparent; border: none;
+            color: #fff; outline: none; font-size: 0.95rem;
+            padding: 10px 0;
+        }
+
+        .btn-anon-toggle {
+            background: transparent; border: 1px solid var(--border-soft);
+            color: var(--text-dim); width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; flex-shrink: 0; font-size: 1rem; transition: 0.2s;
+        }
+        .btn-anon-toggle.active { background: var(--accent-purple); color: #fff; border-color: var(--accent-purple); }
+
+        .btn-post {
+            background: var(--accent-purple); color: #fff; border: none;
+            padding: 8px 20px; border-radius: 20px; font-weight: 700;
+            cursor: pointer; transition: 0.3s; font-size: 0.85rem; flex-shrink: 0;
+        }
+        .btn-post:hover { opacity: 0.9; transform: scale(1.05); }
+        .btn-post:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* State umum */
+        .state-box { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+        .state-box i { font-size: 2.4rem; margin-bottom: 10px; display: block; }
+        .state-box p { margin: 0; font-size: 0.9rem; }
+
+        /* Toast */
+        #toast-container { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 9999; }
+        .toast { background: #161616; border: 1px solid var(--border-soft); border-left: 3px solid var(--accent-purple); border-radius: 10px; padding: 10px 16px; color: #fff; font-size: 0.85rem; box-shadow: 0 8px 32px #00000060; }
+        .toast.error { border-left-color: #ef4444; }
+        .toast.success { border-left-color: #10b981; }
+    </style>
+</head>
+<body>
+
+    <nav class="thread-nav">
+        <button class="btn-back" onclick="history.back()"><i class='bx bx-left-arrow-alt'></i></button>
+        <div style="font-weight: 700; font-size: 1.1rem;">Postingan</div>
+    </nav>
+
+    <div class="container" id="threadContainer">
+        <div class="state-box"><i class='bx bx-loader-alt bx-spin'></i><p>Memuat thread...</p></div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module">
+        import { supabase } from '../assets/js/supabase-client.js'
+
+        // ── Auth guard (siapapun yang login boleh lihat & komentar) ──
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { window.location.href = '../auth/login.html'; throw new Error('Unauth') }
+
+        const postId = new URLSearchParams(window.location.search).get('id')
+        const container = document.getElementById('threadContainer')
+
+        function toast(msg, type = 'info') {
+            const tc = document.getElementById('toast-container')
+            const el = document.createElement('div')
+            el.className = `toast ${type}`
+            el.textContent = msg
+            tc.appendChild(el)
+            setTimeout(() => el.remove(), 3000)
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div')
+            div.textContent = str ?? ''
+            return div.innerHTML
+        }
+
+        function timeAgoShort(dateStr) {
+            const diffSec = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
+            if (diffSec < 60) return 'baru saja'
+            const min = Math.floor(diffSec / 60); if (min < 60) return `${min}m`
+            const hour = Math.floor(min / 60); if (hour < 24) return `${hour}j`
+            const day = Math.floor(hour / 24); if (day < 30) return `${day}h`
+            const month = Math.floor(day / 30); if (month < 12) return `${month}bln`
+            return `${Math.floor(month / 12)}th`
+        }
+
+        function slug(nama) {
+            return (nama || 'user').toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+        }
+
+        // Mengembalikan info tampilan author, menghormati is_anonim
+        function authorView(row) {
+            if (row.is_anonim) {
+                return {
+                    name: 'Anonim',
+                    handle: '',
+                    badge: '',
+                    avatar: 'https://ui-avatars.com/api/?name=Anonim&background=3a3a3a&color=fff'
+                }
+            }
+            const nama = row.profiles?.nama ?? 'Pengguna'
+            const role = row.profiles?.role
+            return {
+                name: nama,
+                handle: '@' + slug(nama),
+                badge: role === 'konselor' ? `<span class="badge-expert">Konselor</span>` : '',
+                avatar: row.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(nama)}&background=8B2EFF&color=fff`
+            }
+        }
+
+        if (!postId) {
+            container.innerHTML = `<div class="state-box"><i class='bx bx-error-circle'></i><p>ID forum tidak ditemukan.</p></div>`
+            throw new Error('No post id')
+        }
+
+        let currentLikes = 0
+        let liked = false
+        let replyAnon = false
+
+        async function loadThread() {
+            const { data: post, error: postErr } = await supabase
+                .from('forum_posts')
+                .select('id, judul, isi, is_anonim, likes, status, created_at, author_id, profiles:author_id ( nama, role, avatar_url )')
+                .eq('id', postId)
+                .single()
+
+            if (postErr || !post) {
+                container.innerHTML = `<div class="state-box"><i class='bx bx-error-circle'></i><p>Forum tidak ditemukan atau sudah dihapus.</p></div>`
+                return
+            }
+
+            const { data: comments, error: commentErr } = await supabase
+                .from('forum_comments')
+                .select('id, isi, is_anonim, created_at, author_id, profiles:author_id ( nama, role, avatar_url )')
+                .eq('post_id', postId)
+                .order('created_at', { ascending: true })
+
+            currentLikes = post.likes ?? 0
+            const likedPosts = JSON.parse(localStorage.getItem('liked_posts') || '{}')
+            liked = !!likedPosts[postId]
+            const av = authorView(post)
+            const commentCount = comments?.length ?? 0
+
+            container.innerHTML = `
+                <div class="op-container">
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <img src="${av.avatar}" class="avatar">
+                        <div>
+                            <div class="user-info">
+                                <span class="user-name">${escapeHtml(av.name)}</span>
+                                ${av.badge}
+                            </div>
+                            <div class="handle">${av.handle ? av.handle + ' • ' : ''}${timeAgoShort(post.created_at)}</div>
+                        </div>
+                    </div>
+                    <div style="font-weight:700;font-size:1.05rem;margin-top:14px;">${escapeHtml(post.judul)}</div>
+                    <div class="content">${escapeHtml(post.isi)}</div>
+                    <div class="thread-actions">
+                        <div class="action disabled"><i class='bx bx-message-rounded'></i> <span id="commentCount">${commentCount}</span></div>
+                        <div class="action ${liked ? 'liked' : ''}" id="likeBtn"><i class='bx ${liked ? 'bxs-heart' : 'bx-heart'}' id="likeIcon"></i> <span id="likeCount">${currentLikes}</span></div>
+                    </div>
+                </div>
+                <div id="commentsList"></div>
+            `
+
+            const commentsList = document.getElementById('commentsList')
+            if (!comments || !comments.length) {
+                commentsList.innerHTML = `<div class="state-box"><i class='bx bx-message-square-dots'></i><p>Belum ada balasan. Jadilah yang pertama!</p></div>`
+            } else {
+                commentsList.innerHTML = comments.map(c => {
+                    const cav = authorView(c)
+                    return `
+                    <div class="thread-item">
+                        <img src="${cav.avatar}" class="avatar">
+                        <div style="flex: 1;">
+                            <div class="user-info">
+                                <span class="user-name">${escapeHtml(cav.name)}</span>
+                                ${cav.badge}
+                                <span class="handle">${cav.handle ? cav.handle + ' • ' : ''}${timeAgoShort(c.created_at)}</span>
+                            </div>
+                            <div class="content">${escapeHtml(c.isi)}</div>
+                        </div>
+                    </div>`
+                }).join('')
+            }
+
+            document.getElementById('likeBtn').addEventListener('click', handleLike)
+        }
+
+        async function handleLike() {
+            const likedPosts = JSON.parse(localStorage.getItem('liked_posts') || '{}')
+            const wasLiked = liked
+            const newCount = currentLikes + (wasLiked ? -1 : 1)
+
+            liked = !wasLiked
+            currentLikes = newCount
+            document.getElementById('likeCount').textContent = currentLikes
+            document.getElementById('likeBtn').classList.toggle('liked', liked)
+            document.getElementById('likeIcon').className = `bx ${liked ? 'bxs-heart' : 'bx-heart'}`
+
+            if (liked) likedPosts[postId] = true; else delete likedPosts[postId]
+            localStorage.setItem('liked_posts', JSON.stringify(likedPosts))
+
+            const { error } = await supabase
+                .from('forum_posts')
+                .update({ likes: currentLikes })
+                .eq('id', postId)
+
+            if (error) {
+                toast('Gagal menyimpan like', 'error')
+            }
+        }
+
+        window.toggleReplyAnon = function () {
+            replyAnon = !replyAnon
+            document.getElementById('anonToggle').classList.toggle('active', replyAnon)
+        }
+
+        window.sendReply = async function () {
+            const input = document.getElementById('replyInput')
+            const isi = input.value.trim()
+            if (!isi) return
+
+            const btn = document.getElementById('btnPost')
+            btn.disabled = true
+
+            const { error } = await supabase.from('forum_comments').insert({
+                post_id: postId,
+                author_id: user.id,
+                isi,
+                is_anonim: replyAnon,
+            })
+
+            btn.disabled = false
+
+            if (error) {
+                toast('Gagal mengirim balasan: ' + error.message, 'error')
+                return
+            }
+
+            input.value = ''
+            await loadThread()
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && document.activeElement?.id === 'replyInput') {
+                window.sendReply()
+            }
+        })
+
+        await loadThread()
+    </script>
+
+    <div class="reply-wrapper">
+        <button class="btn-anon-toggle" id="anonToggle" onclick="toggleReplyAnon()" title="Balas sebagai anonim"><i class='bx bx-incognito'></i></button>
+        <input type="text" class="reply-input" placeholder="Tulis balasanmu..." id="replyInput">
+        <button class="btn-post" id="btnPost" onclick="sendReply()">Balas</button>
+    </div>
+
+</body>
+</html>

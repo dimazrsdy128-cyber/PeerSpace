@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profil Saya — PeerSpace</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <style>
+    .content-area { padding: 2rem 2.5rem; max-width: 800px; }
+
+    /* ── Page title ── */
+    .page-title { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0 0 .3rem; }
+    .page-title span { color: #8B2EFF; }
+    .page-sub { color: rgba(255,255,255,.45); font-size: .9rem; margin: 0 0 2rem; }
+
+    /* ── Profile hero card ── */
+    .profile-hero {
+      background: linear-gradient(135deg, rgba(139,46,255,.15) 0%, rgba(255,255,255,.03) 100%);
+      border: 1px solid rgba(139,46,255,.2);
+      border-radius: 20px; padding: 2rem;
+      display: flex; align-items: center; gap: 1.8rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.8rem;
+      position: relative; overflow: hidden;
+    }
+    .profile-hero::before {
+      content: '';
+      position: absolute; top: -40px; right: -40px;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(139,46,255,.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .avatar-section { display: flex; flex-direction: column; align-items: center; gap: .8rem; }
+    .avatar-container { position: relative; cursor: pointer; }
+    .profile-avatar {
+      width: 96px; height: 96px; border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(139,46,255,.5);
+      transition: filter .2s;
+    }
+    .avatar-placeholder {
+      width: 96px; height: 96px; border-radius: 50%;
+      background: linear-gradient(135deg, #8B2EFF, #5a00cc);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 800; color: #fff;
+      border: 3px solid rgba(139,46,255,.5);
+      transition: filter .2s;
+    }
+    .avatar-container:hover .profile-avatar,
+    .avatar-container:hover .avatar-placeholder { filter: brightness(.6); }
+    .avatar-overlay {
+      position: absolute; inset: 0; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity .2s; pointer-events: none;
+    }
+    .avatar-container:hover .avatar-overlay { opacity: 1; }
+    .avatar-overlay i { font-size: 1.6rem; color: #fff; }
+    #avatarInput { display: none; }
+
+    .avatar-hint { font-size: .74rem; color: rgba(255,255,255,.35); text-align: center; }
+
+    .hero-info { flex: 1; }
+    .hero-name {
+      font-size: 1.4rem; font-weight: 800; color: #fff; margin: 0 0 .25rem;
+    }
+    .hero-email { font-size: .88rem; color: rgba(255,255,255,.45); margin: 0 0 .8rem; }
+    .hero-badges { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .badge {
+      padding: .22rem .75rem; border-radius: 20px; font-size: .75rem; font-weight: 600;
+    }
+    .badge-role {
+      background: rgba(139,46,255,.2); border: 1px solid rgba(139,46,255,.35); color: #b86fff;
+    }
+    .badge-nim {
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.6);
+    }
+    .badge-joined {
+      background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.25); color: #86efac;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex; gap: .5rem; margin-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,.08); padding-bottom: 0;
+    }
+    .tab-btn {
+      background: none; border: none; cursor: pointer;
+      color: rgba(255,255,255,.45); font-size: .9rem; font-weight: 600;
+      padding: .6rem 1.1rem .8rem; position: relative;
+      transition: color .18s;
+    }
+    .tab-btn::after {
+      content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
+      height: 2px; background: #8B2EFF; border-radius: 2px;
+      transform: scaleX(0); transition: transform .2s;
+    }
+    .tab-btn.active { color: #b86fff; }
+    .tab-btn.active::after { transform: scaleX(1); }
+
+    /* ── Form card ── */
+    .form-card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px; padding: 1.8rem;
+      margin-bottom: 1.4rem;
+    }
+    .form-card h3 {
+      font-size: 1rem; font-weight: 700; color: #fff;
+      margin: 0 0 1.4rem;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .form-card h3 i { color: #8B2EFF; font-size: 1.1rem; }
+
+    .form-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    }
+    .form-group { display: flex; flex-direction: column; gap: .4rem; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label {
+      font-size: .82rem; color: rgba(255,255,255,.55); font-weight: 500;
+    }
+    .form-input, .form-textarea, .form-select {
+      padding: .65rem .9rem;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px; color: #fff; font-size: .9rem; font-family: inherit;
+      transition: border-color .2s; box-sizing: border-box; width: 100%;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      outline: none; border-color: #8B2EFF;
+    }
+    .form-input::placeholder, .form-textarea::placeholder { color: rgba(255,255,255,.25); }
+    .form-input:disabled, .form-textarea:disabled {
+      opacity: .5; cursor: not-allowed;
+    }
+    .form-textarea { resize: vertical; min-height: 90px; }
+    .form-select option { background: #1a0a2e; }
+
+    /* ── Save button ── */
+    .save-row {
+      display: flex; align-items: center; justify-content: flex-end; gap: 1rem;
+      margin-top: 1.2rem;
+    }
+    .save-status {
+      font-size: .83rem; display: flex; align-items: center; gap: .35rem;
+      opacity: 0; transition: opacity .3s;
+    }
+    .save-status.show { opacity: 1; }
+    .save-status.success { color: #22c55e; }
+    .save-status.error   { color: #ef4444; }
+
+    .btn-save {
+      background: linear-gradient(135deg, #8B2EFF, #6d00e8);
+      border: none; color: #fff; border-radius: 10px;
+      padding: .65rem 1.6rem; font-size: .9rem; font-weight: 700;
+      cursor: pointer; transition: opacity .2s, transform .15s;
+      display: flex; align-items: center; gap: .4rem;
+    }
+    .btn-save:hover { opacity: .88; transform: scale(1.02); }
+    .btn-save:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    /* ── Password section ── */
+    .input-eye-wrap { position: relative; }
+    .input-eye-wrap .form-input { padding-right: 2.6rem; }
+    .eye-toggle {
+      position: absolute; right: .8rem; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: rgba(255,255,255,.35);
+      cursor: pointer; font-size: 1.1rem; padding: 0;
+      transition: color .18s;
+    }
+    .eye-toggle:hover { color: rgba(255,255,255,.7); }
+
+    /* ── Stats tab ── */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem;
+    }
+    .stat-card {
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px; padding: 1.2rem;
+      display: flex; flex-direction: column; align-items: center; gap: .4rem;
+    }
+    .stat-card i { font-size: 1.8rem; color: #8B2EFF; }
+    .stat-card .val { font-size: 1.6rem; font-weight: 800; color: #fff; }
+    .stat-card .lbl { font-size: .78rem; color: rgba(255,255,255,.45); text-align: center; }
+
+    /* ── Skeleton ── */
+    @keyframes shimmer {
+      0%   { background-position: -400px 0; }
+      100% { background-position:  400px 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg,
+        rgba(255,255,255,.06) 25%,
+        rgba(255,255,255,.12) 50%,
+        rgba(255,255,255,.06) 75%);
+      background-size: 400px 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 8px;
+    }
+    .sk-line { height: 12px; }
+    .sk-circle { border-radius: 50%; }
+
+    /* ── Tab panels ── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Upload progress ── */
+    .upload-progress {
+      font-size: .78rem; color: #b86fff; margin-top: .3rem; display: none;
+    }
+
+    @media (max-width: 600px) {
+      .content-area { padding: 1.2rem; }
+      .form-grid { grid-template-columns: 1fr; }
+      .profile-hero { flex-direction: column; align-items: flex-start; gap: 1.2rem; }
+      .avatar-section { flex-direction: row; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar" id="sidebar-container"></aside>
+
+  <div class="main-content">
+    <header class="topbar" id="navbar-container"></header>
+
+    <div class="content-wrapper">
+    <div class="content-area">
+      <h1 class="page-title">Profil <span>Saya</span></h1>
+      <p class="page-sub">Kelola informasi akun dan preferensimu</p>
+
+      <!-- Hero card skeleton -->
+      <div class="profile-hero" id="profileHero">
+        <div class="avatar-section">
+          <div class="skeleton sk-circle" style="width:96px;height:96px"></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:.5rem">
+          <div class="skeleton sk-line" style="width:40%;height:16px"></div>
+          <div class="skeleton sk-line" style="width:55%"></div>
+          <div style="display:flex;gap:.5rem;margin-top:.3rem">
+            <div class="skeleton sk-line" style="width:70px;height:22px;border-radius:20px"></div>
+            <div class="skeleton sk-line" style="width:90px;height:22px;border-radius:20px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="info">
+          <i class='bx bx-user'></i> Informasi
+        </button>
+        <button class="tab-btn" data-tab="security">
+          <i class='bx bx-lock'></i> Keamanan
+        </button>
+        <button class="tab-btn" data-tab="stats">
+          <i class='bx bx-bar-chart'></i> Statistik
+        </button>
+      </div>
+
+      <!-- Tab: Info -->
+      <div class="tab-panel active" id="panel-info">
+        <div class="form-card" id="formCardInfo">
+          <!-- skeleton rows -->
+          <h3><i class='bx bx-id-card'></i> Data Pribadi</h3>
+          <div class="form-grid">
+            <div class="form-group"><div class="skeleton sk-line" style="width:40%;margin-bottom:.4rem"></div><div class="skeleton sk-line" style="height:38px;border-radius:10px"></div></div>
+            <div class="form-group"><div class="skeleton sk-line" style="width:40%;margin-bottom:.4rem"></div><div class="skeleton sk-line" style="height:38px;border-radius:10px"></div></div>
+            <div class="form-group"><div class="skeleton sk-line" style="width:40%;margin-bottom:.4rem"></div><div class="skeleton sk-line" style="height:38px;border-radius:10px"></div></div>
+            <div class="form-group"><div class="skeleton sk-line" style="width:40%;margin-bottom:.4rem"></div><div class="skeleton sk-line" style="height:38px;border-radius:10px"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Security -->
+      <div class="tab-panel" id="panel-security">
+        <div class="form-card">
+          <h3><i class='bx bx-lock-alt'></i> Ubah Password</h3>
+          <div style="display:flex;flex-direction:column;gap:1rem;max-width:420px">
+            <div class="form-group">
+              <label>Password Baru</label>
+              <div class="input-eye-wrap">
+                <input type="password" class="form-input" id="newPassword" placeholder="Minimal 8 karakter" />
+                <button class="eye-toggle" onclick="toggleEye('newPassword', this)">
+                  <i class='bx bx-hide'></i>
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Konfirmasi Password Baru</label>
+              <div class="input-eye-wrap">
+                <input type="password" class="form-input" id="confirmPassword" placeholder="Ulangi password baru" />
+                <button class="eye-toggle" onclick="toggleEye('confirmPassword', this)">
+                  <i class='bx bx-hide'></i>
+                </button>
+              </div>
+            </div>
+            <p id="pwError" style="color:#ef4444;font-size:.82rem;display:none"></p>
+            <div class="save-row" style="margin-top:.5rem;justify-content:flex-start">
+              <button class="btn-save" id="btnSavePassword">
+                <i class='bx bx-check'></i> Simpan Password
+              </button>
+              <span class="save-status" id="pwStatus"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Stats -->
+      <div class="tab-panel" id="panel-stats">
+        <div class="stats-grid" id="statsGrid">
+          ${Array(4).fill(0).map(() => `
+          <div class="stat-card">
+            <div class="skeleton sk-circle" style="width:40px;height:40px"></div>
+            <div class="skeleton sk-line" style="width:50px;height:24px"></div>
+            <div class="skeleton sk-line" style="width:80px"></div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { supabase } from '../assets/js/supabase-client.js'
+
+// ── Auth guard ──
+const { data: { user } } = await supabase.auth.getUser()
+if (!user) { window.location.href = '../auth/login.html'; throw new Error() }
+
+// ── Load shared UI ──
+const loadUI = (id, path) =>
+  fetch(path).then(r => r.text()).then(html => {
+    const el = document.getElementById(id)
+    if (el) el.innerHTML = html
+  }).catch(() => {})
+
+loadUI('sidebar-container', '../shared/sidebar.html')
+fetch('../shared/navbar.html').then(r => r.text()).then(async html => {
+  const container = document.getElementById('navbar-container')
+  container.innerHTML = html
+  const titleEl = container.querySelector('#topbarTitle')
+  if (titleEl) titleEl.textContent = 'Profil Saya'
+  const { data: profile } = await supabase.from('profiles').select('nama,role,avatar_url').eq('id', user.id).single()
+  if (profile) {
+    const nameEl = container.querySelector('#navUserName')
+    const roleEl = container.querySelector('#navUserRole')
+    const avatarEl = container.querySelector('#navAvatar')
+    if (nameEl) nameEl.textContent = profile.nama || user.email
+    if (roleEl) roleEl.textContent = { mahasiswa:'Mahasiswa', konselor:'Konselor', admin:'Admin' }[profile.role] || profile.role
+    if (avatarEl) avatarEl.src = profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.nama||'U')}&background=8B2EFF&color=fff`
+  }
+  const logoutBtn = container.querySelector('#btnLogout')
+  if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut({ scope: 'local' })
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// ── Tabs ──
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'))
+    btn.classList.add('active')
+    document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active')
+  })
+})
+
+// ── Eye toggle ──
+window.toggleEye = (inputId, btn) => {
+  const input = document.getElementById(inputId)
+  const isHidden = input.type === 'password'
+  input.type = isHidden ? 'text' : 'password'
+  btn.querySelector('i').className = `bx ${isHidden ? 'bx-show' : 'bx-hide'}`
+}
+
+// ── Helpers ──
+function formatDate (iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+function showStatus (id, type, msg) {
+  const el = document.getElementById(id)
+  if (!el) return
+  el.textContent = msg
+  el.className = `save-status show ${type}`
+  setTimeout(() => el.classList.remove('show'), 3000)
+}
+
+// ── Fetch profile ──
+let profileData = null
+
+async function fetchProfile () {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    if (error && error.code !== 'PGRST116') throw error
+    profileData = data || {}
+    renderHero()
+    renderInfoForm()
+  } catch (err) {
+    console.error('Gagal memuat profil:', err)
+    document.getElementById('profileHero').innerHTML = `
+      <p style="color:#ef4444;font-size:.9rem">Gagal memuat profil.</p>`
+  }
+}
+
+// ── Fetch stats ──
+async function fetchStats () {
+  try {
+    const [bookingRes, forumRes, commentRes] = await Promise.all([
+      supabase.from('booking').select('id, status', { count: 'exact' }).eq('id', user.id),
+      supabase.from('forum_posts').select('id', { count: 'exact' }).eq('id', user.id),
+      supabase.from('forum_comments').select('id', { count: 'exact' }).eq('id', user.id),
+    ])
+
+    const totalBooking   = bookingRes.count ?? 0
+    const selesaiBooking = (bookingRes.data || []).filter(b => b.status === 'selesai').length
+    const totalForum     = forumRes.count ?? 0
+    const totalKomentar  = commentRes.count ?? 0
+
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card">
+        <i class='bx bx-calendar-check'></i>
+        <span class="val">${totalBooking}</span>
+        <span class="lbl">Total Booking</span>
+      </div>
+      <div class="stat-card">
+        <i class='bx bxs-check-circle'></i>
+        <span class="val">${selesaiBooking}</span>
+        <span class="lbl">Sesi Selesai</span>
+      </div>
+      <div class="stat-card">
+        <i class='bx bx-message-dots'></i>
+        <span class="val">${totalForum}</span>
+        <span class="lbl">Post Forum</span>
+      </div>
+      <div class="stat-card">
+        <i class='bx bx-comment'></i>
+        <span class="val">${totalKomentar}</span>
+        <span class="lbl">Komentar</span>
+      </div>`
+  } catch (err) {
+    console.error('Gagal memuat statistik:', err)
+  }
+}
+
+// ── Render hero ──
+function renderHero () {
+  const name    = profileData.nama || user.email?.split('@')[0] || 'Mahasiswa'
+  const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+  const joinDate = formatDate(user.created_at)
+
+  const avatarHtml = profileData.avatar_url
+    ? `<img class="profile-avatar" id="avatarImg" src="${profileData.avatar_url}" alt="${name}" />`
+    : `<div class="avatar-placeholder" id="avatarImg">${initials}</div>`
+
+  document.getElementById('profileHero').innerHTML = `
+    <div class="avatar-section">
+      <div class="avatar-container" onclick="document.getElementById('avatarInput').click()">
+        ${avatarHtml}
+        <div class="avatar-overlay"><i class='bx bx-camera'></i></div>
+      </div>
+      <input type="file" id="avatarInput" accept="image/*" />
+      <p class="avatar-hint">Klik untuk ubah foto</p>
+      <p class="upload-progress" id="uploadProgress">Mengunggah...</p>
+    </div>
+    <div class="hero-info">
+      <p class="hero-name">${name}</p>
+      <p class="hero-email">${user.email}</p>
+      <div class="hero-badges">
+        <span class="badge badge-role"><i class='bx bx-user-circle'></i> Mahasiswa</span>
+        ${profileData.nim ? `<span class="badge badge-nim">NIM: ${profileData.nim}</span>` : ''}
+        <span class="badge badge-joined"><i class='bx bx-calendar'></i> Bergabung ${joinDate}</span>
+      </div>
+    </div>`
+
+  document.getElementById('avatarInput').addEventListener('change', handleAvatarUpload)
+}
+
+// ── Render info form ──
+function renderInfoForm () {
+  document.getElementById('formCardInfo').innerHTML = `
+    <h3><i class='bx bx-id-card'></i> Data Pribadi</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Nama Lengkap</label>
+        <input type="text" class="form-input" id="fullName"
+          value="${profileData.nama || ''}" placeholder="Nama lengkap" />
+      </div>
+      <div class="form-group">
+        <label>NIM</label>
+        <input type="text" class="form-input" id="nim"
+          value="${profileData.nim || ''}" placeholder="Nomor Induk Mahasiswa" />
+      </div>
+
+      <div class="form-group">
+        <label>Program Studi</label>
+        <input type="text" class="form-input" id="prodi"
+          value="${profileData.prodi || ''}" placeholder="Teknik Informatika, dll." />
+      </div>
+
+      <div class="form-group">
+        <label>Angkatan</label>
+        <input type="number" class="form-input" id="angkatan"
+          value="${profileData.angkatan || ''}" placeholder="2022" min="2000" max="2099" />
+      </div>
+
+    </div>
+    <div class="save-row">
+      <span class="save-status" id="infoStatus"></span>
+      <button class="btn-save" id="btnSaveInfo">
+        <i class='bx bx-save'></i> Simpan Perubahan
+      </button>
+    </div>`
+
+  document.getElementById('btnSaveInfo').addEventListener('click', saveInfo)
+}
+
+// ── Save info ──
+async function saveInfo () {
+  const btn = document.getElementById('btnSaveInfo')
+  btn.disabled = true
+  btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Menyimpan...`
+
+  const updates = {
+  nama:      document.getElementById('fullName').value.trim(),
+  nim_nip:   document.getElementById('nim').value.trim(),
+  prodi:     document.getElementById('prodi').value.trim(),
+  angkatan:  document.getElementById('angkatan').value || null,
+  updated_at: new Date().toISOString(),
+}
+
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', user.id)
+
+    if (error) throw error
+
+    profileData = { ...profileData, ...updates }
+    renderHero()
+    showStatus('infoStatus', 'success', '✓ Profil berhasil disimpan')
+  } catch (err) {
+    console.error(err)
+    showStatus('infoStatus', 'error', '✗ Gagal menyimpan: ' + (err.message || 'Coba lagi'))
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = `<i class='bx bx-save'></i> Simpan Perubahan`
+  }
+}
+
+// ── Save password ──
+document.getElementById('btnSavePassword').addEventListener('click', async () => {
+  const btn     = document.getElementById('btnSavePassword')
+  const newPw   = document.getElementById('newPassword').value
+  const confPw  = document.getElementById('confirmPassword').value
+  const errEl   = document.getElementById('pwError')
+
+  errEl.style.display = 'none'
+
+  if (newPw.length < 8) {
+    errEl.textContent = 'Password minimal 8 karakter.'
+    errEl.style.display = 'block'; return
+  }
+  if (newPw !== confPw) {
+    errEl.textContent = 'Password tidak cocok.'
+    errEl.style.display = 'block'; return
+  }
+
+  btn.disabled = true
+  btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Menyimpan...`
+
+  try {
+    const { error } = await supabase.auth.updateUser({ password: newPw })
+    if (error) throw error
+
+    document.getElementById('newPassword').value    = ''
+    document.getElementById('confirmPassword').value = ''
+    showStatus('pwStatus', 'success', '✓ Password berhasil diubah')
+  } catch (err) {
+    showStatus('pwStatus', 'error', '✗ Gagal: ' + (err.message || 'Coba lagi'))
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = `<i class='bx bx-check'></i> Simpan Password`
+  }
+})
+
+// ── Avatar upload ──
+async function handleAvatarUpload (e) {
+  const file = e.target.files[0]
+  if (!file) return
+
+  // Validasi
+  if (file.size > 2 * 1024 * 1024) {
+    alert('Ukuran foto maksimal 2MB.'); return
+  }
+  if (!file.type.startsWith('image/')) {
+    alert('File harus berupa gambar.'); return
+  }
+
+  const progressEl = document.getElementById('uploadProgress')
+  if (progressEl) progressEl.style.display = 'block'
+
+  try {
+    const ext      = file.name.split('.').pop()
+    const filePath = `avatars/${user.id}.${ext}`
+
+    const { error: upErr } = await supabase.storage
+      .from('profiles')
+      .upload(filePath, file, { upsert: true, contentType: file.type })
+
+    if (upErr) throw upErr
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('profiles')
+      .getPublicUrl(filePath)
+
+    const { error: dbErr } = await supabase
+      .from('profiles')
+      .upsert({ id: user.id, avatar_url: publicUrl }, { onConflict: 'id' })
+
+    if (dbErr) throw dbErr
+
+    profileData.avatar_url = publicUrl
+    renderHero()
+  } catch (err) {
+    console.error('Upload gagal:', err)
+    alert('Gagal mengunggah foto: ' + (err.message || 'Coba lagi'))
+  } finally {
+    if (progressEl) progressEl.style.display = 'none'
+    e.target.value = ''
+  }
+}
+
+// ── Init ──
+await Promise.all([fetchProfile(), fetchStats()])
+</script>
+</body>
+</html>

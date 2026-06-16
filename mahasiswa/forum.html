@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forum Diskusi — PeerSpace</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <style>
+    .content-area { max-width: 900px; }
+
+    /* ── Header ── */
+    .forum-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+      margin-bottom: 1.8rem;
+    }
+    .forum-header h1 {
+      font-size: 1.7rem; font-weight: 800; color: #fff; margin: 0 0 .3rem;
+    }
+    .forum-header h1 span { color: #8B2EFF; }
+    .forum-header p { color: rgba(255,255,255,.45); font-size: .9rem; margin: 0; }
+
+    .btn-new-post {
+      display: flex; align-items: center; gap: .5rem;
+      background: linear-gradient(135deg, #8B2EFF, #6d00e8);
+      color: #fff; border: none; border-radius: 10px;
+      padding: .65rem 1.3rem; font-size: .88rem; font-weight: 600;
+      cursor: pointer; text-decoration: none; white-space: nowrap;
+      transition: opacity .2s, transform .15s;
+    }
+    .btn-new-post:hover { opacity: .88; transform: scale(1.02); }
+
+    /* ── Toolbar ── */
+    .forum-toolbar {
+      display: flex; gap: .8rem; flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .search-wrap i {
+      position: absolute; left: .9rem; top: 50%; transform: translateY(-50%);
+      color: rgba(255,255,255,.35); font-size: 1.05rem;
+    }
+    .search-input {
+      width: 100%; padding: .6rem .9rem .6rem 2.4rem;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px; color: #fff; font-size: .88rem;
+      transition: border-color .2s;
+    }
+    .search-input:focus { outline: none; border-color: #8B2EFF; }
+    .search-input::placeholder { color: rgba(255,255,255,.3); }
+
+    .filter-tabs {
+      display: flex; gap: .5rem; flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      color: rgba(255,255,255,.55); padding: .5rem 1rem; border-radius: 8px;
+      font-size: .82rem; font-weight: 500; cursor: pointer;
+      transition: all .18s;
+    }
+    .tab-btn:hover, .tab-btn.active {
+      background: rgba(139,46,255,.2); border-color: rgba(139,46,255,.45);
+      color: #b86fff;
+    }
+
+    /* ── Post card ── */
+    .post-card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px; padding: 1.3rem 1.4rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: transform .2s, border-color .2s, box-shadow .2s;
+      text-decoration: none; display: block; color: inherit;
+    }
+    .post-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(139,46,255,.35);
+      box-shadow: 0 6px 24px rgba(139,46,255,.1);
+    }
+
+    .post-top {
+      display: flex; align-items: center; gap: .8rem;
+      margin-bottom: .9rem;
+    }
+    .poster-avatar {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      object-fit: cover; border: 1.5px solid rgba(139,46,255,.35);
+    }
+    .poster-avatar-ph {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, #8B2EFF, #5a00cc);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .85rem; font-weight: 700; color: #fff;
+      border: 1.5px solid rgba(139,46,255,.35);
+    }
+    .poster-meta { flex: 1; }
+    .poster-name {
+      font-size: .85rem; font-weight: 600; color: rgba(255,255,255,.8);
+    }
+    .post-time { font-size: .75rem; color: rgba(255,255,255,.35); }
+
+    .post-category {
+      background: rgba(139,46,255,.14); border: 1px solid rgba(139,46,255,.25);
+      color: #b86fff; padding: .18rem .65rem; border-radius: 20px;
+      font-size: .72rem; font-weight: 600;
+    }
+
+    .post-title {
+      font-size: 1rem; font-weight: 700; color: #fff;
+      margin: 0 0 .5rem; line-height: 1.4;
+    }
+    .post-excerpt {
+      font-size: .85rem; color: rgba(255,255,255,.45);
+      margin: 0 0 1rem; line-height: 1.6;
+      display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .post-footer {
+      display: flex; align-items: center; gap: 1.2rem;
+    }
+    .post-stat {
+      display: flex; align-items: center; gap: .3rem;
+      font-size: .78rem; color: rgba(255,255,255,.4);
+    }
+    .post-stat i { font-size: .95rem; }
+    .post-stat.likes i   { color: #ef4444; }
+    .post-stat.comments i { color: #8B2EFF; }
+    .post-stat.views i   { color: rgba(255,255,255,.35); }
+
+    .post-pinned {
+      margin-left: auto;
+      display: flex; align-items: center; gap: .3rem;
+      font-size: .74rem; color: #f59e0b;
+    }
+
+    /* ── Skeleton ── */
+    @keyframes shimmer {
+      0%   { background-position: -400px 0; }
+      100% { background-position:  400px 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg,
+        rgba(255,255,255,.06) 25%,
+        rgba(255,255,255,.11) 50%,
+        rgba(255,255,255,.06) 75%);
+      background-size: 400px 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+    }
+    .sk-line { height: 11px; }
+    .sk-circle { border-radius: 50%; }
+
+    /* ── Load more ── */
+    .load-more-wrap { text-align: center; padding: 1.5rem 0; }
+    .btn-load-more {
+      background: rgba(139,46,255,.15); border: 1px solid rgba(139,46,255,.3);
+      color: #b86fff; padding: .55rem 1.5rem; border-radius: 10px;
+      font-size: .87rem; font-weight: 600; cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-load-more:hover { background: rgba(139,46,255,.3); }
+    .btn-load-more:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Empty / Error ── */
+    .empty-state, .error-state {
+      text-align: center; padding: 3.5rem 2rem; color: rgba(255,255,255,.4);
+    }
+    .empty-state i, .error-state i {
+      font-size: 3rem; display: block; margin-bottom: .8rem;
+    }
+    .empty-state i { color: rgba(139,46,255,.4); }
+    .error-state i { color: #ef4444; }
+    .retry-btn {
+      margin-top: .8rem; background: rgba(139,46,255,.2);
+      border: 1px solid rgba(139,46,255,.4); color: #b86fff;
+      padding: .45rem 1.1rem; border-radius: 8px; cursor: pointer; font-size: .85rem;
+    }
+
+    /* Modal buat post */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.7);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; opacity: 0; visibility: hidden;
+      transition: opacity .25s, visibility .25s;
+    }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+    .modal-box {
+      background: #1a0a2e; border: 1px solid rgba(139,46,255,.3);
+      border-radius: 16px; padding: 1.8rem; width: 100%; max-width: 520px;
+      margin: 1rem;
+      transform: scale(.95); transition: transform .25s;
+    }
+    .modal-overlay.open .modal-box { transform: scale(1); }
+    .modal-box h2 { font-size: 1.2rem; color: #fff; margin: 0 0 1.2rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: .83rem; color: rgba(255,255,255,.6); margin-bottom: .4rem; }
+    .form-input, .form-textarea, .form-select-modal {
+      width: 100%; padding: .65rem .9rem;
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 10px; color: #fff; font-size: .9rem;
+      transition: border-color .2s; box-sizing: border-box;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select-modal:focus {
+      outline: none; border-color: #8B2EFF;
+    }
+    .form-textarea { resize: vertical; min-height: 110px; font-family: inherit; }
+    .form-select-modal option { background: #1a0a2e; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: .7rem; margin-top: 1.4rem; }
+    .btn-cancel {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+      color: rgba(255,255,255,.6); padding: .55rem 1.1rem; border-radius: 9px;
+      cursor: pointer; font-size: .87rem;
+    }
+    .btn-submit {
+      background: linear-gradient(135deg, #8B2EFF, #6d00e8);
+      border: none; color: #fff; padding: .55rem 1.3rem; border-radius: 9px;
+      cursor: pointer; font-size: .87rem; font-weight: 600;
+    }
+    .btn-submit:disabled { opacity: .5; cursor: not-allowed; }
+
+    @media (max-width: 640px) {
+      .content-area { padding: 1.2rem; }
+      .forum-header h1 { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar" id="sidebar-container"></aside>
+
+  <div class="main-content">
+    <header class="topbar" id="navbar-container"></header>
+
+    <div class="content-wrapper">
+    <div class="content-area">
+      <!-- Header -->
+      <div class="forum-header">
+        <div>
+          <h1>Forum <span>Diskusi</span></h1>
+          <p>Berbagi pengalaman & bertanya bersama sesama mahasiswa</p>
+        </div>
+        <button class="btn-new-post" id="btnNewPost">
+          <i class='bx bx-plus'></i> Ajukan Topik
+        </button>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="forum-toolbar">
+        <div class="search-wrap">
+          <i class='bx bx-search'></i>
+          <input type="text" class="search-input" id="searchInput" placeholder="Cari topik diskusi..." />
+        </div>
+        <div class="filter-tabs" id="filterTabs">
+          <button class="tab-btn active" data-cat="">Semua</button>
+          <button class="tab-btn" data-cat="Akademik">Akademik</button>
+          <button class="tab-btn" data-cat="Mental Health">Mental Health</button>
+          <button class="tab-btn" data-cat="Karir">Karir</button>
+          <button class="tab-btn" data-cat="Umum">Umum</button>
+        </div>
+      </div>
+
+      <!-- List -->
+      <div id="postsList"></div>
+      <div class="load-more-wrap" id="loadMoreWrap" style="display:none">
+        <button class="btn-load-more" id="btnLoadMore">Muat Lebih Banyak</button>
+      </div><!-- /load-more-wrap -->
+    </div><!-- /content-area -->
+    </div><!-- /content-wrapper -->
+  </div><!-- /main-content -->
+</div><!-- /app-wrapper -->
+
+<!-- Modal ajukan topik ke konselor -->
+<div class="modal-overlay" id="modalNewPost">
+  <div class="modal-box">
+    <h2>✍️ Ajukan Topik Diskusi</h2>
+    <p style="color:rgba(255,255,255,.5);font-size:.82rem;margin:-0.6rem 0 1.2rem;">
+      Topikmu akan direview konselor dulu sebelum tayang di forum.
+    </p>
+    <div class="form-group">
+      <label>Kategori</label>
+      <select class="form-select-modal" id="postKategori">
+        <option value="Umum">Umum</option>
+        <option value="Akademik">Akademik</option>
+        <option value="Mental Health">Mental Health</option>
+        <option value="Karir">Karir</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Judul <span style="color:#ef4444">*</span></label>
+      <input type="text" class="form-input" id="postJudul" placeholder="Apa yang ingin kamu diskusikan?" maxlength="150" />
+    </div>
+    <div class="form-group">
+      <label>Isi Post <span style="color:#ef4444">*</span></label>
+      <textarea class="form-textarea" id="postIsi" placeholder="Ceritakan lebih detail..."></textarea>
+    </div>
+    <div class="form-group" style="display:flex;align-items:center;gap:.5rem;margin-bottom:0;">
+      <input type="checkbox" id="postAnonim" style="width:16px;height:16px;accent-color:#8B2EFF;" />
+      <label for="postAnonim" style="margin:0;cursor:pointer;color:rgba(255,255,255,.7);font-size:.85rem;">Ajukan sebagai anonim</label>
+    </div>
+    <p id="postError" style="color:#ef4444;font-size:.82rem;margin:.4rem 0 0;display:none"></p>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="btnCancelPost">Batal</button>
+      <button class="btn-submit" id="btnSubmitPost">Kirim ke Konselor</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { supabase } from '../assets/js/supabase-client.js'
+// ── Auth guard ──
+const { data: { user }, error: authErr } = await supabase.auth.getUser()
+if (!user) { window.location.href = '../auth/login.html'; throw new Error() }
+
+// ── Load sidebar ──
+fetch('../shared/sidebar.html').then(r => r.text()).then(html => {
+  const container = document.getElementById('sidebar-container')
+  container.innerHTML = html
+  container.querySelectorAll('a.menu-link').forEach(a => {
+    if (a.getAttribute('href') === 'forum.html') a.closest('.menu-item')?.classList.add('active')
+  })
+  const btn = container.querySelector('#btnLogout')
+  if (btn) btn.addEventListener('click', async e => {
+    e.preventDefault()
+    await supabase.auth.signOut({ scope: 'local' })
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// ── Load navbar ──
+fetch('../shared/navbar.html').then(r => r.text()).then(async html => {
+  const container = document.getElementById('navbar-container')
+  container.innerHTML = html
+  const titleEl = container.querySelector('#topbarTitle')
+  if (titleEl) titleEl.textContent = 'Forum Diskusi'
+  const { data: profile } = await supabase.from('profiles').select('nama,role,avatar_url').eq('id', user.id).single()
+  if (profile) {
+    const nameEl = container.querySelector('#navUserName')
+    const roleEl = container.querySelector('#navUserRole')
+    const avatarEl = container.querySelector('#navAvatar')
+    if (nameEl) nameEl.textContent = profile.nama || user.email
+    if (roleEl) roleEl.textContent = { mahasiswa:'Mahasiswa', konselor:'Konselor', admin:'Admin' }[profile.role] || profile.role
+    if (avatarEl) avatarEl.src = profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.nama||'U')}&background=8B2EFF&color=fff`
+  }
+  const logoutBtn = container.querySelector('#btnLogout')
+  if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut({ scope: 'local' })
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// ── State ──
+const PAGE_SIZE = 10
+let page = 0
+let hasMore = true
+let activeCategory = ''
+let searchQuery = ''
+let isFetching = false
+
+// ── Helpers ──
+function timeAgo (iso) {
+  const diff = Date.now() - new Date(iso)
+  const m = Math.floor(diff / 60000)
+  if (m < 1) return 'baru saja'
+  if (m < 60) return `${m} menit lalu`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h} jam lalu`
+  const d = Math.floor(h / 24)
+  if (d < 30) return `${d} hari lalu`
+  return new Date(iso).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })
+}
+
+function skeletonPost () {
+  return `
+  <div class="post-card" style="pointer-events:none">
+    <div class="post-top">
+      <div class="skeleton sk-circle" style="width:38px;height:38px;flex-shrink:0"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:.45rem">
+        <div class="skeleton sk-line" style="width:30%"></div>
+        <div class="skeleton sk-line" style="width:20%"></div>
+      </div>
+    </div>
+    <div class="skeleton sk-line" style="width:70%;height:14px;margin-bottom:.6rem"></div>
+    <div class="skeleton sk-line" style="width:90%"></div>
+    <div class="skeleton sk-line" style="width:80%;margin-top:.3rem"></div>
+    <div style="display:flex;gap:1rem;margin-top:1rem">
+      <div class="skeleton sk-line" style="width:50px"></div>
+      <div class="skeleton sk-line" style="width:50px"></div>
+    </div>
+  </div>`
+}
+
+// ── Render posts ──
+function renderPosts (posts, append = false) {
+  const list = document.getElementById('postsList')
+  if (!append) list.innerHTML = ''
+
+  if (!posts.length && !append) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <i class='bx bx-message-dots'></i>
+        <p>Belum ada diskusi. Jadilah yang pertama!</p>
+      </div>`
+    return
+  }
+
+  posts.forEach(post => {
+    const isAnonim  = post.is_anonim
+    const name      = isAnonim ? 'Anonim' : (post.profiles?.nama || 'Pengguna')
+    const initials  = name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()
+    const avatarHtml = (!isAnonim && post.profiles?.avatar_url)
+      ? `<img class="poster-avatar" src="${post.profiles.avatar_url}" alt="${name}" />`
+      : `<div class="poster-avatar-ph">${isAnonim ? '?' : initials}</div>`
+
+    const commentCount = post.forum_comments?.[0]?.count ?? 0
+    const likeCount    = post.likes ?? 0
+
+    // tags sebagai kategori (tags text[] di schema)
+    const firstTag = (post.tags && post.tags.length) ? post.tags[0] : null
+
+    const card = document.createElement('a')
+    card.className = 'post-card'
+    card.href      = `forum-detail.html?id=${post.id}`
+    card.innerHTML = `
+      <div class="post-top">
+        ${avatarHtml}
+        <div class="poster-meta">
+          <div class="poster-name">${name}</div>
+          <div class="post-time">${timeAgo(post.created_at)}</div>
+        </div>
+        ${firstTag ? `<span class="post-category">${firstTag}</span>` : ''}
+      </div>
+      <p class="post-title">${post.judul}</p>
+      <p class="post-excerpt">${post.isi || ''}</p>
+      <div class="post-footer">
+        <span class="post-stat likes"><i class='bx bxs-heart'></i>${likeCount}</span>
+        <span class="post-stat comments"><i class='bx bx-comment'></i>${commentCount}</span>
+      </div>`
+    list.appendChild(card)
+  })
+}
+
+// ── Fetch ──
+async function fetchPosts (reset = false) {
+  if (isFetching) return
+  isFetching = true
+
+  if (reset) { page = 0; hasMore = true }
+
+  const list = document.getElementById('postsList')
+  const lmBtn = document.getElementById('btnLoadMore')
+
+  if (reset) {
+    list.innerHTML = Array(4).fill(0).map(skeletonPost).join('')
+  }
+
+  try {
+    let query = supabase
+      .from('forum_posts')
+      .select(`
+        id, judul, isi, tags, likes, created_at,
+        profiles ( nama, avatar_url ),
+        forum_comments ( count )
+      `, { count: 'exact' })
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+
+    if (activeCategory) query = query.contains('tags', [activeCategory])
+    if (searchQuery)    query = query.ilike('judul', `%${searchQuery}%`)
+
+    const { data, error, count } = await query
+    if (error) throw error
+
+    renderPosts(data || [], page > 0)
+
+    hasMore = (page + 1) * PAGE_SIZE < (count || 0)
+    document.getElementById('loadMoreWrap').style.display = hasMore ? 'block' : 'none'
+    if (lmBtn) lmBtn.disabled = false
+    page++
+  } catch (err) {
+    console.error('Gagal memuat forum:', err)
+    if (reset) {
+      list.innerHTML = `
+        <div class="error-state">
+          <i class='bx bx-error-circle'></i>
+          <p>Gagal memuat diskusi.</p>
+          <button class="retry-btn" onclick="fetchPosts(true)">Coba Lagi</button>
+        </div>`
+    }
+  } finally {
+    isFetching = false
+  }
+}
+
+// ── Filter tabs ──
+document.getElementById('filterTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn')
+  if (!btn) return
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  activeCategory = btn.dataset.cat
+  fetchPosts(true)
+})
+
+// ── Search ──
+let debounce
+document.getElementById('searchInput').addEventListener('input', e => {
+  clearTimeout(debounce)
+  debounce = setTimeout(() => {
+    searchQuery = e.target.value.trim()
+    fetchPosts(true)
+  }, 320)
+})
+
+// ── Load more ──
+document.getElementById('btnLoadMore').addEventListener('click', () => {
+  document.getElementById('btnLoadMore').disabled = true
+  fetchPosts()
+})
+
+// ── Modal ──
+const modal   = document.getElementById('modalNewPost')
+const btnNew  = document.getElementById('btnNewPost')
+const btnCxl  = document.getElementById('btnCancelPost')
+const btnSub  = document.getElementById('btnSubmitPost')
+
+btnNew.addEventListener('click', () => modal.classList.add('open'))
+btnCxl.addEventListener('click', () => modal.classList.remove('open'))
+modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open') })
+
+btnSub.addEventListener('click', async () => {
+  const judul  = document.getElementById('postJudul').value.trim()
+  const isi    = document.getElementById('postIsi').value.trim()
+  const kat    = document.getElementById('postKategori').value
+  const isAnon = document.getElementById('postAnonim').checked
+  const errEl  = document.getElementById('postError')
+
+  errEl.style.display = 'none'
+  if (!judul) { errEl.textContent = 'Judul wajib diisi.'; errEl.style.display = 'block'; return }
+  if (!isi)   { errEl.textContent = 'Isi post wajib diisi.'; errEl.style.display = 'block'; return }
+
+  btnSub.disabled = true
+  btnSub.textContent = 'Mengirim...'
+
+  try {
+    const { error } = await supabase.from('forum_post_requests').insert({
+      requester_id: user.id,
+      judul:        judul,
+      isi:          isi,
+      tags:         [kat],
+      is_anonim:    isAnon,
+    })
+    if (error) throw error
+
+    modal.classList.remove('open')
+    document.getElementById('postJudul').value = ''
+    document.getElementById('postIsi').value   = ''
+    document.getElementById('postAnonim').checked = false
+    alert('Topikmu sudah dikirim ke konselor. Tunggu sampai di-review ya!')
+  } catch (err) {
+    errEl.textContent = 'Gagal mengirim: ' + (err.message || 'Coba lagi.')
+    errEl.style.display = 'block'
+  } finally {
+    btnSub.disabled = false
+    btnSub.textContent = 'Kirim ke Konselor'
+  }
+})
+
+// ── Init ──
+fetchPosts(true)
+</script>
+</body>
+</html>

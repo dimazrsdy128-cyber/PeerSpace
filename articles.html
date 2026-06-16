@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artikel & Insight - PeerSpace</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root {
+            --bg-dark: #000000;
+            --card-dark: #141214;
+            --border-dark: rgba(255,255,255,0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-purple: #8b5cf6;
+        }
+
+        body { background-color: var(--bg-dark); color: var(--text-main); margin: 0; font-family: 'Inter', sans-serif; }
+
+        .landing-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        /* HEADER SECTION */
+        .page-header { padding: 150px 0 60px; text-align: center; }
+        .page-header h1 { font-size: 3rem; letter-spacing: -2px; margin-bottom: 15px; }
+        .page-header p { color: var(--text-muted); max-width: 600px; margin: 0 auto; }
+
+        /* ARTICLE GRID */
+        .article-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+            padding-bottom: 100px;
+        }
+
+        .article-card {
+            background: var(--card-dark);
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid var(--border-dark);
+            transition: 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .article-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-purple);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .article-thumbnail {
+            height: 200px;
+            width: 100%;
+            background: #222;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .article-content { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
+
+        .article-category {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 800;
+            color: var(--accent-purple);
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .article-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            text-decoration: none;
+            line-height: 1.4;
+            margin-bottom: 15px;
+            transition: 0.2s;
+        }
+
+        .article-title:hover { color: var(--accent-purple); }
+
+        .article-excerpt {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 25px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .article-meta {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .article-author { display: flex; align-items: center; gap: 10px; }
+        .article-author img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+
+        /* THUMBNAIL PLACEHOLDERS (Ganti dengan path aslimu) */
+        .thumb-1 { background-image: url('https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=400'); }
+        .thumb-2 { background-image: url('https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=400'); }
+        .thumb-3 { background-image: url('https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=400'); }
+    </style>
+</head>
+<body>
+
+    <nav class="topbar" style="position: fixed; width: 100%; border-bottom: 1px solid var(--border-color); z-index: 9999; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);">
+        <div class="landing-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 0;">
+            <div style="font-weight: 800; font-size: 1.5rem; color: var(--accent-purple);">PeerSpace.</div>
+            <div style="display: flex; gap: 30px; align-items: center;">
+                <a href="index.html" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">Beranda</a>
+                <a href="counselors.html" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">Konselor</a>
+                <a href="articles.html" style="color: #fff; text-decoration: none; font-size: 0.9rem; font-weight: 600;">Artikel</a>
+                <a href="auth/login.html" class="btn-primary" style="padding: 8px 20px; width: auto; font-size: 0.85rem;">Masuk</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="landing-container">
+        <header class="page-header">
+            <h1>Pojok Baca & Insight</h1>
+            <p>Kumpulan tips, cerita, dan panduan untuk navigasi kehidupan kampus yang lebih sehat.</p>
+        </header>
+
+        <div class="article-grid">
+            <article class="article-card">
+                <div class="article-thumbnail thumb-1"></div>
+                <div class="article-content">
+                    <span class="article-category">Mental Health</span>
+                    <a href="article-detail.html" class="article-title">Mengatasi Burnout di Pertengahan Semester, Harus Gimana?</a>
+                    <p class="article-excerpt">Tugas numpuk, rapat organisasi jalan terus, dan jam tidur makin berantakan. Jangan sampai tumbang, yuk kenali gejalanya.</p>
+                    <div class="article-meta">
+                        <div class="article-author">
+                            <img src="https://ui-avatars.com/api/?name=Dimaz&background=8b5cf6&color=fff" alt="Author">
+                            <span>Kak Dimaz</span>
+                        </div>
+                        <span>25 Apr 2026</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="article-card">
+                <div class="article-thumbnail thumb-2"></div>
+                <div class="article-content">
+                    <span class="article-category">Karier & Akademik</span>
+                    <a href="article-detail2.html" class="article-title">Quarter Life Crisis: Bingung Lulus Mau Jadi Apa?</a>
+                    <p class="article-excerpt">Melihat teman sudah magang sementara kita masih bingung judul TA. Tenang, ini cara memetakan timeline pribadimu.</p>
+                    <div class="article-meta">
+                        <div class="article-author">
+                            <img src="https://ui-avatars.com/api/?name=Ojan&background=3b82f6&color=fff" alt="Author">
+                            <span>Ojan PC</span>
+                        </div>
+                        <span>20 Apr 2026</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="article-card">
+                <div class="article-thumbnail thumb-3"></div>
+                <div class="article-content">
+                    <span class="article-category">Sosial</span>
+                    <a href="article-detail3.html" class="article-title">Seni Berkata "Tidak" Pada Ajakan Nongkrong yang Toxic</a>
+                    <p class="article-excerpt">FOMO bikin kita capek. Belajar menetapkan batasan adalah kunci kesehatan mental di lingkungan kampus.</p>
+                    <div class="article-meta">
+                        <div class="article-author">
+                            <img src="https://ui-avatars.com/api/?name=Adila&background=22c55e&color=fff" alt="Author">
+                            <span>Adila Database</span>
+                        </div>
+                        <span>18 Apr 2026</span>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <footer style="padding: 60px 0; border-top: 1px solid var(--border-dark); text-align: center; color: var(--text-muted);">
+        <p>© 2026 PeerSpace — Portal Konseler Sebaya Polimedia</p>
+    </footer>
+
+</body>
+</html>

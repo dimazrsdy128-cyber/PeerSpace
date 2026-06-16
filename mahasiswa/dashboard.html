@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - PeerSpace</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        .schedule-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .schedule-item:last-child { border-bottom: none; }
+        .schedule-info h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
+        .schedule-info p  { font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-pending  { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .badge-accepted { background: rgba(34,197,94,0.15);  color: #22c55e; }
+        .skeleton { background: linear-gradient(90deg, #1a1a1a 25%, #242424 50%, #1a1a1a 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* ── Kuesioner section (gaya sama dengan dashboard konselor) ── */
+        .chart-section { display: flex; flex-direction: column; gap: 24px; margin-top: 24px; }
+        .chart-card { background: #141214; border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; overflow: hidden; }
+        .chart-card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 24px 16px; border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .chart-card-header h3 {
+            font-size: 1rem; font-weight: 600; color: #fff; margin: 0;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .chart-card-header h3 i { color: var(--accent-purple); font-size: 1.1rem; }
+        .chart-card-header span.subtitle { font-size: 0.8rem; color: var(--text-secondary); }
+
+        .kuesioner-summary { display: flex; gap: 20px; padding: 18px 24px 4px; }
+        .kuesioner-summary-item { flex: 1; min-width: 0; }
+        .kuesioner-summary-value { font-size: 1.4rem; font-weight: 700; color: #fff; line-height: 1; }
+        .kuesioner-summary-label { font-size: 0.72rem; color: var(--text-secondary); margin-top: 4px; }
+
+        .chart-legend { display: flex; gap: 16px; align-items: center; padding: 0 24px 14px; font-size: 0.7rem; color: var(--text-secondary); }
+        .legend-dot { width: 9px; height: 9px; border-radius: 3px; display: inline-block; margin-right: 5px; vertical-align: middle; }
+
+        .chart-wrap { padding: 20px 24px 24px; }
+        .bar-chart { display: flex; align-items: flex-end; gap: 10px; height: 80px; }
+        .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+        .bar-pair { display: flex; gap: 3px; align-items: flex-end; width: 100%; }
+        .bar-pair .bar { flex: 1; }
+        .bar { width: 100%; border-radius: 5px 5px 0 0; background: linear-gradient(180deg, #8B2EFF, #5b1eaa); transition: height .8s cubic-bezier(.22,.68,0,1.2); min-height: 4px; }
+        .bar-min { background: transparent !important; border: 1.5px dashed #f59e0b88; border-bottom: none; }
+        .bar-val { font-size: 0.65rem; color: var(--text-secondary); }
+        .bar-label-judul { flex: 1; text-align: center; font-size: 0.62rem; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 2px; }
+
+        .pie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px; padding: 18px 24px 22px; }
+        .pie-item { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .pie-circle { width: 110px; height: 110px; border-radius: 50%; flex-shrink: 0; }
+        .pie-title { font-size: 0.72rem; color: #c4b8e8; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
+        .pie-stats { font-size: 0.68rem; color: var(--text-secondary); text-align: center; }
+        .pie-stats b { color: #e2d9f3; }
+
+        .empty-state { padding: 48px 24px; text-align: center; color: var(--text-secondary); }
+        .empty-state i { font-size: 2.5rem; margin-bottom: 10px; display: block; }
+        .empty-state p { margin: 0; font-size: 0.875rem; }
+        .empty-state .bx-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 992px) { .pie-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="app-wrapper">
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-content">
+        <header class="topbar" id="navbar-container"></header>
+        <div class="content-wrapper">
+            <h2 id="welcomeText">Selamat Datang! 👋</h2>
+            <p style="color: var(--text-secondary); margin-top: 8px; margin-bottom: 32px;">
+                Lihat ringkasan aktivitas dan jadwal konselingmu di sini.
+            </p>
+            <div class="grid-3">
+                <div class="card stat-card">
+                    <div class="stat-icon" style="background: rgba(139,92,246,0.1); color: var(--accent-purple);"><i class='bx bx-calendar-check'></i></div>
+                    <div class="stat-info"><h3 id="statSesi">—</h3><p>Sesi Selesai</p></div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon" style="background: rgba(59,130,246,0.1); color: #3b82f6;"><i class='bx bx-award'></i></div>
+                    <div class="stat-info"><h3 id="statKuesioner">—</h3><p>Kuesioner Selesai</p></div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon" style="background: rgba(34,197,94,0.1); color: #22c55e;"><i class='bx bx-time-five'></i></div>
+                    <div class="stat-info"><h3 id="statPending">—</h3><p>Booking Menunggu</p></div>
+                </div>
+            </div>
+
+            <!-- Chart kuesioner (system-wide), gaya sama dengan dashboard konselor -->
+            <div class="chart-section">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <h3><i class='bx bx-bar-chart-alt-2'></i> Rata-rata Skor Kuisioner</h3>
+                        <span class="subtitle">Pilihan ganda &amp; skala</span>
+                    </div>
+                    <div id="kuesioner-body">
+                        <div class="kuesioner-summary">
+                            <div class="kuesioner-summary-item"><div class="skeleton" style="width:60px;height:28px;margin-bottom:6px;"></div><div class="skeleton" style="width:110px;height:14px;"></div></div>
+                            <div class="kuesioner-summary-item"><div class="skeleton" style="width:60px;height:28px;margin-bottom:6px;"></div><div class="skeleton" style="width:110px;height:14px;"></div></div>
+                            <div class="kuesioner-summary-item"><div class="skeleton" style="width:60px;height:28px;margin-bottom:6px;"></div><div class="skeleton" style="width:110px;height:14px;"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <h3><i class='bx bx-pie-chart-alt'></i> Perbandingan Ya / Tidak</h3>
+                        <span class="subtitle">Per kuesioner</span>
+                    </div>
+                    <div id="yatidak-body">
+                        <div class="empty-state"><i class='bx bx-loader-alt bx-spin'></i><p>Memuat data…</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-top: 24px;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Jadwal Terdekat</h3>
+                        <a href="booking.html" style="color: var(--accent-purple); text-decoration: none; font-size: 0.85rem;">Lihat Semua</a>
+                    </div>
+                    <div id="jadwalContainer">
+                        <div class="skeleton" style="height:60px; margin-bottom:10px;"></div>
+                        <div class="skeleton" style="height:60px;"></div>
+                    </div>
+                </div>
+                <div class="card" style="border: 1px dashed rgba(255,255,255,0.1); text-align: center; padding: 30px;">
+                    <h3 style="font-size: 1rem; margin-bottom: 8px;">Butuh Teman Cerita?</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">Pilih konselor yang paling membuatmu nyaman.</p>
+                    <a href="booking.html" class="btn-primary" style="text-decoration: none; display: inline-block; width: 80%;">Buat Booking</a>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script type="module">
+    import { supabase } from '../assets/js/supabase-client.js'
+
+    // ── Guard ──
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { window.location.href = '../auth/login.html'; throw new Error('not auth') }
+    const user = session.user
+
+    // FIX: profiles.id = auth.users.id langsung (bukan user_id)
+    const { data: profile, error: profErr } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle()
+
+    if (profErr || !profile) {
+        window.location.href = '../auth/login.html'
+        throw new Error('no profile')
+    }
+
+    if (profile.role !== 'mahasiswa') {
+        window.location.href = profile.role === 'konselor'
+            ? '../konselor/dashboard.html'
+            : '../auth/login.html'
+        throw new Error('wrong role')
+    }
+
+    // FIX: pakai profile.nama (bukan full_name)
+    document.getElementById('welcomeText').textContent =
+        `Selamat Datang, ${profile.nama || 'Mahasiswa'}! 👋`
+
+    // ── Load sidebar & navbar ──
+    const loadUI = (id, path) =>
+        fetch(path).then(r => r.text()).then(html => {
+            document.getElementById(id).innerHTML = html
+        })
+
+    await loadUI('sidebar-container', '../shared/sidebar.html')
+
+    // Load navbar + isi data user langsung
+    const navHtml = await fetch('../shared/navbar.html').then(r => r.text())
+    const navContainer = document.getElementById('navbar-container')
+    navContainer.innerHTML = navHtml
+    const titleEl = navContainer.querySelector('#topbarTitle')
+    if (titleEl) titleEl.textContent = 'Dashboard'
+    const nameEl = navContainer.querySelector('#navUserName')
+    const roleEl = navContainer.querySelector('#navUserRole')
+    const avatarEl = navContainer.querySelector('#navAvatar')
+    if (nameEl) nameEl.textContent = profile.nama || user.email
+    if (roleEl) roleEl.textContent = { mahasiswa:'Mahasiswa', konselor:'Konselor', admin:'Admin' }[profile.role] || profile.role
+    if (avatarEl) avatarEl.src = profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.nama||'U')}&background=8B2EFF&color=fff`
+    const logoutBtn = navContainer.querySelector('#btnLogout')
+    if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+        await supabase.auth.signOut({ scope: 'local' })
+        Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+        window.location.href = '../auth/login.html'
+    })
+
+    // ── Pasang logout handler setelah sidebar di-load ──
+    const btnLogout = document.getElementById('btnLogout')
+    if (btnLogout) {
+        btnLogout.addEventListener('click', async (e) => {
+            e.preventDefault()
+            await supabase.auth.signOut({ scope: 'local' })
+            Object.keys(localStorage)
+                .filter(k => k.startsWith('sb-'))
+                .forEach(k => localStorage.removeItem(k))
+            window.location.href = '../auth/login.html'
+        })
+    }
+
+    // ── Booking ──
+    // FIX: cek nama kolom FK booking → kemungkinan mahasiswa_id atau user_id
+    // Pakai filter by user.id via mahasiswa_id dulu, fallback ke user_id
+    let bookings = []
+    const { data: b1 } = await supabase
+        .from('booking')
+        .select(`id, status, tanggal, sesi, konselor ( id, profiles ( nama ) )`)
+        .eq('mahasiswa_id', user.id)
+        .order('tanggal', { ascending: false })
+
+    if (b1 && b1.length > 0) {
+        bookings = b1
+    } else {
+        // fallback
+        const { data: b2 } = await supabase
+            .from('booking')
+            .select(`id, status, tanggal, sesi, konselor ( id, profiles ( nama ) )`)
+            .eq('user_id', user.id)
+            .order('tanggal', { ascending: false })
+        bookings = b2 ?? []
+    }
+
+    // ── Stats ──
+    document.getElementById('statSesi').textContent =
+        bookings.filter(b => ['done','selesai'].includes(b.status)).length
+
+    document.getElementById('statPending').textContent =
+        bookings.filter(b => ['pending','accepted'].includes(b.status)).length
+
+    const { count: jumlahKuesioner } = await supabase
+        .from('kuesioner_hasil')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+    document.getElementById('statKuesioner').textContent = jumlahKuesioner ?? 0
+
+    // ── Jadwal terdekat ──
+    const jadwalEl = document.getElementById('jadwalContainer')
+    const aktif    = bookings.filter(b => ['pending','accepted'].includes(b.status))
+
+    if (!aktif.length) {
+        jadwalEl.innerHTML = `<p style="color:var(--text-secondary);font-size:0.88rem;padding:16px 0;">
+            Belum ada jadwal mendatang.
+            <a href="booking.html" style="color:var(--accent-purple);">Buat booking sekarang</a>.
+        </p>`
+    } else {
+        jadwalEl.innerHTML = aktif.slice(0, 3).map(b => {
+            const namaKonselor = b.konselor?.profiles?.nama ?? 'Konselor'
+            const tgl = new Date(b.tanggal).toLocaleDateString('id-ID', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            })
+            const badgeClass = b.status === 'accepted' ? 'badge-accepted' : 'badge-pending'
+            const badgeLabel = b.status === 'accepted' ? 'Dikonfirmasi' : 'Menunggu'
+            return `
+            <div class="schedule-item">
+                <div class="schedule-info">
+                    <h4>Konseling dengan ${namaKonselor}</h4>
+                    <p><i class='bx bx-calendar'></i> ${tgl} • ${b.sesi ?? ''}</p>
+                </div>
+                <span class="badge ${badgeClass}">${badgeLabel}</span>
+            </div>`
+        }).join('')
+    }
+
+    // ── Rata-rata skor kuisioner (pilihan ganda + likert, system-wide) ──
+    async function loadKuesionerChart() {
+        const body = document.getElementById('kuesioner-body')
+
+        const { data, error } = await supabase
+            .from('kuesioner_hasil')
+            .select('skor_total, kuesioner:kuesioner_id ( id, judul, nilai_minimum )')
+
+        if (error) {
+            body.innerHTML = `<div class="empty-state"><i class='bx bx-error-circle'></i><p>Gagal memuat data kuisioner.</p></div>`
+            return
+        }
+
+        const rows = (data ?? []).filter(r => r.skor_total !== null && r.skor_total !== undefined)
+
+        if (!rows.length) {
+            body.innerHTML = `<div class="empty-state"><i class='bx bx-bar-chart-alt-2'></i><p>Belum ada hasil kuisioner dengan skor (pilihan ganda/skala).</p></div>`
+            return
+        }
+
+        // Group by kuesioner
+        const grouped = {}
+        rows.forEach(r => {
+            const kid = r.kuesioner?.id ?? 'unknown'
+            if (!grouped[kid]) grouped[kid] = {
+                judul: r.kuesioner?.judul ?? 'Tanpa judul',
+                nilaiMinimum: r.kuesioner?.nilai_minimum ?? null,
+                total: 0, count: 0
+            }
+            grouped[kid].total += Number(r.skor_total)
+            grouped[kid].count += 1
+        })
+
+        const entries = Object.values(grouped)
+            .map(v => ({ judul: v.judul, avg: v.total / v.count, count: v.count, min: v.nilaiMinimum }))
+            .sort((a, b) => b.avg - a.avg)
+            .slice(0, 8)
+
+        const totalKuesioner = Object.keys(grouped).length
+        const totalPengisian = rows.length
+        const overallAvg = (rows.reduce((a, r) => a + Number(r.skor_total), 0) / rows.length).toFixed(1)
+        const maxVal = Math.max(...entries.map(e => e.avg), ...entries.map(e => e.min ?? 0), 1)
+        const hasMinBar = entries.some(e => e.min !== null && e.min !== undefined)
+
+        body.innerHTML = `
+            <div class="kuesioner-summary">
+                <div class="kuesioner-summary-item">
+                    <div class="kuesioner-summary-value">${totalKuesioner}</div>
+                    <div class="kuesioner-summary-label">Kuesioner Memiliki Hasil</div>
+                </div>
+                <div class="kuesioner-summary-item">
+                    <div class="kuesioner-summary-value">${totalPengisian}</div>
+                    <div class="kuesioner-summary-label">Total Pengisian</div>
+                </div>
+                <div class="kuesioner-summary-item">
+                    <div class="kuesioner-summary-value">${overallAvg}</div>
+                    <div class="kuesioner-summary-label">Rata-rata Skor Keseluruhan</div>
+                </div>
+            </div>
+            ${hasMinBar ? `
+            <div class="chart-legend">
+                <span><span class="legend-dot" style="background:linear-gradient(180deg,#8B2EFF,#5b1eaa);"></span>Rata-rata skor</span>
+                <span><span class="legend-dot" style="border:1.5px dashed #f59e0b88;background:transparent;"></span>Nilai minimum</span>
+            </div>` : ''}
+            <div class="chart-wrap">
+                <div class="bar-chart">
+                    ${entries.map(e => {
+                        const hAvg = Math.round((e.avg / maxVal) * 70) || 4
+                        const hMin = e.min !== null && e.min !== undefined ? (Math.round((e.min / maxVal) * 70) || 2) : 0
+                        return `
+                        <div class="bar-col">
+                            <div class="bar-val">${e.avg.toFixed(1)}</div>
+                            <div class="bar-pair">
+                                <div class="bar" style="height:${hAvg}px;"></div>
+                                ${e.min !== null && e.min !== undefined ? `<div class="bar bar-min" style="height:${hMin}px;"></div>` : ''}
+                            </div>
+                        </div>`
+                    }).join('')}
+                </div>
+                <div style="display:flex;gap:10px;margin-top:4px;">
+                    ${entries.map(e => `<div class="bar-label-judul" title="${e.judul}">${e.judul}</div>`).join('')}
+                </div>
+            </div>`
+    }
+
+    // ── Perbandingan Ya/Tidak per kuesioner (system-wide) ────────
+    async function loadYaTidakChart() {
+        const body = document.getElementById('yatidak-body')
+
+        const [soalRes, hasilRes] = await Promise.all([
+            supabase
+                .from('kuesioner_soal')
+                .select('id, kuesioner_id, kuesioner:kuesioner_id ( judul )')
+                .eq('tipe_soal', 'ya_tidak'),
+            supabase
+                .from('kuesioner_hasil')
+                .select('jawaban, kuesioner_id'),
+        ])
+
+        if (soalRes.error || hasilRes.error) {
+            body.innerHTML = `<div class="empty-state"><i class='bx bx-error-circle'></i><p>Gagal memuat data ya/tidak.</p></div>`
+            return
+        }
+
+        const soalList = soalRes.data ?? []
+        if (!soalList.length) {
+            body.innerHTML = `<div class="empty-state"><i class='bx bx-pie-chart-alt'></i><p>Belum ada soal bertipe ya/tidak.</p></div>`
+            return
+        }
+
+        // Map kuesioner_id -> { judul, soalIds: Set }
+        const kuesionerMap = {}
+        soalList.forEach(s => {
+            if (!kuesionerMap[s.kuesioner_id]) {
+                kuesionerMap[s.kuesioner_id] = { judul: s.kuesioner?.judul ?? 'Tanpa judul', soalIds: new Set(), ya: 0, tidak: 0 }
+            }
+            kuesionerMap[s.kuesioner_id].soalIds.add(s.id)
+        })
+
+        ;(hasilRes.data ?? []).forEach(h => {
+            const k = kuesionerMap[h.kuesioner_id]
+            if (!k || !h.jawaban) return
+            k.soalIds.forEach(soalId => {
+                const val = h.jawaban[soalId]
+                if (val === 'Ya') k.ya++
+                else if (val === 'Tidak') k.tidak++
+            })
+        })
+
+        const entries = Object.values(kuesionerMap).filter(k => k.ya + k.tidak > 0)
+
+        if (!entries.length) {
+            body.innerHTML = `<div class="empty-state"><i class='bx bx-pie-chart-alt'></i><p>Belum ada jawaban ya/tidak.</p></div>`
+            return
+        }
+
+        body.innerHTML = `<div class="pie-grid">
+            ${entries.map(e => {
+                const total = e.ya + e.tidak
+                const yaPct = Math.round((e.ya / total) * 100)
+                const simpulan = yaPct >= 80
+                    ? { label: 'Kebanyakan mengetahui', cls: 'badge-accepted' }
+                    : yaPct >= 60
+                        ? { label: 'Cukup mengetahui', cls: 'badge-pending' }
+                        : { label: 'Kurang mengetahui', cls: 'badge-pending' }
+                return `
+                <div class="pie-item">
+                    <div class="pie-circle" style="background: conic-gradient(#8B2EFF 0 ${yaPct}%, rgba(255,255,255,0.08) ${yaPct}% 100%);"></div>
+                    <div class="pie-title" title="${e.judul}">${e.judul}</div>
+                    <div class="pie-stats"><b>${yaPct}%</b> Ya · <b>${100 - yaPct}%</b> Tidak</div>
+                    <span class="badge ${simpulan.cls}">${simpulan.label}</span>
+                </div>`
+            }).join('')}
+        </div>`
+    }
+
+    try {
+        await Promise.all([loadKuesionerChart(), loadYaTidakChart()])
+    } catch (e) {
+        console.error(e)
+    }
+</script>
+</body>
+</html>

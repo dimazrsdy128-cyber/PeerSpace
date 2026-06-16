@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Artikel — PeerSpace</title>
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <style>
+    :root {
+      --accent: #8B2EFF;
+      --accent-soft: rgba(139,46,255,.12);
+      --bg-p: var(--bg-primary, #0f0f1a);
+      --bg-s: var(--bg-secondary, #16162a);
+      --tx-p: var(--text-primary, #e2e2f0);
+      --tx-m: var(--text-muted, #888);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    .articles-page { padding: 32px 28px; max-width: 1200px; margin: 0 auto; }
+
+    /* ── Page header ── */
+    .page-hero {
+      margin-bottom: 36px;
+      padding: 36px 40px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(139,46,255,.18) 0%, rgba(26,16,55,.6) 60%, transparent 100%);
+      border: 1px solid rgba(139,46,255,.2);
+      position: relative; overflow: hidden;
+    }
+    .page-hero::before {
+      content: '';
+      position: absolute; top: -60px; right: -60px;
+      width: 240px; height: 240px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(139,46,255,.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .page-hero__tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--accent-soft); border: 1px solid rgba(139,46,255,.3);
+      color: #a855f7; padding: 4px 12px; border-radius: 99px;
+      font-size: .75rem; font-weight: 600; letter-spacing: .06em;
+      text-transform: uppercase; margin-bottom: 14px;
+    }
+    .page-hero__title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      color: var(--tx-p);
+      margin: 0 0 10px; line-height: 1.2;
+    }
+    .page-hero__sub {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--tx-m); font-size: .95rem; max-width: 520px;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex; gap: 12px; align-items: center;
+      flex-wrap: wrap; margin-bottom: 28px;
+    }
+    .search-wrap {
+      flex: 1; min-width: 220px; position: relative;
+    }
+    .search-wrap i {
+      position: absolute; left: 14px; top: 50%;
+      transform: translateY(-50%); color: var(--tx-m); font-size: 1.05rem;
+    }
+    .search-wrap input {
+      width: 100%;
+      background: var(--bg-s);
+      border: 1px solid rgba(139,46,255,.18);
+      border-radius: 12px; padding: 10px 14px 10px 40px;
+      color: var(--tx-p); font-size: .88rem; outline: none;
+      transition: border-color .2s; font-family: 'DM Sans', sans-serif;
+    }
+    .search-wrap input:focus { border-color: var(--accent); }
+
+    .category-tabs {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .cat-btn {
+      padding: 8px 16px; border-radius: 99px;
+      border: 1px solid rgba(139,46,255,.2);
+      background: transparent; color: var(--tx-m);
+      font-size: .82rem; font-weight: 500; cursor: pointer;
+      transition: all .18s; white-space: nowrap;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .cat-btn:hover { border-color: var(--accent); color: #a855f7; }
+    .cat-btn.active {
+      background: var(--accent); border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* ── Sort select ── */
+    .sort-select {
+      background: var(--bg-s); border: 1px solid rgba(139,46,255,.18);
+      border-radius: 12px; padding: 10px 14px; color: var(--tx-p);
+      font-size: .85rem; outline: none; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    /* ── Grid ── */
+    .articles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 22px;
+    }
+
+    /* ── Skeleton ── */
+    .skel { background: rgba(255,255,255,.06); border-radius: 8px; animation: shimmer 1.6s infinite; }
+    @keyframes shimmer { 0%,100%{opacity:.45} 50%{opacity:.9} }
+    .card-skeleton {
+      background: var(--bg-s);
+      border-radius: var(--radius); overflow: hidden;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .skel-img { height: 180px; border-radius: 0; }
+    .skel-body { padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+    .skel-tag { height: 20px; width: 70px; border-radius: 99px; }
+    .skel-title { height: 14px; }
+    .skel-title.short { width: 70%; }
+    .skel-line { height: 11px; }
+    .skel-line.short { width: 55%; }
+
+    /* ── Article card ── */
+    .article-card {
+      background: var(--bg-s);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .22s, border-color .22s, box-shadow .22s;
+      display: flex; flex-direction: column;
+      text-decoration: none;
+    }
+    .article-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(139,46,255,.4);
+      box-shadow: 0 12px 40px rgba(139,46,255,.15);
+    }
+    .card-img {
+      width: 100%; height: 190px; object-fit: cover;
+      background: linear-gradient(135deg, rgba(139,46,255,.15), rgba(26,16,55,.8));
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .card-img img { width: 100%; height: 100%; object-fit: cover; }
+    .card-img-placeholder { color: rgba(139,46,255,.4); font-size: 2.8rem; }
+    .card-body { padding: 18px 20px; flex: 1; display: flex; flex-direction: column; }
+    .card-category {
+      display: inline-block; padding: 3px 10px; border-radius: 99px;
+      font-size: .72rem; font-weight: 600; letter-spacing: .05em;
+      text-transform: uppercase; margin-bottom: 10px;
+      background: var(--accent-soft); color: #a855f7;
+      border: 1px solid rgba(139,46,255,.25);
+    }
+    .card-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.05rem; line-height: 1.4;
+      color: var(--tx-p); margin: 0 0 8px;
+      display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .card-excerpt {
+      font-family: 'DM Sans', sans-serif;
+      font-size: .83rem; color: var(--tx-m); line-height: 1.6;
+      display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+      flex: 1;
+    }
+    .card-footer {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 16px; padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+    .card-author-avatar {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      background: var(--accent-soft); overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .72rem; font-weight: 700; color: #a855f7;
+    }
+    .card-author-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .card-author-name {
+      font-family: 'DM Sans', sans-serif;
+      font-size: .8rem; font-weight: 600; color: var(--tx-p);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
+    }
+    .card-meta-right {
+      display: flex; gap: 10px; align-items: center; flex-shrink: 0;
+    }
+    .card-stat {
+      font-size: .75rem; color: var(--tx-m);
+      display: flex; align-items: center; gap: 4px;
+    }
+    .card-stat i { font-size: .9rem; }
+
+    /* Featured card (first one) */
+    .article-card.featured {
+      grid-column: 1 / -1;
+      flex-direction: row;
+    }
+    .article-card.featured .card-img {
+      width: 42%; height: auto; min-height: 240px; flex-shrink: 0;
+    }
+    .article-card.featured .card-title { font-size: 1.3rem; }
+    .article-card.featured .card-excerpt { -webkit-line-clamp: 4; line-clamp: 4; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center; padding: 60px 20px;
+      color: var(--tx-m);
+    }
+    .empty-state i { font-size: 3rem; color: rgba(139,46,255,.3); display: block; margin-bottom: 12px; }
+    .empty-state p { font-family: 'DM Sans', sans-serif; font-size: .95rem; }
+
+    /* ── Load more ── */
+    .load-more-wrap { text-align: center; margin-top: 36px; }
+    .load-more-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent; border: 1px solid rgba(139,46,255,.35);
+      color: #a855f7; padding: 11px 28px; border-radius: 12px;
+      font-family: 'DM Sans', sans-serif; font-size: .9rem; font-weight: 600;
+      cursor: pointer; transition: background .2s, transform .15s;
+    }
+    .load-more-btn:hover { background: var(--accent-soft); transform: translateY(-1px); }
+    .load-more-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Toast ── */
+    .toast-container { position: fixed; top: 18px; right: 18px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+    .toast { padding: 10px 18px; border-radius: 10px; font-size: .85rem; font-weight: 500; color: #fff; animation: fadeIn .3s; }
+    .toast.error { background: rgba(239,68,68,.9); }
+    @keyframes fadeIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:none} }
+
+    @media(max-width:700px) {
+      .articles-page { padding: 20px 14px; }
+      .article-card.featured { flex-direction: column; grid-column: auto; }
+      .article-card.featured .card-img { width: 100%; height: 200px; }
+      .page-hero { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-wrapper">
+    <aside class="sidebar" id="sidebar-container"></aside>
+
+    <div class="main-content">
+      <header class="topbar" id="navbar-container"></header>
+
+      <div class="content-wrapper">
+        <div class="toast-container" id="toastContainer"></div>
+
+      <div class="articles-page">
+        <!-- Hero -->
+        <div class="page-hero">
+          <div class="page-hero__tag"><i class='bx bx-book-open'></i> Perpustakaan</div>
+          <h1 class="page-hero__title">Artikel &amp; Wawasan</h1>
+          <p class="page-hero__sub">Kumpulan tulisan dari konselor kami tentang kesehatan mental, produktivitas, dan kesejahteraan mahasiswa.</p>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <div class="search-wrap">
+            <i class='bx bx-search'></i>
+            <input type="text" id="searchInput" placeholder="Cari artikel, topik, penulis..." />
+          </div>
+          <div class="category-tabs" id="categoryTabs">
+            <button class="cat-btn active" data-cat="">Semua</button>
+            <!-- filled dynamically -->
+          </div>
+          <select class="sort-select" id="sortSelect">
+            <option value="newest">Terbaru</option>
+            <option value="oldest">Terlama</option>
+            <option value="popular">Terpopuler</option>
+          </select>
+        </div>
+
+        <!-- Grid -->
+        <div class="articles-grid" id="articlesGrid"></div>
+
+        <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
+          <button class="load-more-btn" id="loadMoreBtn">
+            <i class='bx bx-refresh'></i> Muat lebih banyak
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <script type="module">
+    import { supabase } from '../assets/js/supabase-client.js'
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { window.location.href = '../auth/login.html'; throw new Error() }
+
+    // ── Shared UI ──────────────────────────────────────────
+    const loadUI = (id, path) =>
+      fetch(path).then(r => r.text()).then(html => { document.getElementById(id).innerHTML = html }).catch(()=>{})
+    loadUI('sidebar-container', '../shared/sidebar.html')
+    fetch('../shared/navbar.html').then(r => r.text()).then(async html => {
+      const container = document.getElementById('navbar-container')
+      container.innerHTML = html
+      const titleEl = container.querySelector('#topbarTitle')
+      if (titleEl) titleEl.textContent = 'Artikel'
+      const { data: profile } = await supabase.from('profiles').select('nama,role,avatar_url').eq('id', user.id).single()
+      if (profile) {
+        const nameEl = container.querySelector('#navUserName')
+        const roleEl = container.querySelector('#navUserRole')
+        const avatarEl = container.querySelector('#navAvatar')
+        if (nameEl) nameEl.textContent = profile.nama || user.email
+        if (roleEl) roleEl.textContent = { mahasiswa:'Mahasiswa', konselor:'Konselor', admin:'Admin' }[profile.role] || profile.role
+        if (avatarEl) avatarEl.src = profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.nama||'U')}&background=8B2EFF&color=fff`
+      }
+      const logoutBtn = container.querySelector('#btnLogout')
+      if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+        await supabase.auth.signOut({ scope: 'local' })
+        window.location.href = '../auth/login.html'
+      })
+    })
+
+    // ── State ──────────────────────────────────────────────
+    const PAGE_SIZE = 9
+    let allArticles = []
+    let categories = new Set()
+    let activeCategory = ''
+    let searchQuery = ''
+    let sortMode = 'newest'
+    let page = 0
+    let hasMore = false
+
+    // ── Toast ──────────────────────────────────────────────
+    function toast(msg, type = 'error') {
+      const c = document.getElementById('toastContainer')
+      const t = document.createElement('div')
+      t.className = `toast ${type}`; t.textContent = msg; c.appendChild(t)
+      setTimeout(() => t.remove(), 3500)
+    }
+
+    // ── Fetch articles ────────────────────────────────────
+    async function fetchArticles(reset = true) {
+      if (reset) { page = 0; allArticles = [] }
+
+      const from = page * PAGE_SIZE
+      const to = from + PAGE_SIZE - 1
+
+      let query = supabase
+        .from('articles')
+        .select(`
+          id, judul, konten, cover_url, tags, views, created_at,
+          author:author_id ( id, full_name, avatar_url )
+        `, { count: 'exact' })
+        .eq('status', 'published')
+        .range(from, to)
+
+      if (activeCategory) query = query.contains('tags', [activeCategory])
+      if (searchQuery) query = query.ilike('judul', `%${searchQuery}%`)
+
+      switch (sortMode) {
+        case 'oldest': query = query.order('created_at', { ascending: true }); break
+        case 'popular': query = query.order('views', { ascending: false }); break
+        default: query = query.order('created_at', { ascending: false })
+      }
+
+      const { data, error, count } = await query
+
+      if (error) { toast('Gagal memuat artikel.'); renderEmpty(); return }
+
+      allArticles = reset ? (data || []) : [...allArticles, ...(data || [])]
+      hasMore = (from + PAGE_SIZE) < (count || 0)
+
+      // Collect categories
+      if (reset) {
+        const { data: catData } = await supabase
+        .from('articles')
+        .select('tags')
+        .eq('status', 'published')
+        .not('tags', 'is', null)
+      if (catData) catData.forEach(r => { if (r.tags) r.tags.forEach(t => categories.add(t)) })
+        renderCategories()
+      }
+
+      renderArticles(reset)
+      document.getElementById('loadMoreWrap').style.display = hasMore ? 'block' : 'none'
+      page++
+    }
+
+    // ── Render categories ──────────────────────────────────
+    function renderCategories() {
+      const tabs = document.getElementById('categoryTabs')
+      tabs.innerHTML = `<button class="cat-btn ${activeCategory===''?'active':''}" data-cat="">Semua</button>`
+      categories.forEach(cat => {
+        const btn = document.createElement('button')
+        btn.className = `cat-btn ${activeCategory===cat?'active':''}`
+        btn.dataset.cat = cat
+        btn.textContent = cat
+        tabs.appendChild(btn)
+      })
+      tabs.querySelectorAll('.cat-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeCategory = btn.dataset.cat
+          tabs.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'))
+          btn.classList.add('active')
+          fetchArticles(true)
+        })
+      })
+    }
+
+    // ── Render articles ────────────────────────────────────
+    function renderArticles(reset) {
+      const grid = document.getElementById('articlesGrid')
+      if (reset) grid.innerHTML = ''
+
+      if (!allArticles.length) { renderEmpty(); return }
+
+      allArticles.forEach((art, idx) => {
+        const profile = art.author || {}
+        const name = profile.nama || 'Konselor'
+        const initials = name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()
+        const avatarUrl = profile.avatar_url
+        const isFeatured = idx === 0 && reset && !activeCategory && !searchQuery
+
+        const dateStr = new Date(art.created_at).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })
+        const views = art.views || 0
+        const firstTag = art.tags?.[0] || ''
+
+        const card = document.createElement('a')
+        card.className = `article-card${isFeatured?' featured':''}`
+        card.href = `artikel-detail.html?id=${art.id}`
+
+        card.innerHTML = `
+          <div class="card-img">
+            ${art.cover_url
+              ? `<img src="${art.cover_url}" alt="${escHtml(art.judul)}" loading="lazy" class="card-cover-img">`
+              : `<i class='bx bx-news card-img-placeholder'></i>`}
+          </div>
+          <div class="card-body">
+            ${firstTag ? `<span class="card-category">${escHtml(firstTag)}</span>` : ''}
+            <h2 class="card-title">${escHtml(art.judul)}</h2>
+            <p class="card-excerpt">${escHtml(stripHtml(art.konten || ''))}</p>
+            ...
+            <span class="card-stat"><i class='bx bx-show'></i>${fmtNum(views)}</span>
+              </div>
+            </div>
+          </div>`
+
+        grid.appendChild(card)
+      })
+
+      // Handle broken cover images via event delegation
+      grid.querySelectorAll('.card-cover-img').forEach(img => {
+        img.addEventListener('error', () => {
+          img.parentElement.innerHTML = "<i class='bx bx-news card-img-placeholder'></i>"
+        })
+      })
+    }
+
+    function renderEmpty() {
+      document.getElementById('articlesGrid').innerHTML = `
+        <div class="empty-state">
+          <i class='bx bx-book-open'></i>
+          <p>Belum ada artikel yang ditemukan.</p>
+        </div>`
+    }
+
+    // ── Helpers ────────────────────────────────────────────
+    function escHtml(str) {
+      return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    }
+    function stripHtml(html) { return html.replace(/<[^>]+>/g, '').slice(0, 180) }
+    function fmtNum(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n) }
+
+    // ── Event listeners ────────────────────────────────────
+    let searchTimer
+    document.getElementById('searchInput').addEventListener('input', e => {
+      clearTimeout(searchTimer)
+      searchTimer = setTimeout(() => { searchQuery = e.target.value.trim(); fetchArticles(true) }, 400)
+    })
+
+    document.getElementById('sortSelect').addEventListener('change', e => {
+      sortMode = e.target.value; fetchArticles(true)
+    })
+
+    document.getElementById('loadMoreBtn').addEventListener('click', () => {
+      const btn = document.getElementById('loadMoreBtn')
+      btn.disabled = true; btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Memuat...`
+      fetchArticles(false).finally(() => {
+        btn.disabled = false; btn.innerHTML = `<i class='bx bx-refresh'></i> Muat lebih banyak`
+      })
+    })
+
+    // ── Init ───────────────────────────────────────────────
+    // Show skeleton while loading
+    document.getElementById('articlesGrid').innerHTML = [1,2,3,4,5,6].map(()=>`
+      <div class="card-skeleton">
+        <div class="skel skel-img"></div>
+        <div class="skel-body">
+          <div class="skel skel-tag"></div>
+          <div class="skel skel-title"></div>
+          <div class="skel skel-title short"></div>
+          <div class="skel skel-line" style="margin-top:6px"></div>
+          <div class="skel skel-line short"></div>
+        </div>
+      </div>`).join('')
+
+    await fetchArticles(true)
+  </script>
+</body>
+</html>

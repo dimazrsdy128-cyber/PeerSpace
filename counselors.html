@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daftar Konselor — PeerSpace</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <style>
+    /* ── Layout ── */
+    .page-wrapper { display: flex; min-height: 100vh; background: var(--bg-primary, #0f0f17); }
+    .main-content { flex: 1; display: flex; flex-direction: column; overflow-x: hidden; }
+    .content-area { padding: 2rem 2.5rem; flex: 1; }
+
+    /* ── Hero strip ── */
+    .counselors-hero {
+      background: linear-gradient(135deg, #1a0a2e 0%, #16002e 50%, #0f0f17 100%);
+      border-bottom: 1px solid rgba(139,46,255,.18);
+      padding: 2.5rem 2.5rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .counselors-hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 80% at 80% 50%, rgba(139,46,255,.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-title {
+      font-size: 1.9rem; font-weight: 800; color: #fff;
+      margin: 0 0 .4rem;
+    }
+    .hero-title span { color: #8B2EFF; }
+    .hero-sub { color: rgba(255,255,255,.5); font-size: .95rem; margin: 0; }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex; align-items: center; gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+    .search-wrap {
+      position: relative; flex: 1; min-width: 220px;
+    }
+    .search-wrap i {
+      position: absolute; left: .9rem; top: 50%; transform: translateY(-50%);
+      color: rgba(255,255,255,.35); font-size: 1.1rem;
+    }
+    .search-input {
+      width: 100%; padding: .65rem .9rem .65rem 2.5rem;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px; color: #fff; font-size: .9rem;
+      transition: border-color .2s;
+    }
+    .search-input:focus { outline: none; border-color: #8B2EFF; }
+    .search-input::placeholder { color: rgba(255,255,255,.3); }
+
+    .filter-select {
+      padding: .65rem 1rem;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px; color: #fff; font-size: .9rem;
+      cursor: pointer; transition: border-color .2s;
+    }
+    .filter-select:focus { outline: none; border-color: #8B2EFF; }
+    .filter-select option { background: #1a0a2e; }
+
+    .count-badge {
+      background: rgba(139,46,255,.18); border: 1px solid rgba(139,46,255,.3);
+      color: #b86fff; padding: .35rem .85rem; border-radius: 20px;
+      font-size: .82rem; font-weight: 600; white-space: nowrap;
+    }
+
+    /* ── Grid ── */
+    .counselors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.4rem;
+    }
+
+    /* ── Card ── */
+    .counselor-card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px; padding: 1.5rem;
+      display: flex; flex-direction: column; gap: 1rem;
+      transition: transform .22s, border-color .22s, box-shadow .22s;
+      cursor: pointer; text-decoration: none; color: inherit;
+    }
+    .counselor-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(139,46,255,.45);
+      box-shadow: 0 8px 32px rgba(139,46,255,.15);
+    }
+
+    .card-top { display: flex; align-items: center; gap: 1rem; }
+    .avatar-wrap { position: relative; flex-shrink: 0; }
+    .avatar-img {
+      width: 64px; height: 64px; border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(139,46,255,.4);
+    }
+    .avatar-placeholder {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, #8B2EFF, #5a00cc);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 700; color: #fff;
+      border: 2px solid rgba(139,46,255,.4);
+    }
+    .status-dot {
+      position: absolute; bottom: 2px; right: 2px;
+      width: 12px; height: 12px; border-radius: 50%;
+      border: 2px solid #0f0f17;
+    }
+    .status-dot.online  { background: #22c55e; }
+    .status-dot.offline { background: #64748b; }
+
+    .card-info { flex: 1; overflow: hidden; }
+    .card-name {
+      font-size: 1rem; font-weight: 700; color: #fff;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin: 0 0 .2rem;
+    }
+    .card-title {
+      font-size: .8rem; color: #8B2EFF; font-weight: 600;
+      margin: 0 0 .3rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .card-exp { font-size: .78rem; color: rgba(255,255,255,.45); margin: 0; }
+
+    /* Spesialisasi chips */
+    .card-specs {
+      display: flex; flex-wrap: wrap; gap: .4rem;
+    }
+    .spec-chip {
+      background: rgba(139,46,255,.14); border: 1px solid rgba(139,46,255,.25);
+      color: #b86fff; padding: .2rem .65rem; border-radius: 20px;
+      font-size: .73rem; font-weight: 500;
+    }
+    .spec-chip.more {
+      background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.12);
+      color: rgba(255,255,255,.45);
+    }
+
+    /* Stats row */
+    .card-stats {
+      display: flex; gap: 1.2rem;
+      padding-top: .8rem;
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+    .stat-item { display: flex; align-items: center; gap: .35rem; }
+    .stat-item i { font-size: .95rem; }
+    .stat-item .val { font-size: .85rem; font-weight: 700; color: #fff; }
+    .stat-item .lbl { font-size: .73rem; color: rgba(255,255,255,.4); }
+    .stat-star i  { color: #f59e0b; }
+    .stat-book i  { color: #8B2EFF; }
+
+    /* Booking button */
+    .btn-book {
+      display: flex; align-items: center; justify-content: center; gap: .4rem;
+      background: linear-gradient(135deg, #8B2EFF, #6d00e8);
+      color: #fff; border: none; border-radius: 10px;
+      padding: .6rem 1rem; font-size: .85rem; font-weight: 600;
+      cursor: pointer; transition: opacity .2s, transform .15s;
+      text-decoration: none;
+      margin-top: auto;
+    }
+    .btn-book:hover { opacity: .88; transform: scale(1.02); }
+
+    /* ── Skeleton ── */
+    @keyframes shimmer {
+      0%   { background-position: -400px 0; }
+      100% { background-position: 400px 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg,
+        rgba(255,255,255,.06) 25%,
+        rgba(255,255,255,.12) 50%,
+        rgba(255,255,255,.06) 75%);
+      background-size: 400px 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 8px;
+    }
+    .sk-avatar { width: 64px; height: 64px; border-radius: 50%; }
+    .sk-line { height: 12px; }
+    .sk-line.short { width: 55%; }
+    .sk-line.medium { width: 75%; }
+    .sk-line.long  { width: 90%; }
+    .sk-btn { height: 36px; border-radius: 10px; }
+    .sk-chip { width: 70px; height: 22px; border-radius: 20px; }
+
+    /* ── Empty & error ── */
+    .empty-state, .error-state {
+      grid-column: 1/-1;
+      text-align: center; padding: 4rem 2rem; color: rgba(255,255,255,.4);
+    }
+    .empty-state i { font-size: 3rem; margin-bottom: 1rem; display: block; color: rgba(139,46,255,.4); }
+    .error-state i { font-size: 3rem; margin-bottom: 1rem; display: block; color: #ef4444; }
+    .empty-state p, .error-state p { font-size: .95rem; margin: 0; }
+    .retry-btn {
+      margin-top: 1rem;
+      background: rgba(139,46,255,.2); border: 1px solid rgba(139,46,255,.4);
+      color: #b86fff; padding: .5rem 1.2rem; border-radius: 8px;
+      cursor: pointer; font-size: .85rem;
+    }
+    .retry-btn:hover { background: rgba(139,46,255,.35); }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .content-area { padding: 1.2rem; }
+      .counselors-hero { padding: 1.5rem 1.2rem 1.2rem; }
+      .hero-title { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrapper">
+  <div id="sidebar-container"></div>
+
+  <div class="main-content">
+    <div id="navbar-container"></div>
+
+    <!-- Hero -->
+    <div class="counselors-hero">
+      <h1 class="hero-title">Temukan <span>Konselor</span> Terbaik</h1>
+      <p class="hero-sub">Profesional siap membantu perjalanan akademik & mentalmu</p>
+    </div>
+
+    <div class="content-area">
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="search-wrap">
+          <i class='bx bx-search'></i>
+          <input type="text" class="search-input" id="searchInput"
+                 placeholder="Cari nama atau spesialisasi..." />
+        </div>
+        <select class="filter-select" id="filterSpesialisasi">
+          <option value="">Semua Spesialisasi</option>
+        </select>
+        <select class="filter-select" id="filterStatus">
+          <option value="">Semua Status</option>
+          <option value="online">Tersedia</option>
+          <option value="offline">Tidak Tersedia</option>
+        </select>
+        <span class="count-badge" id="countBadge">Memuat...</span>
+      </div>
+
+      <!-- Grid -->
+      <div class="counselors-grid" id="counselorsGrid">
+        <!-- skeleton -->
+        ${Array(6).fill(0).map(() => `
+        <div class="counselor-card" style="pointer-events:none">
+          <div class="card-top">
+            <div class="skeleton sk-avatar"></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:.5rem">
+              <div class="skeleton sk-line medium"></div>
+              <div class="skeleton sk-line short"></div>
+              <div class="skeleton sk-line short" style="width:40%"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:.4rem">
+            <div class="skeleton sk-chip"></div>
+            <div class="skeleton sk-chip"></div>
+          </div>
+          <div class="skeleton sk-btn"></div>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { supabase } from '../assets/js/supabase-client.js'
+
+// ── Auth guard (opsional untuk halaman publik — tapi tetap cek agar bisa tampil tombol booking) ──
+let currentUser = null
+try {
+  const { data: { user } } = await supabase.auth.getUser()
+  currentUser = user
+} catch (_) {}
+
+// ── Load shared UI ──
+const loadUI = (id, path) =>
+  fetch(path).then(r => r.text()).then(html => {
+    const el = document.getElementById(id)
+    if (el) el.innerHTML = html
+  }).catch(() => {})
+
+loadUI('sidebar-container', 'shared/sidebar.html')
+loadUI('navbar-container',  'shared/navbar.html')
+
+// ── State ──
+let allKonselor = []
+let filteredKonselor = []
+
+// ── Fetch data ──
+async function fetchKonselor () {
+  const grid = document.getElementById('counselorsGrid')
+
+  try {
+    // Ambil konselor + join profiles + hitung booking & rata-rata review
+    const { data, error } = await supabase
+      .from('konselor')
+      .select(`
+        id,
+        user_id,
+        spesialisasi,
+        pengalaman_tahun,
+        is_available,
+        profiles (
+          full_name,
+          avatar_url,
+          bio
+        ),
+        booking (count),
+        reviews (rating)
+      `)
+      .order('id')
+
+    if (error) throw error
+
+    allKonselor = (data || []).map(k => {
+      const totalBooking = k.booking?.[0]?.count ?? 0
+      const ratings = (k.reviews || []).map(r => r.rating).filter(Boolean)
+      const avgRating = ratings.length
+        ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
+        : null
+      const specs = k.spesialisasi
+        ? k.spesialisasi.split(',').map(s => s.trim()).filter(Boolean)
+        : []
+      return { ...k, totalBooking, avgRating, specs }
+    })
+
+    // Isi dropdown spesialisasi
+    const allSpecs = [...new Set(allKonselor.flatMap(k => k.specs))].sort()
+    const sel = document.getElementById('filterSpesialisasi')
+    allSpecs.forEach(s => {
+      const opt = document.createElement('option')
+      opt.value = s; opt.textContent = s
+      sel.appendChild(opt)
+    })
+
+    applyFilter()
+  } catch (err) {
+    console.error('Gagal memuat konselor:', err)
+    grid.innerHTML = `
+      <div class="error-state">
+        <i class='bx bx-error-circle'></i>
+        <p>Gagal memuat data konselor.</p>
+        <button class="retry-btn" onclick="location.reload()">Coba Lagi</button>
+      </div>`
+  }
+}
+
+// ── Render ──
+function renderCards (list) {
+  const grid = document.getElementById('counselorsGrid')
+  document.getElementById('countBadge').textContent = `${list.length} Konselor`
+
+  if (!list.length) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <i class='bx bx-user-x'></i>
+        <p>Tidak ada konselor yang sesuai filter.</p>
+      </div>`
+    return
+  }
+
+  grid.innerHTML = list.map(k => {
+    const name    = k.profiles?.full_name || 'Konselor'
+    const initials = name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()
+    const avatarHtml = k.profiles?.avatar_url
+      ? `<img class="avatar-img" src="${k.profiles.avatar_url}" alt="${name}" loading="lazy" />`
+      : `<div class="avatar-placeholder">${initials}</div>`
+
+    const statusClass = k.is_available ? 'online' : 'offline'
+    const statusLabel = k.is_available ? 'Tersedia' : 'Tidak Tersedia'
+
+    const specChips = k.specs.slice(0, 3).map(s =>
+      `<span class="spec-chip">${s}</span>`).join('')
+    const moreChip  = k.specs.length > 3
+      ? `<span class="spec-chip more">+${k.specs.length - 3}</span>` : ''
+
+    const ratingHtml = k.avgRating
+      ? `<div class="stat-item stat-star">
+           <i class='bx bxs-star'></i>
+           <span class="val">${k.avgRating}</span>
+           <span class="lbl">rating</span>
+         </div>`
+      : `<div class="stat-item stat-star">
+           <i class='bx bx-star'></i>
+           <span class="val">—</span>
+           <span class="lbl">rating</span>
+         </div>`
+
+    const bookingUrl = currentUser
+      ? `mahasiswa/booking.html?konselor=${k.id}`
+      : `auth/login.html?redirect=mahasiswa/booking.html?konselor=${k.id}`
+
+    return `
+    <div class="counselor-card" onclick="location.href='${bookingUrl}'">
+      <div class="card-top">
+        <div class="avatar-wrap">
+          ${avatarHtml}
+          <span class="status-dot ${statusClass}" title="${statusLabel}"></span>
+        </div>
+        <div class="card-info">
+          <p class="card-name">${name}</p>
+          <p class="card-title">${k.specs[0] || 'Konselor'}</p>
+          <p class="card-exp">${k.pengalaman_tahun ? k.pengalaman_tahun + ' tahun pengalaman' : 'Konselor profesional'}</p>
+        </div>
+      </div>
+
+      <div class="card-specs">${specChips}${moreChip}</div>
+
+      <div class="card-stats">
+        ${ratingHtml}
+        <div class="stat-item stat-book">
+          <i class='bx bx-calendar-check'></i>
+          <span class="val">${k.totalBooking}</span>
+          <span class="lbl">sesi</span>
+        </div>
+      </div>
+
+      <a class="btn-book" href="${bookingUrl}" onclick="event.stopPropagation()">
+        <i class='bx bx-calendar-plus'></i>
+        Buat Janji
+      </a>
+    </div>`
+  }).join('')
+}
+
+// ── Filter ──
+function applyFilter () {
+  const q       = document.getElementById('searchInput').value.toLowerCase().trim()
+  const spec    = document.getElementById('filterSpesialisasi').value
+  const status  = document.getElementById('filterStatus').value
+
+  filteredKonselor = allKonselor.filter(k => {
+    const name = (k.profiles?.full_name || '').toLowerCase()
+    const matchSearch = !q || name.includes(q) || k.specs.some(s => s.toLowerCase().includes(q))
+    const matchSpec   = !spec   || k.specs.includes(spec)
+    const matchStatus = !status || (status === 'online' ? k.is_available : !k.is_available)
+    return matchSearch && matchSpec && matchStatus
+  })
+  renderCards(filteredKonselor)
+}
+
+// ── Event listeners ──
+let debounceTimer
+document.getElementById('searchInput').addEventListener('input', () => {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(applyFilter, 280)
+})
+document.getElementById('filterSpesialisasi').addEventListener('change', applyFilter)
+document.getElementById('filterStatus').addEventListener('change', applyFilter)
+
+// ── Init ──
+fetchKonselor()
+</script>
+</body>
+</html>

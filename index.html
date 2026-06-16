@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerSpace - Tempat Aman untuk Didengar</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        /* Skeleton loading */
+        .skeleton {
+            background: linear-gradient(90deg, #1a1a1a 25%, #242424 50%, #1a1a1a 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+        @keyframes shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .skeleton-card {
+            background: #141414;
+            padding: 30px;
+            border-radius: 24px;
+            border: 1px solid #2A2A2A;
+            text-align: center;
+        }
+        .skeleton-circle  { width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 20px; }
+        .skeleton-line    { height: 14px; margin-bottom: 10px; }
+        .skeleton-line.short { width: 60%; margin: 0 auto 10px; }
+        .skeleton-line.long  { width: 90%; margin: 0 auto 10px; }
+
+        /* Konselor card */
+        .counselor-card {
+            cursor: pointer;
+            background: #141414;
+            padding: 30px;
+            border-radius: 24px;
+            text-align: center;
+            border: 1px solid #2A2A2A;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .counselor-card:hover { transform: translateY(-4px); border-color: var(--accent-purple); }
+        .counselor-img { width: 100px; height: 100px; border-radius: 50%; margin-bottom: 20px; object-fit: cover; }
+        .counselor-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
+        .rating-badge { margin: 8px 0; color: #ffcc00; font-size: 0.9rem; }
+        .counselor-bio { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px; min-height: 40px; }
+        .tag {
+            display: inline-block;
+            background: rgba(139, 46, 255, 0.1);
+            color: var(--accent-purple);
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+        }
+
+        /* Forum post card */
+        .post-card {
+            padding: 20px;
+            background: #141414;
+            border-radius: 16px;
+            margin-bottom: 15px;
+            border: 1px solid #2A2A2A;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .post-card:hover { border-color: var(--accent-purple); }
+        .post-card p { font-size: 0.95rem; font-weight: 500; margin-bottom: 6px; }
+        .post-card span { font-size: 0.75rem; color: var(--text-secondary); }
+
+        /* Artikel card */
+        .article-card {
+            display: flex;
+            gap: 20px;
+            background: #141414;
+            padding: 15px;
+            border-radius: 16px;
+            cursor: pointer;
+            border: 1px solid #2A2A2A;
+            margin-bottom: 15px;
+            transition: border-color 0.2s;
+        }
+        .article-card:hover { border-color: var(--accent-purple); }
+        .article-thumb {
+            width: 80px; height: 80px;
+            background: #222;
+            border-radius: 12px;
+            flex-shrink: 0;
+            object-fit: cover;
+        }
+        .article-card h4 { font-size: 0.95rem; margin-bottom: 5px; }
+        .article-tag { font-size: 0.75rem; color: var(--accent-purple); }
+
+        /* Stats */
+        .stat-item h2 { font-size: 2.5rem; color: var(--accent-purple); }
+
+        /* Empty state */
+        .empty-state { color: var(--text-secondary); font-size: 0.88rem; padding: 16px 0; }
+    </style>
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="topbar" style="position: fixed; width: 100%; border-bottom: 1px solid var(--border-color); z-index: 9999; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);">
+        <div class="landing-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 0;">
+            <div style="font-weight: 800; font-size: 1.5rem; color: var(--accent-purple);">PeerSpace.</div>
+            <div style="display: flex; gap: 30px; align-items: center;">
+                <a href="index.html" style="color: #fff; text-decoration: none; font-size: 0.9rem; font-weight: 600;">Beranda</a>
+                <a href="counselors.html" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem;">Konselor</a>
+                <a href="articles.html" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem;">Artikel</a>
+                <a href="auth/login.html" class="btn-primary" style="padding: 8px 20px; width: auto; font-size: 0.85rem;">Masuk</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="landing-container" style="padding-top: 120px;">
+
+        <!-- HERO -->
+        <section class="hero-section" style="text-align: center; margin-bottom: 100px;">
+            <h1 style="font-size: 3.5rem; line-height: 1.1; margin-bottom: 20px;">Tempat Aman <br> untuk Didengar.</h1>
+            <p style="max-width: 600px; margin: 0 auto 40px; color: var(--text-secondary);">Layanan konselor sebaya Polimedia untuk membantu mahasiswa menghadapi tantangan akademik, mental, dan sosial secara anonim.</p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <a href="auth/register.html" class="btn-primary" style="width: auto; padding: 15px 40px; text-decoration: none;">Mulai Konseling</a>
+                <a href="counselors.html" style="color: #fff; border: 1px solid var(--border-color); padding: 15px 40px; text-decoration: none; border-radius: 12px;">Cari Konselor</a>
+            </div>
+        </section>
+
+        <!-- STATS — dinamis dari DB -->
+        <section class="stats-section" style="display: flex; justify-content: space-around; padding: 60px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+            <div class="stat-item" style="text-align: center;">
+                <h2 id="stat-mahasiswa">—</h2>
+                <p style="color: var(--text-secondary);">Mahasiswa Terdaftar</p>
+            </div>
+            <div class="stat-item" style="text-align: center;">
+                <h2 id="stat-konselor">—</h2>
+                <p style="color: var(--text-secondary);">Konselor Aktif</p>
+            </div>
+            <div class="stat-item" style="text-align: center;">
+                <h2 id="stat-sesi">—</h2>
+                <p style="color: var(--text-secondary);">Sesi Selesai</p>
+            </div>
+        </section>
+
+        <!-- KONSELOR TERPOPULER — dinamis dari DB -->
+        <section style="padding: 100px 0;">
+            <div class="preview-title" style="text-align: center; margin-bottom: 50px;">
+                <h2 style="font-size: 2rem;">Konselor Sebaya Terpopuler</h2>
+                <p style="color: var(--text-secondary);">Mahasiswa terpilih dengan bio dan rating terbaik.</p>
+            </div>
+            <div id="konselor-grid" class="counselor-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;">
+                <!-- Skeleton loading -->
+                <div class="skeleton-card"><div class="skeleton skeleton-circle"></div><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line long"></div><div class="skeleton skeleton-line short"></div></div>
+                <div class="skeleton-card"><div class="skeleton skeleton-circle"></div><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line long"></div><div class="skeleton skeleton-line short"></div></div>
+                <div class="skeleton-card"><div class="skeleton skeleton-circle"></div><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line long"></div><div class="skeleton skeleton-line short"></div></div>
+            </div>
+        </section>
+
+        <!-- FORUM & ARTIKEL — dinamis dari DB -->
+        <section style="padding: 80px 0; border-top: 1px solid var(--border-color);">
+            <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+
+                <!-- Forum -->
+                <div>
+                    <h3 style="margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+                        <i class='bx bx-message-dots' style="color: var(--accent-purple);"></i> Diskusi Komunitas
+                    </h3>
+                    <div id="forum-list">
+                        <!-- Skeleton -->
+                        <div class="post-card"><div class="skeleton skeleton-line long"></div><div class="skeleton skeleton-line short"></div></div>
+                        <div class="post-card"><div class="skeleton skeleton-line long"></div><div class="skeleton skeleton-line short"></div></div>
+                    </div>
+                    <a href="mahasiswa/forum.html" style="font-size: 0.85rem; color: var(--accent-purple); text-decoration: none;">Lihat semua diskusi →</a>
+                </div>
+
+                <!-- Artikel -->
+                <div>
+                    <h3 style="margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+                        <i class='bx bx-book-open' style="color: var(--accent-purple);"></i> Artikel Terbaru
+                    </h3>
+                    <div id="artikel-list">
+                        <!-- Skeleton -->
+                        <div class="article-card"><div class="skeleton article-thumb"></div><div style="flex:1"><div class="skeleton skeleton-line long"></div><div class="skeleton skeleton-line short"></div></div></div>
+                        <div class="article-card"><div class="skeleton article-thumb"></div><div style="flex:1"><div class="skeleton skeleton-line long"></div><div class="skeleton skeleton-line short"></div></div></div>
+                    </div>
+                    <a href="articles.html" style="font-size: 0.85rem; color: var(--accent-purple); text-decoration: none;">Lihat semua artikel →</a>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <div class="cta-box" style="text-align: center; margin: 100px 0;">
+            <h2 style="font-size: 2.5rem; margin-bottom: 20px;">Gak Harus Menghadapi Semua Sendiri</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 40px;">Ambil langkah pertama untuk mental yang lebih tenang hari ini.</p>
+            <a href="auth/register.html" class="btn-primary" style="width: auto; padding: 18px 50px; text-decoration: none;">Daftar Sekarang</a>
+        </div>
+
+    </main>
+
+    <footer style="padding: 60px 0; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-secondary);">
+        <p>© 2026 PeerSpace — Portal Konselor Sebaya Polimedia</p>
+    </footer>
+
+    <script type="module">
+        import { supabase } from '../assets/js/supabase-client.js'
+
+        // ── Helper ─────────────────────────────────────────────
+        function avatarUrl(nama, avatarUrl) {
+            if (avatarUrl) return avatarUrl
+            return `https://ui-avatars.com/api/?name=${encodeURIComponent(nama)}&background=8B2EFF&color=fff`
+        }
+
+        function timeAgo(dateStr) {
+            const diff = (Date.now() - new Date(dateStr)) / 1000
+            if (diff < 60)    return `${Math.floor(diff)} detik yang lalu`
+            if (diff < 3600)  return `${Math.floor(diff / 60)} menit yang lalu`
+            if (diff < 86400) return `${Math.floor(diff / 3600)} jam yang lalu`
+            return `${Math.floor(diff / 86400)} hari yang lalu`
+        }
+
+        function renderStars(rating) {
+            let stars = ''
+            for (let i = 1; i <= 5; i++) {
+                stars += `<i class='bx ${i <= Math.round(rating) ? "bxs-star" : "bx-star"}'></i>`
+            }
+            return stars
+        }
+
+        // ── 1. STATS ───────────────────────────────────────────
+        async function loadStats() {
+            try {
+                const [{ count: mahasiswa }, { count: konselor }, { count: sesi }] = await Promise.all([
+                    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'mahasiswa'),
+                    supabase.from('konselor').select('*', { count: 'exact', head: true }).eq('is_available', true),
+                    supabase.from('booking').select('*',  { count: 'exact', head: true }).eq('status', 'done'),
+                ])
+                document.getElementById('stat-mahasiswa').textContent = (mahasiswa ?? 0) + '+'
+                document.getElementById('stat-konselor').textContent  = (konselor  ?? 0) + '+'
+                document.getElementById('stat-sesi').textContent      = (sesi      ?? 0) + '+'
+            } catch (e) {
+                console.error('Stats error:', e)
+            }
+        }
+
+        // ── 2. KONSELOR TERPOPULER ─────────────────────────────
+        async function loadKonselor() {
+            const grid = document.getElementById('konselor-grid')
+            try {
+                const { data, error } = await supabase
+                    .from('konselor')
+                    .select('id, rating, total_review, bio, spesialisasi, profiles!user_id(nama, avatar_url)')
+                    .eq('is_available', true)
+                    .order('rating', { ascending: false })
+                    .limit(3)
+
+                if (error) throw error
+
+                if (!data || data.length === 0) {
+                    grid.innerHTML = '<p class="empty-state">Belum ada konselor tersedia.</p>'
+                    return
+                }
+
+                grid.innerHTML = data.map(k => {
+                    const nama      = k.profiles?.nama ?? 'Konselor'
+                    const avatar    = avatarUrl(nama, k.profiles?.avatar_url)
+                    const spek      = k.spesialisasi?.[0] ?? 'Konseling Umum'
+                    const bio       = k.bio ? `"${k.bio.substring(0, 80)}${k.bio.length > 80 ? '...' : ''}"` : '"Siap membantu permasalahanmu."'
+                    const rating    = parseFloat(k.rating ?? 0).toFixed(1)
+                    const totalRev  = k.total_review ?? 0
+
+                    return `
+                    <div class="counselor-card" onclick="window.location.href='counselors.html?id=${k.id}'">
+                        <img src="${avatar}" class="counselor-img" alt="${nama}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(nama)}&background=8B2EFF&color=fff'">
+                        <h3 class="counselor-name">${nama}</h3>
+                        <div class="rating-badge">
+                            ${renderStars(rating)}
+                            <span style="color: #fff; font-weight: 700; margin-left: 4px;">${rating}</span>
+                            <span style="color: var(--text-secondary); font-size: 0.8rem;">(${totalRev} Review)</span>
+                        </div>
+                        <p class="counselor-bio">${bio}</p>
+                        <span class="tag">${spek}</span>
+                    </div>`
+                }).join('')
+
+            } catch (e) {
+                console.error('Konselor error:', e)
+                grid.innerHTML = '<p class="empty-state">Gagal memuat data konselor.</p>'
+            }
+        }
+
+        // ── 3. FORUM TERBARU ───────────────────────────────────
+        async function loadForum() {
+            const list = document.getElementById('forum-list')
+            try {
+                const { data, error } = await supabase
+                    .from('forum_posts')
+                    .select('id, judul, created_at, forum_comments(count)')
+                    .eq('status', 'active')
+                    .order('created_at', { ascending: false })
+                    .limit(2)
+
+                if (error) throw error
+
+                if (!data || data.length === 0) {
+                    list.innerHTML = '<p class="empty-state">Belum ada diskusi.</p>'
+                    return
+                }
+
+                list.innerHTML = data.map(p => {
+                    const jumlahKomentar = p.forum_comments?.[0]?.count ?? 0
+                    return `
+                    <div class="post-card" onclick="window.location.href='mahasiswa/forum-detail.html?id=${p.id}'">
+                        <p>"${p.judul}"</p>
+                        <span>${jumlahKomentar} Komentar • ${timeAgo(p.created_at)}</span>
+                    </div>`
+                }).join('')
+
+            } catch (e) {
+                console.error('Forum error:', e)
+                list.innerHTML = '<p class="empty-state">Gagal memuat diskusi.</p>'
+            }
+        }
+
+        // ── 4. ARTIKEL TERBARU ─────────────────────────────────
+        async function loadArtikel() {
+            const list = document.getElementById('artikel-list')
+            try {
+                const { data, error } = await supabase
+                    .from('articles')
+                    .select('id, judul, cover_url, tags')
+                    .eq('status', 'published')
+                    .order('created_at', { ascending: false })
+                    .limit(2)
+
+                if (error) throw error
+
+                if (!data || data.length === 0) {
+                    list.innerHTML = '<p class="empty-state">Belum ada artikel.</p>'
+                    return
+                }
+
+                list.innerHTML = data.map(a => {
+                    const tag   = a.tags?.[0] ?? 'Artikel'
+                    const thumb = a.cover_url
+                        ? `<img src="${a.cover_url}" class="article-thumb" alt="${a.judul}">`
+                        : `<div class="article-thumb" style="background:#222;"></div>`
+                    return `
+                    <div class="article-card" onclick="window.location.href='article-detail.html?id=${a.id}'">
+                        ${thumb}
+                        <div>
+                            <h4>${a.judul}</h4>
+                            <span class="article-tag">${tag}</span>
+                        </div>
+                    </div>`
+                }).join('')
+
+            } catch (e) {
+                console.error('Artikel error:', e)
+                list.innerHTML = '<p class="empty-state">Gagal memuat artikel.</p>'
+            }
+        }
+
+        // ── Load semua ─────────────────────────────────────────
+        loadStats()
+        loadKonselor()
+        loadForum()
+        loadArtikel()
+    </script>
+</body>
+</html>

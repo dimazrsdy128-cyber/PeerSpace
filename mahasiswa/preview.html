@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pilih Konselor - PeerSpace</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root {
+            --bg-dark: #000000;
+            --card-dark: #141214;
+            --border-dark: rgba(255,255,255,0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-purple: #8b5cf6;
+        }
+
+        body { background-color: var(--bg-dark); color: var(--text-main); }
+        .page-header-actions h2 { color: var(--text-main); }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            max-width: 350px;
+            height: 44px;
+            background: #1e293b;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 0 16px;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+        .search-bar:focus-within {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+        }
+        .search-bar i { color: #64748b; font-size: 1.2rem; margin-right: 12px; flex-shrink: 0; }
+        .search-bar input {
+            flex: 1; height: 100%;
+            background: transparent; border: none;
+            color: #f8fafc; font-size: 0.95rem;
+            outline: none; padding: 0; box-sizing: border-box;
+        }
+        .search-bar input::placeholder { color: #64748b; }
+
+        .counselor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .counselor-card {
+            background: var(--card-dark);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid var(--border-dark);
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .counselor-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-purple);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+        }
+
+        .counselor-img {
+            width: 100px; height: 100px;
+            border-radius: 50%; object-fit: cover;
+            margin-bottom: 15px;
+            border: 3px solid rgba(255,255,255,0.05);
+        }
+
+        .counselor-name { color: var(--text-main); margin-bottom: 5px; }
+        .counselor-role { color: var(--text-muted); font-size: 0.85rem; }
+
+        .rating-badge {
+            background: rgba(234,179,8,0.1); color: #fbbf24;
+            padding: 4px 12px; border-radius: 20px;
+            font-size: 0.8rem; margin: 12px 0;
+            display: inline-flex; align-items: center; gap: 5px;
+        }
+
+        .tags-container {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            justify-content: center; margin-bottom: 20px; min-height: 55px;
+        }
+        .tag {
+            background: rgba(139,92,246,0.1); color: #a78bfa;
+            padding: 5px 12px; border-radius: 8px; font-size: 0.75rem;
+            border: 1px solid rgba(139,92,246,0.2);
+        }
+
+        .btn-primary {
+            width: 100%; text-decoration: none;
+            justify-content: center;
+            background: var(--accent-purple); color: #fff;
+            border: none; padding: 12px; border-radius: 10px;
+            font-weight: 600; transition: 0.3s; display: block;
+        }
+        .btn-primary:hover { background: #7c3aed; filter: brightness(1.1); }
+
+        /* Skeleton */
+        @keyframes shimmer {
+            0%   { background-position: -600px 0; }
+            100% { background-position: 600px 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #1e293b 25%, #2d3748 50%, #1e293b 75%);
+            background-size: 600px 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+        .sk-avatar  { width: 100px; height: 100px; border-radius: 50%; margin-bottom: 15px; }
+        .sk-line    { height: 14px; margin: 6px auto; }
+        .sk-short   { width: 60%; }
+        .sk-medium  { width: 80%; }
+        .sk-btn     { width: 100%; height: 44px; border-radius: 10px; margin-top: auto; }
+        .sk-tag     { width: 80px; height: 28px; border-radius: 8px; }
+
+        .empty-msg {
+            grid-column: 1/-1; text-align: center;
+            padding: 48px; color: var(--text-muted); font-size: 0.95rem;
+        }
+        .empty-msg i { font-size: 2.5rem; display: block; margin-bottom: 10px; color: #4b5563; }
+        .error-msg {
+            grid-column: 1/-1; text-align: center;
+            padding: 32px; color: #ef4444; font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-wrapper">
+        <aside class="sidebar" id="sidebar-container"></aside>
+
+        <main class="main-content">
+            <header class="topbar" id="navbar-container"></header>
+
+            <div class="content-wrapper">
+                <div class="page-header-actions">
+                    <div>
+                        <h2>Pilih Konselor Sebaya</h2>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Temukan teman cerita yang pas buat masalahmu.</p>
+                    </div>
+                    <div class="search-bar">
+                        <i class='bx bx-search'></i>
+                        <input type="text" id="searchInput" placeholder="Cari nama atau keahlian...">
+                    </div>
+                </div>
+
+                <div class="counselor-grid" id="counselorGrid">
+                    <!-- Skeleton loading -->
+                    <div class="counselor-card" style="pointer-events:none">
+                        <div class="skeleton sk-avatar"></div>
+                        <div class="skeleton sk-line sk-medium"></div>
+                        <div class="skeleton sk-line sk-short"></div>
+                        <div class="skeleton sk-line" style="width:50%;height:24px;border-radius:20px;margin:12px auto"></div>
+                        <div class="tags-container" style="gap:8px">
+                            <div class="skeleton sk-tag"></div>
+                            <div class="skeleton sk-tag"></div>
+                        </div>
+                        <div class="skeleton sk-btn"></div>
+                    </div>
+                    <div class="counselor-card" style="pointer-events:none">
+                        <div class="skeleton sk-avatar"></div>
+                        <div class="skeleton sk-line sk-medium"></div>
+                        <div class="skeleton sk-line sk-short"></div>
+                        <div class="skeleton sk-line" style="width:50%;height:24px;border-radius:20px;margin:12px auto"></div>
+                        <div class="tags-container">
+                            <div class="skeleton sk-tag"></div>
+                            <div class="skeleton sk-tag"></div>
+                        </div>
+                        <div class="skeleton sk-btn"></div>
+                    </div>
+                    <div class="counselor-card" style="pointer-events:none">
+                        <div class="skeleton sk-avatar"></div>
+                        <div class="skeleton sk-line sk-medium"></div>
+                        <div class="skeleton sk-line sk-short"></div>
+                        <div class="skeleton sk-line" style="width:50%;height:24px;border-radius:20px;margin:12px auto"></div>
+                        <div class="tags-container">
+                            <div class="skeleton sk-tag"></div>
+                            <div class="skeleton sk-tag"></div>
+                        </div>
+                        <div class="skeleton sk-btn"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- FIX: type="module" wajib ada agar import bisa jalan -->
+    <script type="module">
+        import { supabase } from '../assets/js/supabase-client.js'
+
+        // ── Auth guard ──
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { window.location.href = '../auth/login.html'; throw new Error() }
+
+        // ── Load sidebar & navbar ──
+        const loadUI = (id, path) =>
+            fetch(path).then(r => r.text()).then(html => {
+                document.getElementById(id).innerHTML = html
+            }).catch(() => {})
+
+        loadUI('../shared/sidebar.html', '../shared/sidebar.html')
+
+        // Load sidebar & tandai menu aktif
+        fetch('../shared/sidebar.html')
+            .then(r => r.text())
+            .then(html => {
+                const tmp = document.createElement('div')
+                tmp.innerHTML = html
+                const activeLink = tmp.querySelector('a[href="preview.html"]')
+                if (activeLink) activeLink.closest('.menu-item')?.classList.add('active')
+                document.getElementById('sidebar-container').innerHTML = tmp.innerHTML
+
+                // Re-attach logout (innerHTML tidak jalankan script, harus manual)
+                const logoutBtn = document.getElementById('btnLogout')
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', async (e) => {
+                        e.preventDefault()
+                        await supabase.auth.signOut({ scope: 'local' })
+                        Object.keys(localStorage)
+                            .filter(k => k.startsWith('sb-'))
+                            .forEach(k => localStorage.removeItem(k))
+                        window.location.href = '../auth/login.html'
+                    })
+                }
+            })
+
+        loadUI('sidebar-container', '../shared/sidebar.html')
+        fetch('../shared/navbar.html').then(r => r.text()).then(async html => {
+        const container = document.getElementById('navbar-container')
+        container.innerHTML = html
+        const titleEl = container.querySelector('#topbarTitle')
+        if (titleEl) titleEl.textContent = 'Konselor Kami'
+        const { data: profile } = await supabase.from('profiles').select('nama,role,avatar_url').eq('id', user.id).single()
+        if (profile) {
+            const nameEl = container.querySelector('#navUserName')
+            const roleEl = container.querySelector('#navUserRole')
+            const avatarEl = container.querySelector('#navAvatar')
+            if (nameEl) nameEl.textContent = profile.nama || user.email
+            if (roleEl) roleEl.textContent = { mahasiswa:'Mahasiswa', konselor:'Konselor', admin:'Admin' }[profile.role] || profile.role
+            if (avatarEl) avatarEl.src = profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.nama||'U')}&background=8B2EFF&color=fff`
+        }
+        const logoutBtn = container.querySelector('#btnLogout')
+        if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+            await supabase.auth.signOut({ scope: 'local' })
+            window.location.href = '../auth/login.html'
+        })
+        })
+
+        // ── Fetch konselor dari Supabase ──
+        let allKonselor = []
+        const grid = document.getElementById('counselorGrid')
+
+        function renderKonselor(list) {
+            if (!list.length) {
+                grid.innerHTML = `
+                    <div class="empty-msg">
+                        <i class='bx bx-user-x'></i>
+                        Belum ada konselor yang tersedia.
+                    </div>`
+                return
+            }
+
+            grid.innerHTML = list.map(k => {
+                
+                const nama    = k.profiles?.nama ?? 'Konselor'
+                const prodi   = k.profiles?.prodi ?? 'Konselor Sebaya'
+                const rating  = k.rating ? parseFloat(k.rating).toFixed(1) : '0.0'
+                const reviews = k.total_review ?? 0
+
+                // spesialisasi adalah text[] dari DB
+                const spek = Array.isArray(k.spesialisasi) ? k.spesialisasi : []
+                const tags = spek.length
+                    ? spek.map(s => `<span class="tag">${s}</span>`).join('')
+                    : '<span class="tag">Konseling Umum</span>'
+                const dataSkills = spek.join(', ').toLowerCase()
+
+                // Avatar: pakai avatar_url jika ada, fallback ui-avatars
+                const avatarSrc = k.profiles?.avatar_url
+                    ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(nama)}&background=8B2EFF&color=fff&size=100`
+
+                return `
+                <div class="counselor-card"
+                     data-name="${nama.toLowerCase()}"
+                     data-skills="${dataSkills}">
+                    <img src="${avatarSrc}" alt="${nama}" class="counselor-img"
+                         onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(nama)}&background=8B2EFF&color=fff'">
+                    <h3 class="counselor-name">${nama}</h3>
+                    <p class="counselor-role">${prodi}</p>
+                    <div class="rating-badge">
+                        <i class='bx bxs-star'></i> ${rating} (${reviews} Review)
+                    </div>
+                    <div class="tags-container">${tags}</div>
+                    <a href="booking.html?konselor=${k.id}" class="btn-primary">Booking Sesi</a>
+                </div>`
+            }).join('')
+        }
+
+        try {
+            // Query langsung — kolom sesuai schema DB aktual
+            // spesialisasi = text[], rating & total_review sudah ada di tabel konselor
+            const { data, error } = await supabase
+                .from('konselor')
+                .select(`
+                    id,
+                    user_id,
+                    bio,
+                    spesialisasi,
+                    rating,
+                    total_review,
+                    total_sesi,
+                    is_available,
+                    profiles (
+                        nama,
+                        avatar_url,
+                        prodi
+                    )
+                `)
+                .eq('is_available', true)
+                .order('rating', { ascending: false })
+
+            if (error) throw error
+
+            allKonselor = data ?? []
+            renderKonselor(allKonselor)
+        } catch (err) {
+            console.error(err)
+            grid.innerHTML = `
+                <div class="error-msg">
+                    <i class='bx bx-error-circle' style="font-size:2rem;display:block;margin-bottom:8px"></i>
+                    Gagal memuat konselor: ${err.message}
+                </div>`
+        }
+
+        // ── Search filter ──
+        document.getElementById('searchInput').addEventListener('input', function () {
+            const val = this.value.toLowerCase().trim()
+            const cards = document.querySelectorAll('.counselor-card')
+            cards.forEach(card => {
+                const name   = card.getAttribute('data-name') ?? ''
+                const skills = card.getAttribute('data-skills') ?? ''
+                card.style.display = (!val || name.includes(val) || skills.includes(val))
+                    ? 'flex' : 'none'
+            })
+        })
+    </script>
+</body>
+</html>

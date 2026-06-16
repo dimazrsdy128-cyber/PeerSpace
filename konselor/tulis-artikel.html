@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tulis Artikel — PeerSpace</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <style>
+    .content-area-page { padding: 2rem 2.5rem; }
+
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.8rem; flex-wrap: wrap; gap: 12px;
+    }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: #fff; margin: 0; }
+    .header-actions { display: flex; gap: 10px; }
+
+    .btn {
+      border-radius: 10px; padding: 9px 20px; font-size: .875rem; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+      border: none; transition: opacity .18s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: #8B2EFF; color: #fff; }
+    .btn-secondary { background: rgba(255,255,255,.06); color: #9b8ec4; border: 1px solid rgba(255,255,255,.1); }
+    .btn-ghost {
+      background: none; color: #9b8ec4; border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px; padding: 9px 16px; font-size: .875rem;
+      cursor: pointer; transition: border-color .15s;
+      display: inline-flex; align-items: center; gap: 7px; text-decoration: none;
+    }
+    .btn-ghost:hover { border-color: rgba(139,46,255,.4); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* Layout */
+    .editor-layout { display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: start; }
+    @media(max-width:960px) { .editor-layout { grid-template-columns: 1fr; } }
+
+    /* Editor card */
+    .editor-card {
+      background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px; overflow: hidden;
+    }
+    .title-input {
+      width: 100%; background: none; border: none;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      color: #fff; font-size: 1.4rem; font-weight: 700;
+      padding: 24px 24px 16px; outline: none; font-family: inherit;
+      box-sizing: border-box;
+    }
+    .title-input::placeholder { color: rgba(255,255,255,.2); }
+
+    /* Toolbar */
+    .editor-toolbar {
+      display: flex; gap: 4px; padding: 10px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      flex-wrap: wrap; align-items: center;
+    }
+    .tool-btn {
+      background: none; border: none; color: rgba(255,255,255,.4);
+      width: 32px; height: 32px; border-radius: 6px; cursor: pointer;
+      font-size: 1rem; transition: all .15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .tool-btn:hover, .tool-btn.active { background: rgba(139,46,255,.15); color: #c084fc; }
+    .tool-sep { width: 1px; height: 20px; background: rgba(255,255,255,.08); margin: 0 4px; }
+
+    .editor-content {
+      width: 100%; min-height: 420px; background: none; border: none;
+      color: rgba(196,184,232,.9); font-size: .95rem; line-height: 1.8;
+      padding: 20px 24px; outline: none; font-family: inherit;
+      box-sizing: border-box;
+    }
+    .editor-content:empty::before {
+      content: attr(data-placeholder); color: rgba(255,255,255,.2); pointer-events: none;
+    }
+
+    /* Sidebar panels */
+    .side-panel {
+      background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px; overflow: hidden;
+    }
+    .panel-header {
+      padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,.06);
+      font-size: .85rem; font-weight: 600; color: rgba(255,255,255,.5);
+      display: flex; align-items: center; gap: 7px;
+    }
+    .panel-header i { color: #8B2EFF; }
+    .panel-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-label {
+      font-size: .72rem; font-weight: 600; color: rgba(255,255,255,.35);
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .form-input, .form-select, .form-textarea-sm {
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+      color: #e2d9f3; border-radius: 8px; padding: 8px 12px;
+      font-size: .85rem; outline: none; transition: border-color .18s; font-family: inherit;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea-sm:focus {
+      border-color: rgba(139,46,255,.5);
+    }
+    .form-select option { background: #1a0a2e; }
+    .form-textarea-sm { resize: vertical; min-height: 72px; line-height: 1.5; }
+
+    /* Tags */
+    .tags-wrap {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 8px; padding: 6px 10px; min-height: 38px; cursor: text;
+    }
+    .tags-wrap:focus-within { border-color: rgba(139,46,255,.5); }
+    .tag-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(139,46,255,.2); border: 1px solid rgba(139,46,255,.3);
+      color: #c084fc; border-radius: 6px; padding: 2px 8px; font-size: .78rem;
+    }
+    .tag-chip button {
+      background: none; border: none; color: #c084fc; cursor: pointer;
+      padding: 0; font-size: .85rem; line-height: 1; opacity: .7;
+    }
+    .tag-chip button:hover { opacity: 1; }
+    .tag-input {
+      background: none; border: none; outline: none; color: #e2d9f3;
+      font-size: .85rem; flex: 1; min-width: 80px; font-family: inherit;
+    }
+
+    /* Cover image */
+    .cover-drop {
+      border: 2px dashed rgba(255,255,255,.1); border-radius: 10px;
+      text-align: center; padding: 20px 12px; cursor: pointer;
+      color: rgba(255,255,255,.3); font-size: .8rem; transition: border-color .18s;
+      position: relative; overflow: hidden;
+    }
+    .cover-drop:hover { border-color: rgba(139,46,255,.4); }
+    .cover-drop i { font-size: 1.8rem; display: block; margin-bottom: 6px; color: rgba(255,255,255,.2); }
+    .cover-drop img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    #cover-input { display: none; }
+
+    /* Status toggle */
+    .status-row { display: flex; gap: 8px; }
+    .status-opt {
+      flex: 1; padding: 7px; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.04); color: rgba(255,255,255,.4);
+      font-size: .78rem; font-weight: 600; text-align: center; cursor: pointer; transition: all .15s;
+    }
+    .status-opt.active {
+      background: rgba(139,46,255,.2); border-color: rgba(139,46,255,.4); color: #c084fc;
+    }
+
+    /* Toast */
+    #toast-container {
+      position: fixed; bottom: 28px; right: 28px;
+      display: flex; flex-direction: column; gap: 10px; z-index: 9999;
+    }
+    .toast {
+      background: #1e1635; border: 1px solid rgba(255,255,255,.1);
+      border-left: 3px solid #8B2EFF; border-radius: 10px;
+      padding: 12px 18px; color: #e2d9f3; font-size: .875rem;
+      max-width: 320px; box-shadow: 0 8px 32px #00000060;
+      animation: toastIn .25s ease;
+    }
+    .toast.error { border-left-color: #ef4444; }
+    .toast.success { border-left-color: #10b981; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(12px); } }
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid #fff4; border-top-color: #fff;
+      border-radius: 50%; animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media(max-width:768px) { .content-area-page { padding: 1.2rem; } }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar" id="sidebar-container"></aside>
+
+  <div class="main-content">
+    <header class="topbar" id="navbar-container"></header>
+
+    <div class="content-wrapper">
+    <div class="content-area-page">
+
+      <div class="page-header">
+        <h1 id="page-title">Tulis Artikel Baru</h1>
+        <div class="header-actions">
+          <a href="artikel.html" class="btn-ghost"><i class='bx bx-arrow-back'></i>Kembali</a>
+          <button class="btn btn-secondary" id="btn-draft"><i class='bx bx-save'></i>Simpan Draft</button>
+          <button class="btn btn-primary" id="btn-publish"><i class='bx bx-send'></i>Terbitkan</button>
+        </div>
+      </div>
+
+      <div class="editor-layout">
+        <!-- Editor -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="editor-card">
+            <input type="text" class="title-input" id="f-judul" placeholder="Judul artikel…" />
+            <div class="editor-toolbar">
+              <button class="tool-btn" data-cmd="bold" title="Bold"><i class='bx bx-bold'></i></button>
+              <button class="tool-btn" data-cmd="italic" title="Italic"><i class='bx bx-italic'></i></button>
+              <button class="tool-btn" data-cmd="underline" title="Underline"><i class='bx bx-underline'></i></button>
+              <div class="tool-sep"></div>
+              <button class="tool-btn" data-cmd="insertUnorderedList" title="Bullet List"><i class='bx bx-list-ul'></i></button>
+              <button class="tool-btn" data-cmd="insertOrderedList" title="Numbered List"><i class='bx bx-list-ol'></i></button>
+              <div class="tool-sep"></div>
+              <button class="tool-btn" data-cmd="formatBlock_h2" title="Heading"><i class='bx bx-heading'></i></button>
+              <button class="tool-btn" data-cmd="formatBlock_blockquote" title="Quote"><i class='bx bx-quote-right'></i></button>
+              <div class="tool-sep"></div>
+              <button class="tool-btn" data-cmd="removeFormat" title="Clear Format"><i class='bx bx-eraser'></i></button>
+            </div>
+            <div id="editor-content" class="editor-content" contenteditable="true"
+                 data-placeholder="Mulai menulis di sini…"></div>
+          </div>
+        </div>
+
+        <!-- Sidebar panels -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+          <!-- Status -->
+          <div class="side-panel">
+            <div class="panel-header"><i class='bx bx-flag'></i>Status Publikasi</div>
+            <div class="panel-body">
+              <div class="status-row">
+                <div class="status-opt active" data-status="draft">Draft</div>
+                <div class="status-opt" data-status="published">Terbitkan</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cover image -->
+          <div class="side-panel">
+            <div class="panel-header"><i class='bx bx-image'></i>Gambar Cover</div>
+            <div class="panel-body">
+              <label for="cover-input">
+                <div class="cover-drop" id="cover-drop">
+                  <i class='bx bx-cloud-upload'></i>
+                  Klik untuk upload gambar
+                  <input type="file" id="cover-input" accept="image/*" />
+                </div>
+              </label>
+              <div class="form-group">
+                <label class="form-label">atau URL gambar</label>
+                <input type="text" id="f-cover-url" class="form-input" placeholder="https://…" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Tags -->
+          <div class="side-panel">
+            <div class="panel-header"><i class='bx bx-purchase-tag'></i>Tags</div>
+            <div class="panel-body">
+              <div class="form-group">
+                <label class="form-label">Tekan Enter atau koma untuk tambah tag</label>
+                <div class="tags-wrap" id="tags-wrap">
+                  <input type="text" class="tag-input" id="tag-input" placeholder="Tambah tag…" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /content-area-page -->
+    </div><!-- /content-wrapper -->
+  </div><!-- /main-content -->
+</div><!-- /app-wrapper -->
+
+<div id="toast-container"></div>
+
+<script type="module">
+import { supabase } from '../assets/js/supabase-client.js'
+
+// ── Auth guard ──
+const { data: { user } } = await supabase.auth.getUser()
+if (!user) { window.location.href = '../auth/login.html'; throw new Error() }
+
+const { data: profile } = await supabase
+  .from('profiles').select('nama, role, avatar_url').eq('id', user.id).single()
+if (!profile || profile.role !== 'konselor') {
+  window.location.href = '../auth/login.html'; throw new Error()
+}
+
+// ── Load sidebar ──
+fetch('../shared/sidebar-konselor.html').then(r => r.text()).then(html => {
+  document.getElementById('sidebar-container').innerHTML = html
+  document.querySelectorAll('#sidebar-container .menu-link').forEach(a => {
+    if (a.getAttribute('href') === 'artikel.html') a.closest('.menu-item')?.classList.add('active')
+  })
+  const btnLogout = document.getElementById('btnLogout')
+  if (btnLogout) btnLogout.addEventListener('click', async (e) => {
+    e.preventDefault()
+    await supabase.auth.signOut({ scope: 'local' })
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// ── Load navbar ──
+fetch('../shared/navbar.html').then(r => r.text()).then(html => {
+  const container = document.getElementById('navbar-container')
+  container.innerHTML = html
+  const el = s => container.querySelector(s)
+  if (el('#topbarTitle')) el('#topbarTitle').textContent = 'Tulis Artikel'
+  if (el('#navUserName')) el('#navUserName').textContent = profile.nama || user.email
+  if (el('#navUserRole')) el('#navUserRole').textContent = 'Konselor'
+  if (el('#navAvatar'))   el('#navAvatar').src = profile.avatar_url
+    || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.nama || 'U')}&background=8B2EFF&color=fff`
+  const logoutBtn = el('#btnLogout')
+  if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut({ scope: 'local' })
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// ── Toast ──
+function toast(msg, type = 'info') {
+  const el = Object.assign(document.createElement('div'), {
+    className: `toast ${type}`, textContent: msg
+  })
+  document.getElementById('toast-container').appendChild(el)
+  setTimeout(() => el.remove(), 3500)
+}
+
+// ── Toolbar ──
+document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const cmd = btn.dataset.cmd
+    if (cmd.startsWith('formatBlock_')) {
+      document.execCommand('formatBlock', false, '<' + cmd.split('_')[1] + '>')
+    } else {
+      document.execCommand(cmd, false, null)
+    }
+    document.getElementById('editor-content').focus()
+  })
+})
+
+// ── Cover image ──
+let coverFile = null, coverUrl = ''
+document.getElementById('cover-input').addEventListener('change', e => {
+  coverFile = e.target.files[0]
+  if (!coverFile) return
+  const url = URL.createObjectURL(coverFile)
+  document.getElementById('cover-drop').innerHTML = `<img src="${url}" alt="cover" />`
+  coverUrl = ''
+  document.getElementById('f-cover-url').value = ''
+})
+document.getElementById('f-cover-url').addEventListener('input', e => {
+  coverUrl = e.target.value.trim()
+  if (coverUrl) {
+    document.getElementById('cover-drop').innerHTML = `<img src="${coverUrl}" alt="cover" />`
+    coverFile = null
+  }
+})
+
+// ── Tags ──
+let tags = []
+const tagsWrap = document.getElementById('tags-wrap')
+const tagInput = document.getElementById('tag-input')
+
+function renderTags() {
+  // Remove existing chips
+  tagsWrap.querySelectorAll('.tag-chip').forEach(c => c.remove())
+  tags.forEach((tag, i) => {
+    const chip = document.createElement('span')
+    chip.className = 'tag-chip'
+    chip.innerHTML = `${tag}<button onclick="removeTag(${i})" title="Hapus">×</button>`
+    tagsWrap.insertBefore(chip, tagInput)
+  })
+}
+window.removeTag = (i) => { tags.splice(i, 1); renderTags() }
+tagsWrap.addEventListener('click', () => tagInput.focus())
+tagInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault()
+    const val = tagInput.value.trim().replace(/,$/, '')
+    if (val && !tags.includes(val)) { tags.push(val); renderTags() }
+    tagInput.value = ''
+  } else if (e.key === 'Backspace' && !tagInput.value && tags.length) {
+    tags.pop(); renderTags()
+  }
+})
+
+// ── Status toggle ──
+let currentStatus = 'draft'
+document.querySelectorAll('.status-opt').forEach(opt => {
+  opt.addEventListener('click', () => {
+    document.querySelectorAll('.status-opt').forEach(o => o.classList.remove('active'))
+    opt.classList.add('active')
+    currentStatus = opt.dataset.status
+  })
+})
+
+// ── Edit mode: load existing article ──
+const articleId = new URLSearchParams(location.search).get('id')
+if (articleId) {
+  document.getElementById('page-title').textContent = 'Edit Artikel'
+  const { data: art } = await supabase.from('articles').select('*').eq('id', articleId).single()
+  if (art) {
+    document.getElementById('f-judul').value = art.judul ?? ''
+    document.getElementById('editor-content').innerHTML = art.konten ?? ''
+    currentStatus = art.status ?? 'draft'
+    document.querySelectorAll('.status-opt').forEach(o => {
+      o.classList.toggle('active', o.dataset.status === currentStatus)
+    })
+    if (art.tags && Array.isArray(art.tags)) {
+      tags = [...art.tags]
+      renderTags()
+    }
+    if (art.cover_url) {
+      document.getElementById('cover-drop').innerHTML = `<img src="${art.cover_url}" alt="cover">`
+      coverUrl = art.cover_url
+    }
+  }
+}
+
+// ── Save ──
+async function saveArticle(status) {
+  const judul = document.getElementById('f-judul').value.trim()
+  if (!judul) { toast('Judul artikel wajib diisi', 'error'); return }
+
+  const konten = document.getElementById('editor-content').innerHTML.trim()
+  if (!konten || konten === '<br>') { toast('Konten artikel tidak boleh kosong', 'error'); return }
+
+  const btn = status === 'published'
+    ? document.getElementById('btn-publish')
+    : document.getElementById('btn-draft')
+  btn.disabled = true
+  btn.innerHTML = `<div class="spinner"></div> Menyimpan…`
+
+  try {
+    // Upload cover jika file dipilih
+    let finalCover = coverUrl
+    if (coverFile) {
+      const ext = coverFile.name.split('.').pop()
+      const path = `articles/${user.id}/${Date.now()}.${ext}`
+      const { error: upErr } = await supabase.storage.from('articles').upload(path, coverFile, { upsert: true })
+      if (upErr) throw upErr
+      finalCover = supabase.storage.from('articles').getPublicUrl(path).data.publicUrl
+    }
+
+    const payload = {
+      judul,
+      konten,
+      cover_url: finalCover || null,
+      tags: tags.length ? tags : null,
+      status,
+      author_id: user.id,
+    }
+
+    let error
+    if (articleId) {
+      ({ error } = await supabase.from('articles').update(payload).eq('id', articleId))
+    } else {
+      ({ error } = await supabase.from('articles').insert([payload]))
+    }
+    if (error) throw error
+
+    toast(status === 'published' ? 'Artikel diterbitkan ✓' : 'Draft disimpan ✓', 'success')
+    setTimeout(() => { window.location.href = 'artikel.html' }, 1200)
+  } catch (e) {
+    toast('Gagal menyimpan: ' + e.message, 'error')
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = status === 'published'
+      ? `<i class='bx bx-send'></i>Terbitkan`
+      : `<i class='bx bx-save'></i>Simpan Draft`
+  }
+}
+
+document.getElementById('btn-draft').addEventListener('click', () => saveArticle('draft'))
+document.getElementById('btn-publish').addEventListener('click', () => saveArticle('published'))
+</script>
+</body>
+</html>

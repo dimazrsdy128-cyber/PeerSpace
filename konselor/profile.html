@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profil Konselor — PeerSpace</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <style>
+    .content-body{padding:28px 32px 48px;flex:1;}
+    .page-header{margin-bottom:28px;}
+    .page-header h1{font-size:1.6rem;font-weight:700;color:#fff;margin:0 0 4px;}
+    .page-header p{color:#9b8ec4;font-size:.88rem;margin:0;}
+
+    .profile-layout{display:grid;grid-template-columns:260px 1fr;gap:24px;align-items:start;}
+    @media(max-width:900px){.profile-layout{grid-template-columns:1fr;}}
+
+    .profile-card{background:#16112b;border:1px solid #2a1f4e;border-radius:16px;padding:28px 20px;text-align:center;position:sticky;top:24px;}
+    .avatar-wrap{position:relative;display:inline-block;margin-bottom:16px;}
+    .avatar-lg{width:96px;height:96px;border-radius:50%;background:#8B2EFF33;color:#8B2EFF;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;text-transform:uppercase;border:3px solid #8B2EFF44;overflow:hidden;}
+    .avatar-lg img{width:100%;height:100%;object-fit:cover;}
+    .avatar-edit-btn{position:absolute;bottom:2px;right:2px;width:28px;height:28px;border-radius:50%;background:#8B2EFF;border:2px solid #0e0b1a;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:.85rem;transition:opacity .18s;}
+    .avatar-edit-btn:hover{opacity:.8;}
+    #avatar-input{display:none;}
+    .profile-name{font-size:1.1rem;font-weight:700;color:#fff;margin:0 0 4px;}
+    .profile-email{font-size:.8rem;color:#7c6fa0;margin:0 0 14px;}
+    .profile-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:99px;background:#8B2EFF22;color:#c084fc;font-size:.75rem;font-weight:600;}
+    .profile-stats{display:flex;justify-content:space-around;margin-top:20px;padding-top:16px;border-top:1px solid #1e1a35;}
+    .pstat-val{font-size:1.2rem;font-weight:700;color:#fff;}
+    .pstat-label{font-size:.7rem;color:#7c6fa0;margin-top:2px;}
+
+    .form-card{background:#16112b;border:1px solid #2a1f4e;border-radius:16px;overflow:hidden;margin-bottom:0;}
+    .form-section-header{padding:18px 24px 14px;border-bottom:1px solid #1a1530;display:flex;align-items:center;gap:8px;}
+    .form-section-header h2{font-size:1rem;font-weight:600;color:#fff;margin:0;}
+    .form-section-header i{color:#8B2EFF;font-size:1.1rem;}
+    .form-body{padding:24px;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    @media(max-width:640px){.form-grid{grid-template-columns:1fr;}}
+    .form-group{display:flex;flex-direction:column;gap:6px;}
+    .form-group.full{grid-column:1/-1;}
+    .form-label{font-size:.78rem;font-weight:600;color:#9b8ec4;text-transform:uppercase;letter-spacing:.04em;}
+    .form-input,.form-textarea{background:#1a1530;border:1px solid #2a1f4e;color:#e2d9f3;border-radius:10px;padding:10px 14px;font-size:.9rem;outline:none;transition:border-color .18s;font-family:inherit;}
+    .form-input:focus,.form-textarea:focus{border-color:#8B2EFF55;}
+    .form-textarea{resize:vertical;min-height:100px;line-height:1.6;}
+    .form-hint{font-size:.73rem;color:#5a4e7a;}
+
+    /* Tags */
+    .tags-wrap{background:#1a1530;border:1px solid #2a1f4e;border-radius:10px;padding:8px 10px;display:flex;flex-wrap:wrap;gap:6px;cursor:text;min-height:44px;align-items:center;transition:border-color .18s;}
+    .tags-wrap:focus-within{border-color:#8B2EFF55;}
+    .tag{background:#8B2EFF22;color:#c084fc;border-radius:99px;padding:3px 10px;font-size:.77rem;display:flex;align-items:center;gap:5px;}
+    .tag-remove{cursor:pointer;font-size:.8rem;opacity:.7;}.tag-remove:hover{opacity:1;}
+    .tags-input{background:none;border:none;color:#e2d9f3;outline:none;font-size:.85rem;min-width:80px;flex:1;}
+
+    /* Schedule */
+    .schedule-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:14px;}
+    .day-toggle{padding:8px 4px;border-radius:8px;border:1px solid #2a1f4e;background:#1a1530;color:#7c6fa0;font-size:.72rem;font-weight:600;text-align:center;cursor:pointer;transition:all .15s;user-select:none;}
+    .day-toggle.on{background:#8B2EFF22;border-color:#8B2EFF44;color:#c084fc;}
+    .time-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .time-row label{font-size:.8rem;color:#9b8ec4;}
+
+    .save-bar{padding:16px 24px;border-top:1px solid #1a1530;display:flex;justify-content:flex-end;gap:12px;}
+    .btn-save{background:#8B2EFF;color:#fff;border:none;border-radius:10px;padding:10px 28px;font-size:.9rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .18s;}
+    .btn-save:hover{opacity:.85;}.btn-save:disabled{opacity:.5;cursor:not-allowed;}
+    .btn-cancel{background:#1a1530;color:#9b8ec4;border:1px solid #2a1f4e;border-radius:10px;padding:10px 20px;font-size:.9rem;cursor:pointer;transition:border-color .15s;}
+    .btn-cancel:hover{border-color:#8B2EFF44;}
+
+    .skeleton{background:linear-gradient(90deg,#1e1635 25%,#2a1f4e 50%,#1e1635 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:8px;}
+    @keyframes shimmer{to{background-position:-200% 0;}}
+
+    #toast-container{position:fixed;bottom:28px;right:28px;display:flex;flex-direction:column;gap:10px;z-index:9999;}
+    .toast{background:#1e1635;border:1px solid #2a1f4e;border-left:3px solid #8B2EFF;border-radius:10px;padding:12px 18px;color:#e2d9f3;font-size:.875rem;max-width:320px;box-shadow:0 8px 32px #00000060;animation:toastIn .25s ease;}
+    .toast.error{border-left-color:#ef4444;}.toast.success{border-left-color:#10b981;}
+    @keyframes toastIn{from{opacity:0;transform:translateY(12px);}}
+    @keyframes spin{to{transform:rotate(360deg);}}
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar" id="sidebar-container"></aside>
+  <div class="main-content">
+    <header class="topbar" id="navbar-container"></header>
+    <div class="content-wrapper">
+    <div class="content-body">
+
+      <div class="page-header">
+        <h1>Profil Saya</h1>
+        <p>Kelola informasi profil konselor kamu</p>
+      </div>
+
+      <div class="profile-layout">
+        <!-- Left: preview -->
+        <div class="profile-card">
+          <div class="avatar-wrap">
+            <div class="avatar-lg" id="avatar-preview">
+              <span id="avatar-initials">?</span>
+            </div>
+            <label class="avatar-edit-btn" for="avatar-input"><i class='bx bx-camera'></i></label>
+            <input type="file" id="avatar-input" accept="image/*" />
+          </div>
+          <p class="profile-name" id="preview-name">–</p>
+          <p class="profile-email" id="preview-email">–</p>
+          <span class="profile-badge"><i class='bx bx-user-check'></i>Konselor</span>
+          <div class="profile-stats">
+            <div><div class="pstat-val" id="stat-sesi">–</div><div class="pstat-label">Sesi</div></div>
+            <div><div class="pstat-val" id="stat-rating">–</div><div class="pstat-label">Rating</div></div>
+            <div><div class="pstat-val" id="stat-ulasan">–</div><div class="pstat-label">Ulasan</div></div>
+          </div>
+        </div>
+
+        <!-- Right: form -->
+        <div style="display:flex;flex-direction:column;gap:20px;">
+
+          <!-- Informasi Dasar -->
+          <div class="form-card">
+            <div class="form-section-header"><i class='bx bx-user'></i><h2>Informasi Dasar</h2></div>
+            <div class="form-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Nama Lengkap</label>
+                  <input type="text" id="f-name" class="form-input" placeholder="Nama lengkap" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email</label>
+                  <input type="email" id="f-email" class="form-input" disabled style="opacity:.5;cursor:not-allowed;" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">NIM / NIP</label>
+                  <input type="text" id="f-nim" class="form-input" placeholder="Nomor Induk" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Program Studi</label>
+                  <input type="text" id="f-prodi" class="form-input" placeholder="Teknik Informatika" />
+                </div>
+                <div class="form-group full">
+                  <label class="form-label">Bio Singkat</label>
+                  <textarea id="f-bio" class="form-textarea" placeholder="Ceritakan sedikit tentang dirimu…"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Spesialisasi -->
+          <div class="form-card">
+            <div class="form-section-header"><i class='bx bx-brain'></i><h2>Spesialisasi</h2></div>
+            <div class="form-body">
+              <div class="form-group">
+                <label class="form-label">Keahlian / Spesialisasi</label>
+                <div class="tags-wrap" id="tags-wrap">
+                  <input class="tags-input" id="tags-input" placeholder="Ketik & tekan Enter…" />
+                </div>
+                <span class="form-hint">Contoh: Kecemasan, Depresi, Manajemen Stres</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Jadwal -->
+          <div class="form-card">
+            <div class="form-section-header"><i class='bx bx-calendar'></i><h2>Jadwal Tersedia</h2></div>
+            <div class="form-body">
+              <p style="font-size:.8rem;color:#7c6fa0;margin:0 0 12px;">Pilih sesi yang tersedia:</p>
+              <div class="schedule-grid" id="day-toggles"></div>
+            </div>
+          </div>
+
+          <!-- Sosmed -->
+          <div class="form-card">
+            <div class="form-section-header"><i class='bx bx-globe'></i><h2>Media Sosial</h2></div>
+            <div class="form-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Instagram</label>
+                  <input type="text" id="f-ig" class="form-input" placeholder="@username" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Twitter / X</label>
+                  <input type="text" id="f-twitter" class="form-input" placeholder="@username" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Save -->
+          <div class="form-card">
+            <div class="save-bar">
+              <button class="btn-cancel" id="btn-cancel">Reset</button>
+              <button class="btn-save" id="btn-save"><i class='bx bx-save'></i>Simpan Perubahan</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    </div><!-- /content-wrapper -->
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script type="module">
+import { supabase } from '../assets/js/supabase-client.js'
+
+// ── Auth guard ──
+const { data: { user } } = await supabase.auth.getUser()
+if (!user) { window.location.href = '../auth/login.html'; throw new Error() }
+
+const { data: profile } = await supabase
+  .from('profiles')
+  .select('role, nama, email, nim_nip, prodi, angkatan, avatar_url')
+  .eq('id', user.id)
+  .single()
+if (!profile || profile.role !== 'konselor') {
+  window.location.href = '../mahasiswa/dashboard.html'; throw new Error()
+}
+
+// ── Load sidebar ──
+fetch('../shared/sidebar-konselor.html').then(r => r.text()).then(html => {
+  document.getElementById('sidebar-container').innerHTML = html
+  const btn = document.getElementById('btnLogout')
+  if (btn) btn.addEventListener('click', async e => {
+    e.preventDefault()
+    await supabase.auth.signOut({ scope: 'local' })
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// ── Load navbar ──
+fetch('../shared/navbar.html').then(r => r.text()).then(async html => {
+  const container = document.getElementById('navbar-container')
+  container.innerHTML = html
+  const titleEl  = container.querySelector('#topbarTitle')
+  const nameEl   = container.querySelector('#navUserName')
+  const roleEl   = container.querySelector('#navUserRole')
+  const avatarEl = container.querySelector('#navAvatar')
+  if (titleEl)  titleEl.textContent  = 'Profil Saya'
+  if (nameEl)   nameEl.textContent   = profile.nama || user.email
+  if (roleEl)   roleEl.textContent   = 'Konselor'
+  if (avatarEl) avatarEl.src = profile.avatar_url ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.nama || 'U')}&background=8B2EFF&color=fff`
+  const logoutBtn = container.querySelector('#btnLogout')
+  if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut({ scope: 'local' })
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// ── Toast ──
+function toast(msg, type = 'info') {
+  const el = Object.assign(document.createElement('div'), { className: `toast ${type}`, textContent: msg })
+  document.getElementById('toast-container').appendChild(el)
+  setTimeout(() => el.remove(), 3500)
+}
+
+// ── Ketersediaan (sesuai schema: text[]) ──
+// Kode sesi: ['Pagi','Siang','Sore']
+const SESI = ['Pagi', 'Siang', 'Sore']
+let selectedSesi = []
+
+function renderSesiToggles() {
+  document.getElementById('day-toggles').innerHTML = SESI.map(s => `
+    <div class="day-toggle${selectedSesi.includes(s) ? ' on' : ''}" data-sesi="${s}">${s}</div>
+  `).join('')
+  document.querySelectorAll('.day-toggle').forEach(el => {
+    el.addEventListener('click', () => {
+      const s = el.dataset.sesi
+      selectedSesi = selectedSesi.includes(s)
+        ? selectedSesi.filter(x => x !== s)
+        : [...selectedSesi, s]
+      renderSesiToggles()
+    })
+  })
+}
+renderSesiToggles()
+
+// ── Tags (spesialisasi) ──
+let tags = []
+function renderTags() {
+  const wrap  = document.getElementById('tags-wrap')
+  const input = document.getElementById('tags-input')
+  wrap.querySelectorAll('.tag').forEach(t => t.remove())
+  tags.forEach(t => {
+    const el = document.createElement('span')
+    el.className = 'tag'
+    el.innerHTML = `${t}<span class="tag-remove" data-tag="${t}">✕</span>`
+    wrap.insertBefore(el, input)
+  })
+  wrap.querySelectorAll('.tag-remove').forEach(btn => {
+    btn.addEventListener('click', () => { tags = tags.filter(t => t !== btn.dataset.tag); renderTags() })
+  })
+}
+document.getElementById('tags-input').addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ',') && e.target.value.trim()) {
+    e.preventDefault()
+    const val = e.target.value.trim().replace(/,$/, '')
+    if (val && !tags.includes(val)) tags.push(val)
+    e.target.value = ''
+    renderTags()
+  }
+})
+
+// ── Avatar preview ──
+let avatarFile = null
+document.getElementById('avatar-input').addEventListener('change', e => {
+  avatarFile = e.target.files[0]
+  if (!avatarFile) return
+  const url = URL.createObjectURL(avatarFile)
+  document.getElementById('avatar-preview').innerHTML = `<img src="${url}" alt="avatar">`
+})
+
+// ── Load data konselor ──
+const { data: konselor } = await supabase
+  .from('konselor')
+  .select('id, bio, spesialisasi, ketersediaan, rating, total_review, total_sesi, sosmed_ig, sosmed_twitter')
+  .eq('user_id', user.id)
+  .single()
+
+// ── Populate form ──
+document.getElementById('f-name').value  = profile.nama    ?? ''
+document.getElementById('f-email').value = profile.email   ?? ''
+document.getElementById('f-nim').value   = profile.nim_nip ?? ''
+document.getElementById('f-prodi').value = profile.prodi   ?? ''
+document.getElementById('f-bio').value   = konselor?.bio   ?? ''
+document.getElementById('f-ig').value    = konselor?.sosmed_ig      ?? ''
+document.getElementById('f-twitter').value = konselor?.sosmed_twitter ?? ''
+
+tags         = konselor?.spesialisasi  ?? []
+selectedSesi = konselor?.ketersediaan  ?? []
+renderTags()
+renderSesiToggles()
+
+// ── Update preview card ──
+function updatePreview() {
+  const name = document.getElementById('f-name').value || '–'
+  document.getElementById('preview-name').textContent  = name
+  document.getElementById('preview-email').textContent = profile.email ?? ''
+  const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+  const initEl = document.getElementById('avatar-initials')
+  if (initEl) initEl.textContent = initials || '?'
+  document.getElementById('stat-sesi').textContent   = konselor?.total_sesi   ?? 0
+  document.getElementById('stat-rating').textContent = konselor?.rating != null ? Number(konselor.rating).toFixed(1) : '0.0'
+  document.getElementById('stat-ulasan').textContent = konselor?.total_review  ?? 0
+}
+document.getElementById('f-name').addEventListener('input', updatePreview)
+updatePreview()
+
+if (profile.avatar_url) {
+  document.getElementById('avatar-preview').innerHTML = `<img src="${profile.avatar_url}" alt="avatar">`
+}
+
+// ── Save ──
+document.getElementById('btn-save').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-save')
+  btn.disabled = true
+  btn.innerHTML = `<div style="width:16px;height:16px;border-radius:50%;border:2px solid #fff4;border-top-color:#fff;animation:spin .6s linear infinite;"></div> Menyimpan…`
+
+  try {
+    // Upload avatar jika ada
+    let avatarUrl = profile.avatar_url
+    if (avatarFile) {
+      const ext  = avatarFile.name.split('.').pop()
+      const path = `avatars/${user.id}.${ext}`
+      const { error: upErr } = await supabase.storage.from('profiles').upload(path, avatarFile, { upsert: true })
+      if (upErr) throw upErr
+      const { data: urlData } = supabase.storage.from('profiles').getPublicUrl(path)
+      avatarUrl = urlData.publicUrl
+    }
+
+    // Update profiles
+    const { error: pErr } = await supabase.from('profiles').update({
+      nama:       document.getElementById('f-name').value.trim(),
+      nim_nip:    document.getElementById('f-nim').value.trim(),
+      prodi:      document.getElementById('f-prodi').value.trim(),
+      avatar_url: avatarUrl,
+      updated_at: new Date().toISOString(),
+    }).eq('id', user.id)
+    if (pErr) throw pErr
+
+    // Update konselor — sesuai schema
+    const { error: kErr } = await supabase.from('konselor').update({
+      bio:           document.getElementById('f-bio').value.trim(),
+      spesialisasi:  tags,
+      ketersediaan:  selectedSesi,
+      sosmed_ig:     document.getElementById('f-ig').value.trim() || null,
+      sosmed_twitter: document.getElementById('f-twitter').value.trim() || null,
+      updated_at:    new Date().toISOString(),
+    }).eq('user_id', user.id)
+    if (kErr) throw kErr
+
+    toast('Profil berhasil disimpan ✓', 'success')
+  } catch (e) {
+    toast('Gagal menyimpan: ' + e.message, 'error')
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = `<i class='bx bx-save'></i>Simpan Perubahan`
+  }
+})
+
+document.getElementById('btn-cancel').addEventListener('click', () => location.reload())
+</script>
+</body>
+</html>

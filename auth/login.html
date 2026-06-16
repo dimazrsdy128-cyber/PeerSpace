@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - PeerSpace</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .auth-container { display: flex; min-height: 100vh; align-items: center; justify-content: center; padding: 20px; }
+        .auth-card { background-color: var(--surface-color); padding: 40px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); width: 100%; max-width: 400px; text-align: center; }
+        .auth-header { margin-bottom: 30px; }
+        .auth-header h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        .auth-header p { color: var(--text-secondary); font-size: 0.95rem; }
+        .auth-links { margin-top: 24px; display: flex; justify-content: space-between; font-size: 0.9rem; }
+        .auth-links a { color: var(--text-secondary); text-decoration: none; transition: color 0.3s; }
+        .auth-links a:hover { color: var(--accent-purple); }
+        .alert { padding: 12px 16px; border-radius: var(--radius-md); font-size: 0.88rem; margin-bottom: 16px; text-align: left; display: none; }
+        .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        .brand { font-weight: 800; font-size: 1.4rem; color: var(--accent-purple); margin-bottom: 24px; display: block; }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <span class="brand">PeerSpace</span>
+            <div class="auth-header">
+                <h1>Selamat Datang</h1>
+                <p>Masuk ke akun kamu untuk mulai konseling.</p>
+            </div>
+            <div id="errorMsg" class="alert alert-error"></div>
+            <div class="form-group" style="text-align: left;">
+                <label for="nim_or_email">NIM / Email</label>
+                <input type="text" id="nim_or_email" class="form-control" placeholder="Masukkan NIM atau Email">
+            </div>
+            <div class="form-group" style="text-align: left;">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Masukkan Password">
+            </div>
+            <button id="btnLogin" class="btn-primary">Masuk</button>
+            <div class="auth-links">
+                <a href="register.html">Belum punya akun?</a>
+                <a href="forgot-password.html">Lupa Password?</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { supabase } from '../assets/js/supabase-client.js'
+
+        const roleMap = {
+            mahasiswa: '../mahasiswa/dashboard.html',
+            konselor:  '../konselor/dashboard.html',
+            admin:     '../admin/dashboard.html'
+        }
+
+        // id di profiles = auth.users.id langsung
+        async function redirectByRole(userId) {
+            try {
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', userId)
+                    .maybeSingle()
+
+                if (error || !profile?.role) {
+                    console.warn('Profile tidak ditemukan:', error?.message)
+                    return
+                }
+
+                window.location.href = roleMap[profile.role] || roleMap.mahasiswa
+            } catch (e) {
+                console.warn('redirectByRole error:', e.message)
+            }
+        }
+
+        // Cek ?force=1 dari tombol logout
+        const params = new URLSearchParams(location.search)
+        if (params.get('force') === '1') {
+            await supabase.auth.signOut({ scope: 'local' })
+            Object.keys(localStorage)
+                .filter(k => k.startsWith('sb-'))
+                .forEach(k => localStorage.removeItem(k))
+            history.replaceState({}, '', location.pathname)
+        } else {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session?.user) {
+                await redirectByRole(session.user.id)
+            }
+        }
+
+        async function handleLogin() {
+            const btn        = document.getElementById('btnLogin')
+            const errEl      = document.getElementById('errorMsg')
+            const nimOrEmail = document.getElementById('nim_or_email').value.trim()
+            const password   = document.getElementById('password').value
+
+            errEl.style.display = 'none'
+
+            if (!nimOrEmail || !password) {
+                errEl.textContent   = 'NIM/Email dan password wajib diisi.'
+                errEl.style.display = 'block'
+                return
+            }
+
+            btn.textContent = 'Memproses...'
+            btn.disabled    = true
+
+            try {
+                const email = nimOrEmail.includes('@')
+                    ? nimOrEmail
+                    : `${nimOrEmail}@peerspace.ac.id`
+
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+                if (error) throw error
+
+                await redirectByRole(data.user.id)
+
+            } catch (err) {
+                const msg = err.message.includes('Invalid login credentials')
+                    ? 'NIM/Email atau password salah. Silakan coba lagi.'
+                    : 'Login gagal: ' + err.message
+
+                errEl.textContent   = msg
+                errEl.style.display = 'block'
+                btn.textContent     = 'Masuk'
+                btn.disabled        = false
+            }
+        }
+
+        document.getElementById('btnLogin').addEventListener('click', handleLogin)
+        document.getElementById('password').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleLogin()
+        })
+    </script>
+</body>
+</html>

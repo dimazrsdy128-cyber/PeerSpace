@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kelola Kuesioner — PeerSpace</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <style>
+    .content-area { padding: 2rem 2.5rem; }
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.8rem; }
+    .page-header h1 { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0 0 .3rem; }
+    .page-header h1 span { color: #8B2EFF; }
+    .page-header p { color: rgba(255,255,255,.45); font-size: .9rem; margin: 0; }
+    .btn-primary { display: inline-flex; align-items: center; gap: .45rem; background: linear-gradient(135deg, #8B2EFF, #6d00e8); color: #fff; border: none; border-radius: 10px; padding: .65rem 1.3rem; font-size: .88rem; font-weight: 700; cursor: pointer; transition: opacity .2s, transform .15s; white-space: nowrap; }
+    .btn-primary:hover { opacity: .88; transform: scale(1.02); }
+
+    .kuesioner-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.2rem; margin-bottom: 2rem; }
+    .kuesioner-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 1.4rem; display: flex; flex-direction: column; gap: .9rem; transition: border-color .2s, box-shadow .2s; }
+    .kuesioner-card:hover { border-color: rgba(139,46,255,.3); box-shadow: 0 4px 20px rgba(139,46,255,.1); }
+    .kcard-header { display: flex; align-items: flex-start; justify-content: space-between; gap: .8rem; }
+    .kcard-title { font-size: 1rem; font-weight: 700; color: #fff; margin: 0 0 .3rem; line-height: 1.4; }
+    .kcard-desc  { font-size: .82rem; color: rgba(255,255,255,.45); margin: 0; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .kcard-badges { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .badge { padding: .2rem .7rem; border-radius: 20px; font-size: .72rem; font-weight: 600; }
+    .badge-aktif    { background: rgba(34,197,94,.12);  border: 1px solid rgba(34,197,94,.25);  color: #86efac; }
+    .badge-nonaktif { background: rgba(100,116,139,.12); border: 1px solid rgba(100,116,139,.25); color: #94a3b8; }
+    .badge-soal     { background: rgba(139,46,255,.12);  border: 1px solid rgba(139,46,255,.25);  color: #b86fff; }
+    .badge-respons  { background: rgba(59,130,246,.1);   border: 1px solid rgba(59,130,246,.25);  color: #93c5fd; }
+    .badge-tipe     { background: rgba(245,158,11,.1);   border: 1px solid rgba(245,158,11,.25);  color: #fde68a; }
+    .kcard-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: auto; }
+    .btn-action { flex: 1; display: flex; align-items: center; justify-content: center; gap: .35rem; border-radius: 9px; padding: .48rem .8rem; font-size: .8rem; font-weight: 600; cursor: pointer; transition: background .18s; border: 1px solid transparent; min-width: 80px; }
+    .btn-edit   { background: rgba(139,46,255,.15); border-color: rgba(139,46,255,.3);  color: #b86fff; }
+    .btn-edit:hover  { background: rgba(139,46,255,.28); }
+    .btn-soal   { background: rgba(59,130,246,.1);  border-color: rgba(59,130,246,.3);   color: #93c5fd; }
+    .btn-soal:hover  { background: rgba(59,130,246,.22); }
+    .btn-toggle { background: rgba(245,158,11,.1);  border-color: rgba(245,158,11,.28);  color: #fde68a; }
+    .btn-toggle:hover { background: rgba(245,158,11,.22); }
+    .btn-delete { background: rgba(239,68,68,.1);   border-color: rgba(239,68,68,.25);   color: #fca5a5; }
+    .btn-delete:hover { background: rgba(239,68,68,.22); }
+
+    @keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+    .skeleton { background: linear-gradient(90deg, rgba(255,255,255,.06) 25%, rgba(255,255,255,.11) 50%, rgba(255,255,255,.06) 75%); background-size: 400px 100%; animation: shimmer 1.4s infinite; border-radius: 6px; }
+    .sk-line { height: 11px; }
+
+    .empty-state { grid-column: 1/-1; text-align: center; padding: 4rem 2rem; color: rgba(255,255,255,.4); }
+    .empty-state i { font-size: 3.5rem; color: rgba(139,46,255,.35); display: block; margin-bottom: 1rem; }
+    .empty-state p { margin: 0 0 1.2rem; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.78); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity .25s, visibility .25s; padding: 1rem; }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+    .modal-box { background: #130820; border: 1px solid rgba(139,46,255,.28); border-radius: 18px; width: 100%; overflow: hidden; transform: scale(.96); transition: transform .25s; display: flex; flex-direction: column; max-height: 90vh; }
+    .modal-overlay.open .modal-box { transform: scale(1); }
+    .modal-header { padding: 1.3rem 1.6rem; border-bottom: 1px solid rgba(255,255,255,.07); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .modal-header h3 { font-size: 1.05rem; font-weight: 700; color: #fff; margin: 0; }
+    .modal-close { background: none; border: none; color: rgba(255,255,255,.4); font-size: 1.4rem; cursor: pointer; transition: color .18s; padding: 0; line-height: 1; }
+    .modal-close:hover { color: #fff; }
+    .modal-body { padding: 1.5rem 1.6rem; overflow-y: auto; flex: 1; }
+    .modal-footer { padding: 1rem 1.6rem; border-top: 1px solid rgba(255,255,255,.07); display: flex; justify-content: flex-end; gap: .7rem; flex-shrink: 0; }
+
+    .form-group { margin-bottom: 1.1rem; }
+    .form-group label { display: block; font-size: .82rem; color: rgba(255,255,255,.55); margin-bottom: .4rem; font-weight: 500; }
+    .form-input, .form-textarea, .form-select { width: 100%; padding: .65rem .9rem; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: 10px; color: #fff; font-size: .9rem; font-family: inherit; transition: border-color .2s; box-sizing: border-box; }
+    .form-input:focus, .form-textarea:focus, .form-select:focus { outline: none; border-color: #8B2EFF; }
+    .form-input::placeholder, .form-textarea::placeholder { color: rgba(255,255,255,.25); }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    .form-select option { background: #1a0a2e; }
+    .btn-cancel { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.6); border-radius: 9px; padding: .55rem 1.2rem; font-size: .87rem; cursor: pointer; }
+    .btn-submit { background: linear-gradient(135deg, #8B2EFF, #6d00e8); border: none; color: #fff; border-radius: 9px; padding: .55rem 1.4rem; font-size: .87rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: .4rem; }
+    .btn-submit:disabled { opacity: .45; cursor: not-allowed; }
+    .form-error { color: #ef4444; font-size: .81rem; margin-top: .3rem; display: none; }
+
+    .modal-soal { max-width: 680px; }
+    .soal-list { display: flex; flex-direction: column; gap: .8rem; margin-bottom: 1.2rem; }
+    .soal-item { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 1rem 1.1rem; display: flex; align-items: flex-start; gap: .9rem; }
+    .soal-num { width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0; background: rgba(139,46,255,.2); color: #b86fff; display: flex; align-items: center; justify-content: center; font-size: .8rem; font-weight: 700; }
+    .soal-content { flex: 1; }
+    .soal-text { font-size: .88rem; color: #fff; margin: 0 0 .3rem; font-weight: 600; }
+    .soal-tipe { font-size: .75rem; color: rgba(255,255,255,.4); }
+    .soal-delete-btn { background: none; border: none; color: rgba(255,255,255,.25); cursor: pointer; font-size: 1.1rem; transition: color .18s; padding: 0; flex-shrink: 0; }
+    .soal-delete-btn:hover { color: #ef4444; }
+    .add-soal-form { background: rgba(255,255,255,.03); border: 1px dashed rgba(139,46,255,.3); border-radius: 12px; padding: 1.1rem; }
+    .add-soal-form h4 { font-size: .85rem; color: #b86fff; margin: 0 0 .9rem; font-weight: 700; }
+    .opsi-list { display: flex; flex-direction: column; gap: .4rem; margin-top: .6rem; }
+    .opsi-item { display: flex; gap: .5rem; align-items: center; }
+    .opsi-item input { flex: 1; padding: .45rem .75rem; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: 8px; color: #fff; font-size: .85rem; font-family: inherit; }
+    .opsi-item input:focus { outline: none; border-color: #8B2EFF; }
+    .opsi-item input::placeholder { color: rgba(255,255,255,.25); }
+    .btn-del-opsi { background: none; border: none; color: rgba(255,255,255,.25); cursor: pointer; font-size: 1rem; transition: color .18s; }
+    .btn-del-opsi:hover { color: #ef4444; }
+    .btn-add-opsi { background: none; border: 1px dashed rgba(255,255,255,.15); color: rgba(255,255,255,.4); border-radius: 8px; padding: .35rem .8rem; font-size: .78rem; cursor: pointer; transition: border-color .18s, color .18s; margin-top: .3rem; }
+    .btn-add-opsi:hover { border-color: rgba(139,46,255,.4); color: #b86fff; }
+    .btn-add-soal { background: rgba(139,46,255,.15); border: 1px solid rgba(139,46,255,.3); color: #b86fff; border-radius: 9px; padding: .5rem 1.1rem; font-size: .85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: .35rem; transition: background .18s; margin-top: .8rem; }
+    .btn-add-soal:hover { background: rgba(139,46,255,.28); }
+
+    .modal-confirm { max-width: 400px; }
+    .confirm-icon { text-align: center; margin-bottom: 1rem; }
+    .confirm-icon i { font-size: 3rem; color: #ef4444; }
+    .confirm-text { text-align: center; color: rgba(255,255,255,.7); font-size: .92rem; line-height: 1.6; }
+    .confirm-text strong { color: #fff; }
+    .btn-danger { background: rgba(239,68,68,.15); border: 1px solid rgba(239,68,68,.3); color: #fca5a5; border-radius: 9px; padding: .55rem 1.3rem; font-size: .87rem; font-weight: 700; cursor: pointer; transition: background .18s; }
+    .btn-danger:hover { background: rgba(239,68,68,.3); }
+
+    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #1e1030; border: 1px solid rgba(139,46,255,.35); border-radius: 12px; padding: .75rem 1.2rem; display: flex; align-items: center; gap: .6rem; font-size: .87rem; color: #fff; z-index: 2000; transform: translateY(20px); opacity: 0; transition: transform .3s, opacity .3s; pointer-events: none; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success i { color: #22c55e; }
+    .toast.error   i { color: #ef4444; }
+
+    @media (max-width: 640px) { .content-area { padding: 1.2rem; } .page-header h1 { font-size: 1.3rem; } }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar" id="sidebar-container"></aside>
+  <div class="main-content">
+    <header class="topbar" id="navbar-container"></header>
+    <div class="content-wrapper">
+    <div class="content-area">
+      <div class="page-header">
+        <div>
+          <h1>Kelola <span>Kuesioner</span></h1>
+          <p>Buat dan kelola kuesioner untuk mahasiswa</p>
+        </div>
+        <button class="btn-primary" id="btnTambahKuesioner">
+          <i class='bx bx-plus'></i> Buat Kuesioner
+        </button>
+      </div>
+
+      <div class="kuesioner-grid" id="kuesionerGrid">
+        <div class="kuesioner-card">
+          <div style="display:flex;flex-direction:column;gap:.5rem">
+            <div class="skeleton sk-line" style="width:75%;height:14px"></div>
+            <div class="skeleton sk-line" style="width:90%"></div>
+            <div class="skeleton sk-line" style="width:60%"></div>
+          </div>
+          <div style="display:flex;gap:.4rem">
+            <div class="skeleton sk-line" style="width:60px;height:22px;border-radius:20px"></div>
+            <div class="skeleton sk-line" style="width:80px;height:22px;border-radius:20px"></div>
+          </div>
+          <div style="display:flex;gap:.5rem">
+            <div class="skeleton sk-line" style="flex:1;height:32px;border-radius:9px"></div>
+            <div class="skeleton sk-line" style="flex:1;height:32px;border-radius:9px"></div>
+          </div>
+        </div>
+        <div class="kuesioner-card">
+          <div style="display:flex;flex-direction:column;gap:.5rem">
+            <div class="skeleton sk-line" style="width:75%;height:14px"></div>
+            <div class="skeleton sk-line" style="width:90%"></div>
+            <div class="skeleton sk-line" style="width:60%"></div>
+          </div>
+          <div style="display:flex;gap:.4rem">
+            <div class="skeleton sk-line" style="width:60px;height:22px;border-radius:20px"></div>
+            <div class="skeleton sk-line" style="width:80px;height:22px;border-radius:20px"></div>
+          </div>
+          <div style="display:flex;gap:.5rem">
+            <div class="skeleton sk-line" style="flex:1;height:32px;border-radius:9px"></div>
+            <div class="skeleton sk-line" style="flex:1;height:32px;border-radius:9px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal kuesioner (tambah/edit) -->
+<div class="modal-overlay" id="modalKuesioner">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-header">
+      <h3 id="modalKuesionerTitle">Buat Kuesioner</h3>
+      <button class="modal-close" data-close="modalKuesioner"><i class='bx bx-x'></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Judul Kuesioner <span style="color:#ef4444">*</span></label>
+        <input type="text" class="form-input" id="kJudul" placeholder="Contoh: Kuesioner Kesehatan Mental" maxlength="150" />
+      </div>
+      <div class="form-group">
+        <label>Deskripsi</label>
+        <textarea class="form-textarea" id="kDeskripsi" placeholder="Jelaskan tujuan kuesioner ini..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Tipe</label>
+        <select class="form-select" id="kTipe">
+          <option value="asesmen">Asesmen</option>
+          <option value="quiz">Quiz</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer">
+          <input type="checkbox" id="kPublish" style="width:16px;height:16px;accent-color:#8B2EFF" />
+          Langsung publikasikan
+        </label>
+      </div>
+      <p class="form-error" id="kError"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" data-close="modalKuesioner">Batal</button>
+      <button class="btn-submit" id="btnSimpanKuesioner"><i class='bx bx-save'></i> Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal kelola soal -->
+<div class="modal-overlay" id="modalSoal">
+  <div class="modal-box modal-soal">
+    <div class="modal-header">
+      <div>
+        <h3 id="modalSoalTitle">Kelola Soal</h3>
+        <p id="modalSoalSub" style="font-size:.78rem;color:rgba(255,255,255,.4);margin:.2rem 0 0"></p>
+      </div>
+      <button class="modal-close" data-close="modalSoal"><i class='bx bx-x'></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="soal-list" id="soalList"></div>
+      <div class="add-soal-form">
+        <h4><i class='bx bx-plus-circle'></i> Tambah Soal Baru</h4>
+        <div class="form-group">
+          <label>Pertanyaan <span style="color:#ef4444">*</span></label>
+          <input type="text" class="form-input" id="soalText" placeholder="Tulis pertanyaan di sini..." />
+        </div>
+        <div class="form-group">
+          <label>Tipe Jawaban</label>
+          <select class="form-select" id="soalTipe">
+            <option value="pilihan_ganda">Pilihan Ganda</option>
+            <option value="likert">Skala (1–5)</option>
+            <option value="teks">Teks Bebas</option>
+            <option value="ya_tidak">Ya / Tidak</option>
+          </select>
+        </div>
+        <div id="opsiSection" style="margin-top:.6rem">
+          <label style="font-size:.8rem;color:rgba(255,255,255,.5);display:block;margin-bottom:.5rem">Pilihan Jawaban</label>
+          <div class="opsi-list" id="opsiList">
+            <div class="opsi-item">
+              <input type="text" placeholder="Pilihan A" />
+              <button class="btn-del-opsi" onclick="delOpsi(this)"><i class='bx bx-trash'></i></button>
+            </div>
+            <div class="opsi-item">
+              <input type="text" placeholder="Pilihan B" />
+              <button class="btn-del-opsi" onclick="delOpsi(this)"><i class='bx bx-trash'></i></button>
+            </div>
+          </div>
+          <button class="btn-add-opsi" onclick="addOpsi()"><i class='bx bx-plus'></i> Tambah Pilihan</button>
+        </div>
+        <p class="form-error" id="soalError"></p>
+        <button class="btn-add-soal" id="btnAddSoal"><i class='bx bx-plus'></i> Tambah ke Daftar</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" data-close="modalSoal">Tutup</button>
+      <button class="btn-submit" id="btnSimpanSoal"><i class='bx bx-save'></i> Simpan Semua Soal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal konfirmasi hapus -->
+<div class="modal-overlay" id="modalConfirm">
+  <div class="modal-box modal-confirm">
+    <div class="modal-header">
+      <h3>Konfirmasi Hapus</h3>
+      <button class="modal-close" data-close="modalConfirm"><i class='bx bx-x'></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="confirm-icon"><i class='bx bx-trash'></i></div>
+      <p class="confirm-text" id="confirmText">Yakin ingin menghapus kuesioner ini?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" data-close="modalConfirm">Batal</button>
+      <button class="btn-danger" id="btnConfirmDelete">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <i class='bx bx-check-circle'></i>
+  <span id="toastMsg"></span>
+</div>
+
+<script type="module">
+import { supabase } from '../assets/js/supabase-client.js'
+
+// ── Auth guard ──
+const { data: { session } } = await supabase.auth.getSession()
+if (!session) { window.location.href = '../auth/login.html'; throw new Error() }
+const user = session.user
+
+const { data: profileData, error: profErr } = await supabase
+  .from('profiles').select('nama, role, avatar_url').eq('id', user.id).maybeSingle()
+if (profErr || !profileData || profileData.role !== 'konselor') {
+  window.location.href = '../auth/login.html'; throw new Error()
+}
+
+// ── Load sidebar ──
+fetch('../shared/sidebar-konselor.html').then(r => r.text()).then(html => {
+  document.getElementById('sidebar-container').innerHTML = html
+  document.querySelectorAll('#sidebar-container .menu-link').forEach(a => {
+    if (a.getAttribute('href') === 'kelola-kuesioner.html') a.closest('.menu-item')?.classList.add('active')
+  })
+  const btnLogout = document.getElementById('btnLogout')
+  if (btnLogout) btnLogout.addEventListener('click', async e => {
+    e.preventDefault()
+    await supabase.auth.signOut({ scope: 'local' })
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// ── Load navbar ──
+fetch('../shared/navbar.html').then(r => r.text()).then(html => {
+  const container = document.getElementById('navbar-container')
+  container.innerHTML = html
+  const navTitle  = container.querySelector('#topbarTitle')
+  const navName   = container.querySelector('#navUserName')
+  const navRole   = container.querySelector('#navUserRole')
+  const navAvatar = container.querySelector('#navAvatar')
+  if (navTitle)  navTitle.textContent = 'Kelola Kuesioner'
+  if (navName)   navName.textContent  = profileData.nama || user.email
+  if (navRole)   navRole.textContent  = 'Konselor'
+  if (navAvatar) navAvatar.src = profileData.avatar_url ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.nama || 'U')}&background=8B2EFF&color=fff`
+  const logoutBtn = container.querySelector('#btnLogout')
+  if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut({ scope: 'local' })
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// ── State ──
+let kuesionerList   = []
+let editingId       = null
+let soalKuesionerId = null
+let soalBuffer      = []
+let deleteTarget    = null
+
+// ── Toast ──
+function showToast(msg, type = 'success') {
+  const toast = document.getElementById('toast')
+  const icon  = toast.querySelector('i')
+  document.getElementById('toastMsg').textContent = msg
+  toast.className = `toast ${type} show`
+  icon.className  = `bx ${type === 'success' ? 'bx-check-circle' : 'bx-error-circle'}`
+  setTimeout(() => toast.classList.remove('show'), 3000)
+}
+
+// ── Modal helpers ──
+function openModal(id)  { document.getElementById(id).classList.add('open') }
+function closeModal(id) { document.getElementById(id).classList.remove('open') }
+
+document.querySelectorAll('[data-close]').forEach(btn => {
+  btn.addEventListener('click', () => closeModal(btn.dataset.close))
+})
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id) })
+})
+
+// ── Fetch kuesioner ──
+// Schema: author_id (FK ke profiles), tipe, status — TIDAK ada konselor_id, kategori, is_aktif
+async function fetchKuesioner() {
+  const grid = document.getElementById('kuesionerGrid')
+  try {
+    const { data, error } = await supabase
+      .from('kuesioner')
+      .select(`
+        id, judul, deskripsi, tipe, status, created_at,
+        kuesioner_soal ( count ),
+        kuesioner_hasil ( count )
+      `)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    kuesionerList = data || []
+    renderKuesioner()
+  } catch (err) {
+    console.error(err)
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <i class='bx bx-error-circle' style="color:#ef4444"></i>
+        <p>Gagal memuat kuesioner.</p>
+        <p style="font-size:.78rem;color:rgba(255,255,255,.35)">${err.message}</p>
+        <button class="btn-primary" onclick="location.reload()">Coba Lagi</button>
+      </div>`
+  }
+}
+
+function renderKuesioner() {
+  const grid = document.getElementById('kuesionerGrid')
+  if (!kuesionerList.length) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <i class='bx bx-notepad'></i>
+        <p>Belum ada kuesioner. Buat yang pertama!</p>
+        <button class="btn-primary" id="btnEmptyNew"><i class='bx bx-plus'></i> Buat Kuesioner</button>
+      </div>`
+    document.getElementById('btnEmptyNew')?.addEventListener('click', openTambah)
+    return
+  }
+
+  grid.innerHTML = kuesionerList.map(k => {
+    const soalCount    = k.kuesioner_soal?.[0]?.count ?? 0
+    const responsCount = k.kuesioner_hasil?.[0]?.count ?? 0
+    const isPublished  = k.status === 'published'
+    const tipeLabel    = { asesmen: 'Asesmen', quiz: 'Quiz' }
+
+    return `
+    <div class="kuesioner-card" data-id="${k.id}">
+      <div class="kcard-header">
+        <div>
+          <p class="kcard-title">${k.judul}</p>
+          <p class="kcard-desc">${k.deskripsi || 'Tidak ada deskripsi'}</p>
+        </div>
+      </div>
+      <div class="kcard-badges">
+        <span class="badge ${isPublished ? 'badge-aktif' : 'badge-nonaktif'}">
+          <i class='bx ${isPublished ? 'bx-check' : 'bx-minus'}'></i>
+          ${isPublished ? 'Published' : 'Draft'}
+        </span>
+        <span class="badge badge-tipe">${tipeLabel[k.tipe] || k.tipe}</span>
+        <span class="badge badge-soal"><i class='bx bx-list-ul'></i> ${soalCount} Soal</span>
+        <span class="badge badge-respons"><i class='bx bx-user-check'></i> ${responsCount} Respons</span>
+      </div>
+      <div class="kcard-actions">
+        <button class="btn-action btn-edit" data-id="${k.id}"><i class='bx bx-edit'></i> Edit</button>
+        <button class="btn-action btn-soal" data-id="${k.id}"><i class='bx bx-list-plus'></i> Soal</button>
+        <button class="btn-action btn-toggle" data-id="${k.id}" data-status="${k.status}">
+          <i class='bx ${isPublished ? 'bx-arrow-back' : 'bx-send'}'></i>
+          ${isPublished ? 'Jadikan Draft' : 'Publikasikan'}
+        </button>
+        <button class="btn-action btn-delete" data-id="${k.id}" data-judul="${k.judul.replace(/"/g,'&quot;')}">
+          <i class='bx bx-trash'></i> Hapus
+        </button>
+      </div>
+    </div>`
+  }).join('')
+
+  // Event listeners setelah render
+  grid.querySelectorAll('.btn-edit').forEach(btn => {
+    btn.addEventListener('click', () => openEdit(btn.dataset.id))
+  })
+  grid.querySelectorAll('.btn-soal').forEach(btn => {
+    btn.addEventListener('click', () => openSoal(btn.dataset.id))
+  })
+  grid.querySelectorAll('.btn-toggle').forEach(btn => {
+    btn.addEventListener('click', () => toggleStatus(btn.dataset.id, btn.dataset.status))
+  })
+  grid.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', () => confirmDelete(btn.dataset.id, btn.dataset.judul))
+  })
+}
+
+// ── Tambah kuesioner ──
+function openTambah() {
+  editingId = null
+  document.getElementById('modalKuesionerTitle').textContent = 'Buat Kuesioner Baru'
+  document.getElementById('kJudul').value     = ''
+  document.getElementById('kDeskripsi').value = ''
+  document.getElementById('kTipe').value      = 'asesmen'
+  document.getElementById('kPublish').checked = false
+  document.getElementById('kError').style.display = 'none'
+  openModal('modalKuesioner')
+}
+document.getElementById('btnTambahKuesioner').addEventListener('click', openTambah)
+
+// ── Edit kuesioner ──
+function openEdit(id) {
+  const k = kuesionerList.find(x => x.id === id)
+  if (!k) return
+  editingId = id
+  document.getElementById('modalKuesionerTitle').textContent = 'Edit Kuesioner'
+  document.getElementById('kJudul').value     = k.judul
+  document.getElementById('kDeskripsi').value = k.deskripsi || ''
+  document.getElementById('kTipe').value      = k.tipe   || 'asesmen'
+  document.getElementById('kPublish').checked = k.status === 'published'
+  document.getElementById('kError').style.display = 'none'
+  openModal('modalKuesioner')
+}
+
+// ── Simpan kuesioner ──
+document.getElementById('btnSimpanKuesioner').addEventListener('click', async () => {
+  const btn   = document.getElementById('btnSimpanKuesioner')
+  const judul = document.getElementById('kJudul').value.trim()
+  const errEl = document.getElementById('kError')
+  errEl.style.display = 'none'
+  if (!judul) { errEl.textContent = 'Judul wajib diisi.'; errEl.style.display = 'block'; return }
+
+  btn.disabled = true; btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Menyimpan...`
+
+  // Payload sesuai schema: author_id, judul, deskripsi, tipe, status
+  const basePayload = {
+    judul,
+    deskripsi: document.getElementById('kDeskripsi').value.trim() || null,
+    tipe:      document.getElementById('kTipe').value,
+    status:    document.getElementById('kPublish').checked ? 'published' : 'draft',
+  }
+
+  try {
+    if (editingId) {
+      const { error } = await supabase.from('kuesioner').update(basePayload).eq('id', editingId)
+      if (error) throw error
+      showToast('Kuesioner berhasil diperbarui!')
+    } else {
+      const { error } = await supabase.from('kuesioner').insert({ ...basePayload, author_id: user.id })
+      if (error) throw error
+      showToast('Kuesioner berhasil dibuat!')
+    }
+    closeModal('modalKuesioner')
+    fetchKuesioner()
+  } catch (err) {
+    errEl.textContent = 'Gagal menyimpan: ' + (err.message || 'Coba lagi')
+    errEl.style.display = 'block'
+  } finally {
+    btn.disabled = false; btn.innerHTML = `<i class='bx bx-save'></i> Simpan`
+  }
+})
+
+// ── Toggle status published/draft ──
+async function toggleStatus(id, currentStatus) {
+  const newStatus = currentStatus === 'published' ? 'draft' : 'published'
+  try {
+    const { error } = await supabase.from('kuesioner').update({ status: newStatus }).eq('id', id)
+    if (error) throw error
+    showToast(`Kuesioner dijadikan ${newStatus === 'published' ? 'Published' : 'Draft'}!`)
+    fetchKuesioner()
+  } catch (err) {
+    showToast('Gagal mengubah status.', 'error')
+  }
+}
+
+// ── Hapus kuesioner ──
+function confirmDelete(id, nama) {
+  deleteTarget = { id, nama }
+  document.getElementById('confirmText').innerHTML =
+    `Yakin ingin menghapus kuesioner <strong>"${nama}"</strong>?<br>
+     <span style="font-size:.82rem;color:rgba(255,255,255,.4)">Semua soal & hasil terkait akan ikut terhapus.</span>`
+  openModal('modalConfirm')
+}
+
+document.getElementById('btnConfirmDelete').addEventListener('click', async () => {
+  if (!deleteTarget) return
+  const btn = document.getElementById('btnConfirmDelete')
+  btn.disabled = true; btn.textContent = 'Menghapus...'
+  try {
+    await supabase.from('kuesioner_soal').delete().eq('kuesioner_id', deleteTarget.id)
+    await supabase.from('kuesioner_hasil').delete().eq('kuesioner_id', deleteTarget.id)
+    const { error } = await supabase.from('kuesioner').delete().eq('id', deleteTarget.id)
+    if (error) throw error
+    showToast('Kuesioner berhasil dihapus!')
+    closeModal('modalConfirm')
+    fetchKuesioner()
+  } catch (err) {
+    showToast('Gagal menghapus.', 'error')
+  } finally {
+    btn.disabled = false; btn.textContent = 'Hapus'
+    deleteTarget = null
+  }
+})
+
+// ── Modal soal ──
+async function openSoal(id) {
+  soalKuesionerId = id
+  const k = kuesionerList.find(x => x.id === id)
+  document.getElementById('modalSoalTitle').textContent = 'Kelola Soal'
+  document.getElementById('modalSoalSub').textContent   = k?.judul || ''
+  document.getElementById('soalText').value  = ''
+  document.getElementById('soalTipe').value  = 'pilihan_ganda'
+  document.getElementById('soalError').style.display = 'none'
+  resetOpsi()
+  handleTipeChange()
+  openModal('modalSoal')
+  await loadSoal(id)
+}
+
+async function loadSoal(id) {
+  const listEl = document.getElementById('soalList')
+  listEl.innerHTML = `<div style="text-align:center;padding:1.5rem;color:rgba(255,255,255,.35)"><i class='bx bx-loader-alt bx-spin' style="font-size:1.5rem"></i></div>`
+  try {
+    const { data, error } = await supabase
+      .from('kuesioner_soal')
+      .select('id, pertanyaan, tipe_soal, opsi_jawaban, nomor')
+      .eq('kuesioner_id', id)
+      .order('nomor', { ascending: true })
+    if (error) throw error
+    soalBuffer = (data || []).map(s => ({
+      id: s.id,
+      pertanyaan: s.pertanyaan,
+      tipe: s.tipe_soal,
+      urutan: s.nomor,
+      opsi: s.opsi_jawaban ? (typeof s.opsi_jawaban === 'string' ? JSON.parse(s.opsi_jawaban) : s.opsi_jawaban) : []
+    }))
+    renderSoalList()
+  } catch (err) {
+    listEl.innerHTML = `<p style="color:#ef4444;font-size:.85rem">Gagal memuat soal.</p>`
+  }
+}
+
+function renderSoalList() {
+  const listEl = document.getElementById('soalList')
+  if (!soalBuffer.length) {
+    listEl.innerHTML = `<p style="color:rgba(255,255,255,.35);font-size:.85rem;text-align:center;padding:.5rem">Belum ada soal. Tambahkan di bawah.</p>`
+    return
+  }
+  const tipeLabel = { pilihan_ganda:'Pilihan Ganda', likert:'Skala 1–5', teks:'Teks Bebas', ya_tidak:'Ya / Tidak' }
+  listEl.innerHTML = soalBuffer.map((s, i) => `
+    <div class="soal-item" data-idx="${i}">
+      <div class="soal-num">${i+1}</div>
+      <div class="soal-content">
+        <p class="soal-text">${s.pertanyaan}</p>
+        <p class="soal-tipe">${tipeLabel[s.tipe] || s.tipe}${s.opsi?.length ? ` · ${s.opsi.join(', ')}` : ''}</p>
+      </div>
+      <button class="soal-delete-btn" data-idx="${i}"><i class='bx bx-trash'></i></button>
+    </div>`).join('')
+
+  listEl.querySelectorAll('.soal-delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      soalBuffer.splice(+btn.dataset.idx, 1)
+      renderSoalList()
+    })
+  })
+}
+
+document.getElementById('soalTipe').addEventListener('change', handleTipeChange)
+function handleTipeChange() {
+  const tipe = document.getElementById('soalTipe').value
+  document.getElementById('opsiSection').style.display = tipe === 'pilihan_ganda' ? 'block' : 'none'
+}
+
+window.addOpsi = () => {
+  const list  = document.getElementById('opsiList')
+  const count = list.children.length
+  const div   = document.createElement('div')
+  div.className = 'opsi-item'
+  div.innerHTML = `<input type="text" placeholder="Pilihan ${String.fromCharCode(65+count)}" /><button class="btn-del-opsi" onclick="delOpsi(this)"><i class='bx bx-trash'></i></button>`
+  list.appendChild(div)
+}
+window.delOpsi = (btn) => {
+  const item = btn.closest('.opsi-item')
+  if (document.getElementById('opsiList').children.length > 1) item.remove()
+}
+function resetOpsi() {
+  document.getElementById('opsiList').innerHTML = `
+    <div class="opsi-item"><input type="text" placeholder="Pilihan A" /><button class="btn-del-opsi" onclick="delOpsi(this)"><i class='bx bx-trash'></i></button></div>
+    <div class="opsi-item"><input type="text" placeholder="Pilihan B" /><button class="btn-del-opsi" onclick="delOpsi(this)"><i class='bx bx-trash'></i></button></div>`
+}
+
+document.getElementById('btnAddSoal').addEventListener('click', () => {
+  const text  = document.getElementById('soalText').value.trim()
+  const tipe  = document.getElementById('soalTipe').value
+  const errEl = document.getElementById('soalError')
+  errEl.style.display = 'none'
+  if (!text) { errEl.textContent = 'Pertanyaan wajib diisi.'; errEl.style.display = 'block'; return }
+
+  let opsi = []
+  if (tipe === 'pilihan_ganda') {
+    opsi = [...document.getElementById('opsiList').querySelectorAll('input')].map(i => i.value.trim()).filter(Boolean)
+    if (opsi.length < 2) { errEl.textContent = 'Minimal 2 pilihan jawaban.'; errEl.style.display = 'block'; return }
+  }
+
+  soalBuffer.push({ pertanyaan: text, tipe, opsi, urutan: soalBuffer.length + 1, kuesioner_id: soalKuesionerId })
+  renderSoalList()
+  document.getElementById('soalText').value = ''
+  resetOpsi()
+  document.getElementById('soalTipe').value = 'pilihan_ganda'
+  handleTipeChange()
+})
+
+document.getElementById('btnSimpanSoal').addEventListener('click', async () => {
+  const btn = document.getElementById('btnSimpanSoal')
+  if (!soalBuffer.length) { showToast('Tambahkan minimal 1 soal.', 'error'); return }
+  btn.disabled = true; btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Menyimpan...`
+  try {
+    await supabase.from('kuesioner_soal').delete().eq('kuesioner_id', soalKuesionerId)
+    const rows = soalBuffer.map((s, i) => ({
+      kuesioner_id: soalKuesionerId,
+      pertanyaan:   s.pertanyaan,
+      tipe_soal:    s.tipe,
+      opsi_jawaban: s.opsi?.length ? JSON.stringify(s.opsi) : null,
+      nomor:        i + 1,
+    }))
+    const { error } = await supabase.from('kuesioner_soal').insert(rows)
+    if (error) throw error
+    showToast(`${rows.length} soal berhasil disimpan!`)
+    closeModal('modalSoal')
+    fetchKuesioner()
+  } catch (err) {
+    showToast('Gagal menyimpan soal: ' + (err.message || 'Coba lagi'), 'error')
+  } finally {
+    btn.disabled = false; btn.innerHTML = `<i class='bx bx-save'></i> Simpan Semua Soal`
+  }
+})
+
+// ── Init ──
+fetchKuesioner()
+</script>
+</body>
+</html>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Forum - Konselor</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root {
+            --bg-dark: #000;
+            --card-dark: #141214;
+            --border-dark: rgba(255,255,255,0.08);
+            --accent-purple: #8b5cf6;
+        }
+        body { background: var(--bg-dark); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+        .btn-add { background: var(--accent-purple); color: #fff; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+        .btn-add:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-add:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-requests {
+            background: var(--accent-purple); color: #fff; border: none; 
+            padding: 7px 20px; border-radius: 12px; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; gap: 8px; transition: 0.3s; text-decoration: none;
+        }
+        .btn-requests:hover { opacity: 0.9; transform: translateY(-2px); }
+        .req-count-badge {
+            background: #ef4444; color: #fff; font-size: 0.7rem; font-weight: 700;
+            border-radius: 99px; padding: 1px 7px; line-height: 1.4;
+        }
+
+        .forum-card { background: var(--card-dark); border: 1px solid var(--border-dark); border-radius: 20px; padding: 24px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+
+        .forum-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .forum-title { font-size: 1.15rem; font-weight: 700; color: #fff; text-decoration: none; }
+        .forum-title:hover { color: var(--accent-purple); }
+        .forum-desc { color: #94a3b8; font-size: 0.9rem; line-height: 1.5; margin-bottom: 15px; max-width: 600px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+        .forum-meta { display: flex; gap: 20px; font-size: 0.85rem; color: #64748b; flex-wrap: wrap; }
+        .forum-meta span { display: flex; align-items: center; gap: 6px; }
+
+        .btn-group { display: flex; gap: 12px; flex-shrink: 0; }
+        .btn-action { height: 45px; padding: 0 15px; border-radius: 12px; border: 1px solid var(--border-dark); background: transparent; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; transition: 0.2s; }
+        .btn-action:hover { background: rgba(255,255,255,0.05); border-color: var(--accent-purple); }
+        .btn-delete:hover { background: #ef4444; border-color: #ef4444; }
+        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Status badge */
+        .status-badge { font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 4px; }
+        .status-flagged  { background: #ef44441a; color: #ef4444; }
+        .status-archived { background: #64748b22; color: #94a3b8; }
+
+        /* Empty / error state */
+        .empty-state { text-align: center; padding: 60px 20px; color: #64748b; }
+        .empty-state i { font-size: 2.6rem; margin-bottom: 12px; display: block; }
+        .empty-state p { margin: 0; font-size: 0.9rem; }
+
+        /* Skeleton */
+        .skeleton { background: linear-gradient(90deg, #1a1a1a 25%, #242424 50%, #1a1a1a 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px; }
+        @keyframes shimmer { to { background-position: -200% 0; } }
+        .skel-title { width: 280px; height: 20px; margin-bottom: 10px; }
+        .skel-desc  { width: 70%; height: 14px; margin-bottom: 8px; }
+        .skel-meta  { width: 180px; height: 12px; }
+
+        /* Toast */
+        #toast-container { position: fixed; bottom: 28px; right: 28px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
+        .toast { background: #141214; border: 1px solid var(--border-dark); border-left: 3px solid var(--accent-purple); border-radius: 10px; padding: 12px 18px; color: #fff; font-size: 0.875rem; max-width: 320px; box-shadow: 0 8px 32px #00000060; animation: toastIn .25s ease; }
+        .toast.error { border-left-color: #ef4444; }
+        .toast.success { border-left-color: #10b981; }
+        @keyframes toastIn { from { opacity:0; transform: translateY(12px); } }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-box { background: var(--card-dark); border: 1px solid var(--border-dark); padding: 32px; border-radius: 24px; width: 500px; }
+        .modal-box h3 { margin-bottom: 20px; font-size: 1.4rem; }
+        .modal-box input, .modal-box textarea { width: 100%; background: #0a0a0a; border: 1px solid var(--border-dark); padding: 14px; border-radius: 12px; color: #fff; margin: 8px 0 20px; outline: none; font-family: inherit; }
+        .modal-box input:focus, .modal-box textarea:focus { border-color: var(--accent-purple); }
+        .field-error { color: #ef4444; font-size: 0.78rem; margin: -16px 0 16px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <aside class="sidebar" id="sidebar-container"></aside>
+
+        <main class="main-content">
+            <header class="topbar" id="navbar-container"></header>
+
+            <div class="content-wrapper">
+                <div class="page-header">
+                    <div>
+                        <h2>Master Forum Diskusi</h2>
+                        <p style="color: #94a3b8; margin-top: 5px;">Kelola topik diskusi resmi untuk seluruh mahasiswa.</p>
+                    </div>
+                    <div class="header-actions">
+                        <a href="forum-requests.html" class="btn-requests" id="btnRequests">
+                            <i class='bx bx-inbox'></i> Permintaan Topik
+                            <span class="req-count-badge" id="reqCountBadge" style="display:none;">0</span>
+                        </a>
+                        <button class="btn-add" onclick="toggleModal(true)"><i class='bx bx-plus-circle'></i> Buat Topik Baru</button>
+                    </div>
+                </div>
+
+                <div id="forumList">
+                    <!-- Skeleton awal -->
+                    <div class="forum-card">
+                        <div>
+                            <div class="skeleton skel-title"></div>
+                            <div class="skeleton skel-desc"></div>
+                            <div class="skeleton skel-meta"></div>
+                        </div>
+                    </div>
+                    <div class="forum-card">
+                        <div>
+                            <div class="skeleton skel-title"></div>
+                            <div class="skeleton skel-desc"></div>
+                            <div class="skeleton skel-meta"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="modalForum">
+        <div class="modal-box">
+            <h3>Buat Forum Baru</h3>
+            <label style="font-size: 0.85rem; color: #94a3b8;">Judul Diskusi</label>
+            <input type="text" id="forumTitle" placeholder="Ketik judul yang menarik...">
+            <div class="field-error" id="errTitle">Judul wajib diisi.</div>
+            <label style="font-size: 0.85rem; color: #94a3b8;">Deskripsi Pengantar</label>
+            <textarea id="forumDesc" rows="4" placeholder="Apa yang ingin dibahas dalam forum ini?"></textarea>
+            <div class="field-error" id="errDesc">Deskripsi wajib diisi.</div>
+            <div style="display: flex; gap: 12px; margin-top: 10px;">
+                <button class="btn-add" id="btnSubmitForum" style="flex:1" onclick="submitForum()">Terbitkan Forum</button>
+                <button class="btn-add" style="flex:1; background: #2A2A2A;" onclick="toggleModal(false)">Batalkan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module">
+        import { supabase } from '../assets/js/supabase-client.js'
+
+        // ── Auth guard ──────────────────────────────────────────────
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { window.location.href = '../auth/login.html'; throw new Error('Unauth') }
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role, nama, avatar_url')
+            .eq('id', user.id)
+            .single()
+
+        if (!profile || profile.role !== 'konselor') {
+            window.location.href = '../mahasiswa/dashboard.html'; throw new Error('Forbidden')
+        }
+
+        // ── Toast helper ────────────────────────────────────────────
+        function toast(msg, type = 'info') {
+            const tc = document.getElementById('toast-container')
+            const el = document.createElement('div')
+            el.className = `toast ${type}`
+            el.textContent = msg
+            tc.appendChild(el)
+            setTimeout(() => el.remove(), 3500)
+        }
+
+        // ── Modal helpers ───────────────────────────────────────────
+        window.toggleModal = function (show) {
+            document.getElementById('modalForum').style.display = show ? 'flex' : 'none'
+            if (show) {
+                document.getElementById('forumTitle').value = ''
+                document.getElementById('forumDesc').value = ''
+                document.getElementById('errTitle').style.display = 'none'
+                document.getElementById('errDesc').style.display = 'none'
+            }
+        }
+
+        window.submitForum = async function () {
+            const titleEl = document.getElementById('forumTitle')
+            const descEl  = document.getElementById('forumDesc')
+            const judul = titleEl.value.trim()
+            const isi   = descEl.value.trim()
+
+            let valid = true
+            document.getElementById('errTitle').style.display = judul ? 'none' : 'block'
+            document.getElementById('errDesc').style.display  = isi   ? 'none' : 'block'
+            if (!judul) valid = false
+            if (!isi) valid = false
+            if (!valid) return
+
+            const btn = document.getElementById('btnSubmitForum')
+            btn.disabled = true
+            btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Menerbitkan...`
+
+            const { error } = await supabase.from('forum_posts').insert({
+                author_id: user.id,
+                judul,
+                isi,
+                is_anonim: false,
+            })
+
+            btn.disabled = false
+            btn.innerHTML = 'Terbitkan Forum'
+
+            if (error) {
+                toast('Gagal membuat forum: ' + error.message, 'error')
+                return
+            }
+
+            toast('Forum berhasil diterbitkan', 'success')
+            window.toggleModal(false)
+            loadForums()
+        }
+
+        window.deleteForum = async function (postId, btnEl) {
+            if (!confirm('Hapus forum ini? Semua komentar di dalamnya juga akan terhapus.')) return
+
+            btnEl.disabled = true
+            const { error } = await supabase.from('forum_posts').delete().eq('id', postId)
+
+            if (error) {
+                toast('Gagal menghapus forum: ' + error.message, 'error')
+                btnEl.disabled = false
+                return
+            }
+
+            toast('Forum berhasil dihapus', 'success')
+            const card = btnEl.closest('.forum-card')
+            if (card) card.remove()
+        }
+
+        // ── Relative time helper ───────────────────────────────────
+        function timeAgo(dateStr) {
+            const diffSec = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
+            if (diffSec < 60) return 'baru saja'
+            const min = Math.floor(diffSec / 60)
+            if (min < 60) return `${min} menit lalu`
+            const hour = Math.floor(min / 60)
+            if (hour < 24) return `${hour} jam lalu`
+            const day = Math.floor(hour / 24)
+            if (day < 30) return `${day} hari lalu`
+            const month = Math.floor(day / 30)
+            if (month < 12) return `${month} bulan lalu`
+            return `${Math.floor(month / 12)} tahun lalu`
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div')
+            div.textContent = str ?? ''
+            return div.innerHTML
+        }
+
+        // ── Load forum list ──────────────────────────────────────────
+        async function loadForums() {
+            const listEl = document.getElementById('forumList')
+
+            const { data: posts, error: postErr } = await supabase
+                .from('forum_posts')
+                .select('id, judul, isi, status, created_at, updated_at')
+                .order('updated_at', { ascending: false })
+
+            if (postErr) {
+                listEl.innerHTML = `<div class="empty-state"><i class='bx bx-error-circle'></i><p>Gagal memuat forum: ${escapeHtml(postErr.message)}</p></div>`
+                return
+            }
+
+            if (!posts || !posts.length) {
+                listEl.innerHTML = `<div class="empty-state"><i class='bx bx-message-square-x'></i><p>Belum ada forum diskusi. Klik "Buat Topik Baru" untuk mulai.</p></div>`
+                return
+            }
+
+            // Hitung jumlah komentar & partisipan unik per post
+            const { data: comments } = await supabase
+                .from('forum_comments')
+                .select('post_id, author_id')
+
+            const statsMap = {}
+            ;(comments ?? []).forEach(c => {
+                if (!statsMap[c.post_id]) statsMap[c.post_id] = { total: 0, authors: new Set() }
+                statsMap[c.post_id].total++
+                if (c.author_id) statsMap[c.post_id].authors.add(c.author_id)
+            })
+
+            const statusBadge = {
+                flagged:  `<span class="status-badge status-flagged"><i class='bx bx-flag'></i> Dilaporkan</span>`,
+                archived: `<span class="status-badge status-archived"><i class='bx bx-archive'></i> Diarsipkan</span>`,
+            }
+
+            listEl.innerHTML = posts.map(p => {
+                const stats = statsMap[p.id] ?? { total: 0, authors: new Set() }
+                const badge = statusBadge[p.status] ?? ''
+                return `
+                <div class="forum-card">
+                    <div>
+                        <div class="forum-title-row">
+                            <a href="forum-detail.html?id=${p.id}" class="forum-title">${escapeHtml(p.judul)}</a>
+                            ${badge}
+                        </div>
+                        <div class="forum-desc">${escapeHtml(p.isi)}</div>
+                        <div class="forum-meta">
+                            <span><i class='bx bx-group'></i> ${stats.authors.size} Partisipan</span>
+                            <span><i class='bx bx-message-square-dots'></i> ${stats.total} Komentar</span>
+                            <span><i class='bx bx-calendar-event'></i> Diperbarui ${timeAgo(p.updated_at)}</span>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn-action" onclick="location.href='forum-detail.html?id=${p.id}'"><i class='bx bx-show'></i> Lihat Forum</button>
+                        <button class="btn-action btn-delete" onclick="deleteForum('${p.id}', this)"><i class='bx bx-trash'></i></button>
+                    </div>
+                </div>`
+            }).join('')
+        }
+        window.loadForums = loadForums
+
+        // ── Load sidebar & sync active state ─────────────────────────
+        fetch('../shared/sidebar-konselor.html').then(r => r.text()).then(d => {
+            const temp = document.createElement('div')
+            temp.innerHTML = d
+
+            const oldActive = temp.querySelector('.menu-item.active')
+            if (oldActive) oldActive.classList.remove('active')
+
+            const target = temp.querySelector('a[href="kelola-forum.html"]')
+            if (target) target.parentElement.classList.add('active')
+
+            document.getElementById('sidebar-container').innerHTML = temp.innerHTML
+        })
+
+        // ── Load navbar ────────────────────────────────────────────
+        fetch('../shared/navbar.html').then(r => r.text()).then(html => {
+            const container = document.getElementById('navbar-container')
+            container.innerHTML = html
+            const titleEl = container.querySelector('#topbarTitle')
+            if (titleEl) titleEl.textContent = 'Master Forum'
+            const nameEl = container.querySelector('#navUserName')
+            const roleEl = container.querySelector('#navUserRole')
+            const avatarEl = container.querySelector('#navAvatar')
+            if (nameEl) nameEl.textContent = profile.nama || user.email
+            if (roleEl) roleEl.textContent = 'Konselor'
+            if (avatarEl && profile.avatar_url) avatarEl.src = profile.avatar_url
+            const logoutBtn = container.querySelector('#btnLogout')
+            if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+                await supabase.auth.signOut({ scope: 'local' })
+                window.location.href = '../auth/login.html'
+            })
+        })
+
+        // ── Badge jumlah permintaan topik pending ───────────────────
+        async function loadPendingRequestCount() {
+            const { count, error } = await supabase
+                .from('forum_post_requests')
+                .select('id', { count: 'exact', head: true })
+                .eq('status', 'pending')
+
+            if (error) return // diam saja kalau tabel/RLS belum siap, tidak mengganggu halaman utama
+
+            const badge = document.getElementById('reqCountBadge')
+            if (count && count > 0) {
+                badge.textContent = count > 99 ? '99+' : count
+                badge.style.display = 'inline-block'
+            }
+        }
+
+        loadForums()
+        loadPendingRequestCount()
+    </script>
+</body>
+</html>

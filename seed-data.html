@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Konselerin — Seed Data</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg-dark: #0A0A0A;
+      --accent-purple: #8B2EFF;
+      --accent-hover: #701EE6;
+      --surface: #141414;
+      --surface-2: #1C1C1C;
+      --border: #2A2A2A;
+      --text-primary: #FFFFFF;
+      --text-secondary: #A1A1AA;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --radius: 12px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 32px 16px;
+    }
+
+    .container { max-width: 860px; margin: 0 auto; }
+
+    /* Header */
+    .header { margin-bottom: 32px; }
+    .header h1 { font-size: 1.8rem; font-weight: 700; }
+    .header h1 span { color: var(--accent-purple); }
+    .header p { color: var(--text-secondary); margin-top: 6px; font-size: 0.95rem; }
+
+    /* Warning box */
+    .warning-box {
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.3);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      color: var(--warning);
+      font-size: 0.88rem;
+      margin-bottom: 28px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    /* Steps */
+    .steps { display: flex; flex-direction: column; gap: 16px; margin-bottom: 28px; }
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: border-color 0.3s;
+    }
+    .step.active { border-color: var(--accent-purple); }
+    .step.done   { border-color: var(--success); }
+    .step.error  { border-color: var(--error); }
+
+    .step-num {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.85rem;
+      flex-shrink: 0;
+      transition: all 0.3s;
+    }
+    .step.active .step-num { background: var(--accent-purple); border-color: var(--accent-purple); }
+    .step.done   .step-num { background: var(--success); border-color: var(--success); }
+    .step.error  .step-num { background: var(--error); border-color: var(--error); }
+
+    .step-info { flex: 1; }
+    .step-info h3 { font-size: 0.95rem; font-weight: 600; }
+    .step-info p  { font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px; }
+
+    .step-badge {
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--surface-2);
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+    .step.active .step-badge { background: rgba(139,46,255,0.2); color: var(--accent-purple); }
+    .step.done   .step-badge { background: rgba(34,197,94,0.15); color: var(--success); }
+    .step.error  .step-badge { background: rgba(239,68,68,0.15); color: var(--error); }
+
+    /* Tombol utama */
+    .btn-run {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent-purple);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 20px;
+    }
+    .btn-run:hover:not(:disabled) {
+      background: var(--accent-hover);
+      box-shadow: 0 4px 24px rgba(139,46,255,0.4);
+    }
+    .btn-run:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Log console */
+    .log-box {
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      max-height: 420px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .log-box:empty::after { content: 'Log akan muncul di sini...'; color: #444; }
+    .log-success { color: var(--success); }
+    .log-error   { color: var(--error); }
+    .log-warn    { color: var(--warning); }
+    .log-info    { color: #60a5fa; }
+    .log-dim     { color: #555; }
+    .log-bold    { color: var(--text-primary); font-weight: bold; }
+
+    /* Result table */
+    .result-section { margin-top: 28px; display: none; }
+    .result-section h2 { font-size: 1rem; font-weight: 700; margin-bottom: 14px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th {
+      text-align: left;
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .badge-done   { color: var(--success); font-weight: 600; }
+    .badge-error  { color: var(--error); font-weight: 600; }
+    .badge-rating {
+      background: rgba(139,46,255,0.2);
+      color: var(--accent-purple);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>Konselerin <span>Seed Data</span></h1>
+    <p>Tool untuk memasukkan data dummy mahasiswa, konselor, booking, dan review ke Supabase.</p>
+  </div>
+
+  <div class="warning-box">
+    ⚠️ <span>Jalankan hanya sekali di database kosong/development. Menjalankan ulang akan membuat data duplikat karena email sudah terdaftar di Auth.</span>
+  </div>
+
+  <!-- Steps indicator -->
+  <div class="steps" id="steps">
+    <div class="step" id="step-1">
+      <div class="step-num">1</div>
+      <div class="step-info">
+        <h3>Register Konselor</h3>
+        <p>3 akun konselor — Dimaz, Fauzan, Azarel</p>
+      </div>
+      <span class="step-badge">Menunggu</span>
+    </div>
+    <div class="step" id="step-2">
+      <div class="step-num">2</div>
+      <div class="step-info">
+        <h3>Register Mahasiswa</h3>
+        <p>9 akun mahasiswa — Andi, Siti, Budi, dst.</p>
+      </div>
+      <span class="step-badge">Menunggu</span>
+    </div>
+    <div class="step" id="step-3">
+      <div class="step-num">3</div>
+      <div class="step-info">
+        <h3>Buat Booking</h3>
+        <p>9 data sesi konseling (status: done)</p>
+      </div>
+      <span class="step-badge">Menunggu</span>
+    </div>
+    <div class="step" id="step-4">
+      <div class="step-num">4</div>
+      <div class="step-info">
+        <h3>Insert Review & Penilaian</h3>
+        <p>9 review dengan rating dari data analis</p>
+      </div>
+      <span class="step-badge">Menunggu</span>
+    </div>
+    <div class="step" id="step-5">
+      <div class="step-num">5</div>
+      <div class="step-info">
+        <h3>Verifikasi Rating Konselor</h3>
+        <p>Cek trigger update_konselor_rating berjalan</p>
+      </div>
+      <span class="step-badge">Menunggu</span>
+    </div>
+  </div>
+
+  <button class="btn-run" id="btnRun" onclick="runSeed()">🚀 Jalankan Seed Data</button>
+
+  <div class="log-box" id="logBox"></div>
+
+  <!-- Hasil verifikasi rating -->
+  <div class="result-section" id="resultSection">
+    <h2>📊 Hasil Verifikasi Rating Konselor</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Konselor</th>
+          <th>Spesialisasi</th>
+          <th>Rating (DB)</th>
+          <th>Total Review</th>
+          <th>Total Sesi</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="resultBody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script type="module">
+  import { supabase } from '../assets/js/supabase-client.js'
+
+  // ── Data master ──────────────────────────────────────────
+  const DATA_KONSELOR = [
+    { ref:'K001', nama:'Dimaz',  nim_nip:'NIP001', email:'dimaz@konselerin.ac.id',  password:'Konselor123!', spesialisasi:['Kesehatan Mental'],    tahun:10 },
+    { ref:'K002', nama:'Fauzan', nim_nip:'NIP002', email:'fauzan@konselerin.ac.id', password:'Konselor123!', spesialisasi:['Karir & Pekerjaan'],    tahun:7  },
+    { ref:'K003', nama:'Azarel', nim_nip:'NIP003', email:'azarel@konselerin.ac.id', password:'Konselor123!', spesialisasi:['Relasi & Pernikahan'],  tahun:5  },
+  ]
+
+  const DATA_MAHASISWA = [
+    { ref:'C001', nim:'221011001', nama:'Andi Pratama',   email:'221011001@konselerin.ac.id', password:'Mahasiswa123!' },
+    { ref:'C002', nim:'221011002', nama:'Siti Rahma',     email:'221011002@konselerin.ac.id', password:'Mahasiswa123!' },
+    { ref:'C003', nim:'221011003', nama:'Budi Santoso',   email:'221011003@konselerin.ac.id', password:'Mahasiswa123!' },
+    { ref:'C004', nim:'221011004', nama:'Rina Wulandari', email:'221011004@konselerin.ac.id', password:'Mahasiswa123!' },
+    { ref:'C005', nim:'221011005', nama:'Dedi Saputra',   email:'221011005@konselerin.ac.id', password:'Mahasiswa123!' },
+    { ref:'C006', nim:'221011006', nama:'Fikriany Salsa', email:'221011006@konselerin.ac.id', password:'Mahasiswa123!' },
+    { ref:'C007', nim:'221011007', nama:'Riski Paujan',   email:'221011007@konselerin.ac.id', password:'Mahasiswa123!' },
+    { ref:'C008', nim:'221011008', nama:'Fauzi',          email:'221011008@konselerin.ac.id', password:'Mahasiswa123!' },
+    { ref:'C009', nim:'221011009', nama:'Nabila',         email:'221011009@konselerin.ac.id', password:'Mahasiswa123!' },
+  ]
+
+  const DATA_PENILAIAN = [
+    { ref:'P0001', mahasiswa:'C001', konselor:'K001', rating:8 },
+    { ref:'P0002', mahasiswa:'C002', konselor:'K002', rating:9 },
+    { ref:'P0003', mahasiswa:'C003', konselor:'K003', rating:7 },
+    { ref:'P0004', mahasiswa:'C004', konselor:'K002', rating:7 },
+    { ref:'P0005', mahasiswa:'C005', konselor:'K003', rating:6 },
+    { ref:'P0006', mahasiswa:'C006', konselor:'K001', rating:7 },
+    { ref:'P0007', mahasiswa:'C007', konselor:'K003', rating:9 },
+    { ref:'P0008', mahasiswa:'C008', konselor:'K002', rating:8 },
+    { ref:'P0009', mahasiswa:'C009', konselor:'K001', rating:8 },
+  ]
+
+  const SESI_LIST = ['Pagi', 'Siang', 'Sore']
+
+  // ── Logging helpers ──────────────────────────────────────
+  const logBox = document.getElementById('logBox')
+  function log(type, msg) {
+    const span = document.createElement('span')
+    span.className = `log-${type}`
+    span.textContent = msg + '\n'
+    logBox.appendChild(span)
+    logBox.scrollTop = logBox.scrollHeight
+  }
+  function logLine() { log('dim', '─'.repeat(55)) }
+
+  // ── Step indicator helpers ───────────────────────────────
+  function setStep(n, state, msg) {
+    const el    = document.getElementById(`step-${n}`)
+    const badge = el.querySelector('.step-badge')
+    el.className = `step ${state}`
+    const labels = { active:'Sedang berjalan...', done:'Selesai ✓', error:'Error ✗' }
+    badge.textContent = msg ?? labels[state] ?? state
+  }
+
+  // ── Rating converter (skala 10 → 5) ─────────────────────
+  function toRating5(v) { return Math.min(5, Math.max(1, Math.round(v / 2))) }
+
+  // ── Main seed ────────────────────────────────────────────
+  window.runSeed = async function() {
+    const btn = document.getElementById('btnRun')
+    btn.disabled = true
+    btn.textContent = '⏳ Sedang berjalan...'
+    logBox.innerHTML = ''
+
+    const konselorProfileId = {}
+    const konselorTableId   = {}
+    const mahasiswaId       = {}
+    const bookingIds        = {}
+    let   totalError        = 0
+
+    // ── STEP 1: Register konselor ─────────────────────────
+    setStep(1, 'active')
+    log('bold', '[ STEP 1 ] Register Konselor\n')
+
+    for (const k of DATA_KONSELOR) {
+      const { data, error } = await supabase.auth.signUp({
+        email: k.email, password: k.password,
+        options: { data: { nama: k.nama, role: 'konselor', nim_nip: k.nim_nip } }
+      })
+      if (error) {
+        log('error', `  ✗ ${k.nama}: ${error.message}`)
+        totalError++
+        continue
+      }
+      const uid = data.user.id
+      konselorProfileId[k.ref] = uid
+
+      await supabase.from('profiles').upsert({ id:uid, nama:k.nama, email:k.email, role:'konselor', nim_nip:k.nim_nip })
+
+      const { data: kRow, error: kErr } = await supabase.from('konselor').insert({
+        user_id:      uid,
+        bio:          `Konselor berpengalaman ${k.tahun} tahun di bidang ${k.spesialisasi[0]}.`,
+        spesialisasi: k.spesialisasi,
+        ketersediaan: ['Senin','Selasa','Rabu','Kamis','Jumat'],
+        is_available: true,
+      }).select('id').single()
+
+      if (kErr) { log('error', `  ✗ konselor record ${k.nama}: ${kErr.message}`); totalError++; continue }
+      konselorTableId[k.ref] = kRow.id
+      log('success', `  ✓ ${k.nama} (${k.ref}) — profile & konselor record dibuat`)
+    }
+    setStep(1, totalError === 0 ? 'done' : 'error')
+    logLine()
+
+    // ── STEP 2: Register mahasiswa ────────────────────────
+    setStep(2, 'active')
+    log('bold', '[ STEP 2 ] Register Mahasiswa\n')
+
+    for (const m of DATA_MAHASISWA) {
+      const { data, error } = await supabase.auth.signUp({
+        email: m.email, password: m.password,
+        options: { data: { nama: m.nama, role: 'mahasiswa', nim_nip: m.nim } }
+      })
+      if (error) { log('error', `  ✗ ${m.nama}: ${error.message}`); totalError++; continue }
+      const uid = data.user.id
+      mahasiswaId[m.ref] = uid
+      await supabase.from('profiles').upsert({ id:uid, nama:m.nama, email:m.email, role:'mahasiswa', nim_nip:m.nim })
+      log('success', `  ✓ ${m.nama} (${m.ref}) — terdaftar`)
+    }
+    setStep(2, 'done')
+    logLine()
+
+    // ── STEP 3: Buat booking ──────────────────────────────
+    setStep(3, 'active')
+    log('bold', '[ STEP 3 ] Buat Booking\n')
+    let errStep3 = 0
+
+    for (let i = 0; i < DATA_PENILAIAN.length; i++) {
+      const p   = DATA_PENILAIAN[i]
+      const mId = mahasiswaId[p.mahasiswa]
+      const kId = konselorTableId[p.konselor]
+      if (!mId || !kId) { log('warn', `  ⚠ Skip ${p.ref}: ID tidak tersedia`); continue }
+
+      const d = new Date('2026-03-05')
+      d.setDate(d.getDate() + i)
+      const tanggal = d.toISOString().split('T')[0]
+
+      const { data: bRow, error: bErr } = await supabase.from('booking').insert({
+        mahasiswa_id:     mId,
+        konselor_id:      kId,
+        tanggal,
+        sesi:             SESI_LIST[i % 3],
+        keluhan:          `Sesi konseling data dummy ${p.ref}`,
+        status:           'done',
+        catatan_konselor: 'Sesi berjalan lancar.',
+      }).select('id').single()
+
+      if (bErr) { log('error', `  ✗ Booking ${p.ref}: ${bErr.message}`); errStep3++; continue }
+      bookingIds[p.ref] = bRow.id
+      log('success', `  ✓ Booking ${p.ref} — ${p.mahasiswa} → ${p.konselor} (${tanggal}, ${SESI_LIST[i%3]})`)
+    }
+    setStep(3, errStep3 === 0 ? 'done' : 'error')
+    logLine()
+
+    // ── STEP 4: Insert reviews ────────────────────────────
+    setStep(4, 'active')
+    log('bold', '[ STEP 4 ] Insert Review & Penilaian\n')
+    let errStep4 = 0
+
+    for (const p of DATA_PENILAIAN) {
+      const bid = bookingIds[p.ref]
+      const mId = mahasiswaId[p.mahasiswa]
+      const kId = konselorTableId[p.konselor]
+      if (!bid || !mId || !kId) { log('warn', `  ⚠ Skip review ${p.ref}`); continue }
+
+      const r5 = toRating5(p.rating)
+      const { error: rErr } = await supabase.from('reviews').insert({
+        booking_id:   bid,
+        mahasiswa_id: mId,
+        konselor_id:  kId,
+        rating:       r5,
+        komentar:     `Data analis: ${p.rating}/10 → dikonversi ${r5}/5`,
+      })
+      if (rErr) { log('error', `  ✗ Review ${p.ref}: ${rErr.message}`); errStep4++; continue }
+      log('success', `  ✓ Review ${p.ref} — rating ${p.rating}/10 → ${r5}/5 ⭐`)
+    }
+    setStep(4, errStep4 === 0 ? 'done' : 'error')
+    logLine()
+
+    // ── STEP 5: Verifikasi ────────────────────────────────
+    setStep(5, 'active')
+    log('bold', '[ STEP 5 ] Verifikasi Rating Konselor\n')
+
+    const { data: kList, error: vErr } = await supabase
+      .from('konselor')
+      .select('id, rating, total_review, total_sesi, profiles!user_id(nama, prodi)')
+
+    if (vErr) {
+      log('error', `  ✗ Verifikasi gagal: ${vErr.message}`)
+      setStep(5, 'error')
+    } else {
+      const tbody = document.getElementById('resultBody')
+      tbody.innerHTML = ''
+
+      const SPESIALIS = { K001:'Kesehatan Mental', K002:'Karir & Pekerjaan', K003:'Relasi & Pernikahan' }
+      // Buat map nama → ref untuk spesialisasi
+      const namaToRef = { Dimaz:'K001', Fauzan:'K002', Azarel:'K003' }
+
+      for (const k of kList) {
+        const nama  = k.profiles?.nama ?? '(unknown)'
+        const ref   = namaToRef[nama] ?? '-'
+        const spek  = SPESIALIS[ref] ?? '-'
+        const ok    = k.total_review > 0
+        log('success', `  ✓ ${nama.padEnd(10)} | Rating: ${k.rating ?? '-'} | Review: ${k.total_review} | Sesi: ${k.total_sesi}`)
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${nama}</strong></td>
+            <td style="color:var(--text-secondary)">${spek}</td>
+            <td><span class="badge-rating">${k.rating ?? '0'} / 5</span></td>
+            <td>${k.total_review}</td>
+            <td>${k.total_sesi}</td>
+            <td class="${ok ? 'badge-done' : 'badge-error'}">${ok ? '✓ OK' : '⚠ Cek trigger'}</td>
+          </tr>`
+      }
+      document.getElementById('resultSection').style.display = 'block'
+      setStep(5, 'done')
+    }
+
+    logLine()
+    if (totalError === 0 && !vErr) {
+      log('success', '🎉 Seed selesai! Semua data berhasil dimasukkan.')
+    } else {
+      log('warn', `⚠ Seed selesai dengan ${totalError} error. Cek log di atas.`)
+    }
+
+    btn.disabled = false
+    btn.textContent = '🔄 Jalankan Ulang'
+  }
+</script>
+</body>
+</html>

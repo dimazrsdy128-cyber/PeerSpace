@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kuesioner — PeerSpace</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <style>
+    .content-area { max-width: 860px; }
+
+    .page-header { margin-bottom: 1.8rem; }
+    .page-header h1 { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0 0 .3rem; }
+    .page-header h1 span { color: #8B2EFF; }
+    .page-header p { color: rgba(255,255,255,.45); font-size: .9rem; margin: 0; }
+
+    /* ── Kuesioner card ── */
+    .kuesioner-list { display: flex; flex-direction: column; gap: 1rem; }
+
+    .k-card {
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px; padding: 1.4rem 1.6rem;
+      display: flex; align-items: center; gap: 1.4rem; flex-wrap: wrap;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .k-card:hover {
+      border-color: rgba(139,46,255,.3); box-shadow: 0 4px 20px rgba(139,46,255,.1);
+    }
+
+    .k-icon {
+      width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+    }
+    .k-icon-mental  { background: rgba(139,46,255,.15); color: #8B2EFF; }
+    .k-icon-akademik{ background: rgba(59,130,246,.12);  color: #60a5fa; }
+    .k-icon-sosial  { background: rgba(34,197,94,.12);   color: #22c55e; }
+    .k-icon-umum    { background: rgba(245,158,11,.1);   color: #f59e0b; }
+
+    .k-info { flex: 1; min-width: 180px; }
+    .k-title { font-size: 1rem; font-weight: 700; color: #fff; margin: 0 0 .3rem; }
+    .k-desc  { font-size: .83rem; color: rgba(255,255,255,.45); margin: 0 0 .6rem;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .k-meta  { display: flex; gap: .6rem; flex-wrap: wrap; }
+    .k-chip  {
+      display: inline-flex; align-items: center; gap: .3rem;
+      font-size: .74rem; color: rgba(255,255,255,.45);
+    }
+    .k-chip i { font-size: .9rem; }
+
+    .k-right { display: flex; flex-direction: column; align-items: flex-end; gap: .6rem; flex-shrink: 0; }
+
+    .status-done {
+      display: flex; align-items: center; gap: .35rem;
+      font-size: .8rem; color: #86efac;
+      background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.2);
+      padding: .25rem .8rem; border-radius: 20px;
+    }
+    .btn-kerjakan {
+      background: linear-gradient(135deg, #8B2EFF, #6d00e8);
+      border: none; color: #fff; border-radius: 10px;
+      padding: .55rem 1.3rem; font-size: .85rem; font-weight: 700;
+      cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: .4rem;
+      transition: opacity .2s, transform .15s;
+    }
+    .btn-kerjakan:hover { opacity: .88; transform: scale(1.02); }
+    .btn-lihat {
+      background: rgba(139,46,255,.12); border: 1px solid rgba(139,46,255,.25);
+      color: #b86fff; border-radius: 10px;
+      padding: .5rem 1.1rem; font-size: .83rem; font-weight: 600;
+      cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: .35rem;
+      transition: background .18s;
+    }
+    .btn-lihat:hover { background: rgba(139,46,255,.25); }
+
+    /* ── Skeleton ── */
+    @keyframes shimmer {
+      0%   { background-position: -400px 0; }
+      100% { background-position:  400px 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg,
+        rgba(255,255,255,.06) 25%, rgba(255,255,255,.11) 50%, rgba(255,255,255,.06) 75%);
+      background-size: 400px 100%; animation: shimmer 1.4s infinite; border-radius: 6px;
+    }
+    .sk-line { height: 11px; }
+
+    /* ── Empty ── */
+    .empty-state {
+      text-align: center; padding: 4rem 2rem; color: rgba(255,255,255,.4);
+    }
+    .empty-state i { font-size: 3.5rem; color: rgba(139,46,255,.35); display: block; margin-bottom: 1rem; }
+
+    @media (max-width: 640px) {
+      .content-area { padding: 1.2rem; }
+      .k-right { align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar" id="sidebar-container"></aside>
+  <div class="main-content">
+    <header class="topbar" id="navbar-container"></header>
+    <div class="content-wrapper">
+    <div class="content-area">
+      <div class="page-header">
+        <h1>Daftar <span>Kuesioner</span></h1>
+        <p>Isi kuesioner yang diberikan oleh konselormu</p>
+      </div>
+      <div class="kuesioner-list" id="kuesionerList">
+        ${Array(3).fill(0).map(() => `
+        <div class="k-card">
+          <div class="skeleton" style="width:52px;height:52px;border-radius:14px;flex-shrink:0"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:.45rem">
+            <div class="skeleton sk-line" style="width:55%"></div>
+            <div class="skeleton sk-line" style="width:80%"></div>
+            <div class="skeleton sk-line" style="width:40%"></div>
+          </div>
+          <div class="skeleton" style="width:110px;height:36px;border-radius:10px"></div>
+        </div>`).join('')}
+      </div>
+    </div><!-- /content-wrapper -->
+  </div><!-- /main-content -->
+</div><!-- /app-wrapper -->
+
+<script type="module">
+import { supabase } from '../assets/js/supabase-client.js'
+
+const { data: { user } } = await supabase.auth.getUser()
+if (!user) { window.location.href = '../auth/login.html'; throw new Error() }
+
+// ── Load sidebar ──
+fetch('../shared/sidebar.html').then(r => r.text()).then(html => {
+  const container = document.getElementById('sidebar-container')
+  container.innerHTML = html
+  // Tandai menu aktif
+  container.querySelectorAll('a.menu-link').forEach(a => {
+    if (a.getAttribute('href') === 'kuesioner-list.html') {
+      a.closest('.menu-item')?.classList.add('active')
+    }
+  })
+  // Attach logout manual (innerHTML tidak eksekusi <script>)
+  const btn = container.querySelector('#btnLogout')
+  if (btn) btn.addEventListener('click', async e => {
+    e.preventDefault()
+    await supabase.auth.signOut({ scope: 'local' })
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// ── Load navbar ──
+fetch('../shared/navbar.html').then(r => r.text()).then(async html => {
+  const container = document.getElementById('navbar-container')
+  container.innerHTML = html
+
+  // Set judul
+  const titleEl = container.querySelector('#topbarTitle')
+  if (titleEl) titleEl.textContent = 'Kuesioner'
+
+  // Isi nama & avatar dari DB — kolom: nama, bukan full_name; .eq('id') bukan user_id
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('nama, role, avatar_url')
+    .eq('id', user.id)
+    .single()
+
+  if (profile) {
+    const nameEl   = container.querySelector('#navUserName')
+    const roleEl   = container.querySelector('#navUserRole')
+    const avatarEl = container.querySelector('#navAvatar')
+    if (nameEl) nameEl.textContent = profile.nama || user.email
+    if (roleEl) roleEl.textContent = { mahasiswa:'Mahasiswa', konselor:'Konselor', admin:'Admin' }[profile.role] || profile.role
+    if (avatarEl) avatarEl.src = profile.avatar_url ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.nama||'U')}&background=8B2EFF&color=fff`
+  }
+
+  // Attach logout navbar
+  const btn = container.querySelector('#btnLogout')
+  if (btn) btn.addEventListener('click', async () => {
+    await supabase.auth.signOut({ scope: 'local' })
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+    window.location.href = '../auth/login.html'
+  })
+})
+
+async function fetchKuesioner () {
+  const listEl = document.getElementById('kuesionerList')
+  try {
+    // Ambil semua kuesioner published
+    // author_id → profiles (nama) untuk nama pembuat
+    // kuesioner_soal untuk hitung jumlah soal
+    const { data: kuesioner, error } = await supabase
+      .from('kuesioner')
+      .select(`
+        id, judul, deskripsi, tipe, created_at,
+        kuesioner_soal ( count ),
+        profiles:author_id ( nama )
+      `)
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+    if (error) throw error
+
+    // Cek yang sudah dikerjakan user ini
+    // kolom FK di kuesioner_hasil kemungkinan mahasiswa_id, fallback ke user_id
+    const { data: hasil } = await supabase
+      .from('kuesioner_hasil')
+      .select('kuesioner_id')
+      .eq('mahasiswa_id', user.id)
+    const sudahDikerjakan = new Set((hasil || []).map(h => h.kuesioner_id))
+
+    if (!kuesioner?.length) {
+      listEl.innerHTML = `
+        <div class="empty-state">
+          <i class='bx bx-notepad'></i>
+          <p>Belum ada kuesioner tersedia saat ini.</p>
+        </div>`
+      return
+    }
+
+    // tipe-based icon (ganti kategori karena kolom kategori tidak ada)
+    const tipeIconMap = {
+      asesmen: ['k-icon-mental',  'bx-brain'],
+      quiz:    ['k-icon-akademik','bx-book-open'],
+    }
+    const tipeLabel = { asesmen: 'Asesmen', quiz: 'Quiz' }
+
+    listEl.innerHTML = kuesioner.map(k => {
+      const [iconCls, iconName] = tipeIconMap[k.tipe] || ['k-icon-umum','bx-notepad']
+      const soalCount  = k.kuesioner_soal?.[0]?.count ?? 0
+      const pembuat    = k.profiles?.nama || 'Konselor'
+      const done       = sudahDikerjakan.has(k.id)
+      const tgl        = new Date(k.created_at).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })
+
+      return `
+      <div class="k-card">
+        <div class="k-icon ${iconCls}"><i class='bx ${iconName}'></i></div>
+        <div class="k-info">
+          <p class="k-title">${k.judul}</p>
+          <p class="k-desc">${k.deskripsi || 'Tidak ada deskripsi'}</p>
+          <div class="k-meta">
+            <span class="k-chip"><i class='bx bx-list-ul'></i>${soalCount} soal</span>
+            <span class="k-chip"><i class='bx bx-user'></i>${pembuat}</span>
+            <span class="k-chip"><i class='bx bx-calendar'></i>${tgl}</span>
+            <span class="k-chip"><i class='bx bx-tag'></i>${tipeLabel[k.tipe] || 'Umum'}</span>
+          </div>
+        </div>
+        <div class="k-right">
+          ${done
+            ? `<span class="status-done"><i class='bx bx-check-circle'></i> Sudah diisi</span>
+               <a class="btn-lihat" href="kuesioner-kerjakan.html?id=${k.id}&review=1">
+                 <i class='bx bx-show'></i> Lihat Jawaban
+               </a>`
+            : `<a class="btn-kerjakan" href="kuesioner-kerjakan.html?id=${k.id}">
+                 <i class='bx bx-pencil'></i> Isi Kuesioner
+               </a>`
+          }
+        </div>
+      </div>`
+    }).join('')
+  } catch (err) {
+    console.error(err)
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <i class='bx bx-error-circle' style="color:#ef4444"></i>
+        <p>Gagal memuat kuesioner.</p>
+        <button onclick="location.reload()" style="margin-top:.8rem;background:rgba(139,46,255,.2);border:1px solid rgba(139,46,255,.4);color:#b86fff;padding:.45rem 1.1rem;border-radius:8px;cursor:pointer;font-size:.85rem">Coba Lagi</button>
+      </div>`
+  }
+}
+
+fetchKuesioner()
+</script>
+</body>
+</html>

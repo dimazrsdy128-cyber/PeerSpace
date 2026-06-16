@@ -1,0 +1,57 @@
+<div class="sidebar-logo">
+    <i class='bx bxs-server'></i>
+    <span>Admin.</span>
+</div>
+<ul class="sidebar-menu">
+    <li class="menu-item active">
+        <a href="dashboard.html" class="menu-link">
+            <i class='bx bx-grid-alt'></i>
+            <span>Dashboard</span>
+        </a>
+    </li>
+    <li class="menu-item">
+        <a href="jadwal.html" class="menu-link">
+            <i class='bx bx-calendar'></i>
+            <span>Kelola Jadwal</span>
+        </a>
+    </li>
+    <li class="menu-item">
+        <a href="forum.html" class="menu-link">
+            <i class='bx bx-message-square-error'></i>
+            <span>Kelola Forum</span>
+        </a>
+    </li>
+    <li class="menu-item">
+        <a href="artikel.html" class="menu-link">
+            <i class='bx bx-book-content'></i>
+            <span>Kelola Artikel</span>
+        </a>
+    </li>
+</ul>
+<li class="menu-item">
+    <a href="profile.html" class="menu-link">
+        <i class='bx bx-shield-alt-2'></i>
+        <span>Profil Admin</span>
+    </a>
+</li>
+<ul class="sidebar-menu" style="margin-top: auto; flex-grow: 0;">
+    <li class="menu-item">
+        <a id="btnLogout" href="#" class="menu-link" style="color: #ff4757; cursor: pointer;">
+            <i class='bx bx-log-out'></i>
+            <span>Keluar</span>
+        </a>
+    </li>
+</ul>
+
+<script type="module">
+    import { supabase } from '../assets/js/supabase-client.js'
+
+    document.getElementById('btnLogout').addEventListener('click', async (e) => {
+        e.preventDefault()
+        await supabase.auth.signOut({ scope: 'local' })
+        Object.keys(localStorage)
+            .filter(k => k.startsWith('sb-'))
+            .forEach(k => localStorage.removeItem(k))
+        window.location.href = '../auth/login.html'
+    })
+</script>

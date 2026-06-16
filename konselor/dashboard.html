@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Konselor — PeerSpace</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <style>
+
+    /* ── Page Header ── */
+    .page-header {
+      margin-bottom: 32px;
+    }
+    .page-header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #fff;
+      margin: 0 0 4px;
+    }
+    .page-header p {
+      color: #9b8ec4;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+    .greeting-name { color: #8B2EFF; }
+
+    /* ── Stat Cards ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 36px;
+    }
+    .stat-card {
+      background: #16112b;
+      border: 1px solid #2a1f4e;
+      border-radius: 16px;
+      padding: 22px 24px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      transition: border-color .2s, transform .2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent, #8B2EFF);
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .stat-card:hover { border-color: #8B2EFF44; transform: translateY(-2px); }
+    .stat-card:hover::before { opacity: 1; }
+    .stat-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+    .stat-icon.purple { background: #8B2EFF22; color: #8B2EFF; }
+    .stat-icon.green  { background: #10b98122; color: #10b981; }
+    .stat-icon.amber  { background: #f59e0b22; color: #f59e0b; }
+    .stat-icon.blue   { background: #3b82f622; color: #3b82f6; }
+    .stat-info { min-width: 0; }
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-label { font-size: 0.8rem; color: #7c6fa0; white-space: nowrap; }
+
+    /* Skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, #1e1635 25%, #2a1f4e 50%, #1e1635 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 8px;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+    .skeleton-stat-value { width: 60px; height: 32px; margin-bottom: 6px; }
+    .skeleton-stat-label { width: 110px; height: 14px; }
+
+    /* ── Two-col layout ── */
+    .dashboard-cols {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 1100px) {
+      .dashboard-cols { grid-template-columns: 1fr; }
+    }
+
+    /* ── Section Card ── */
+    .section-card {
+      background: #16112b;
+      border: 1px solid #2a1f4e;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid #1e1a35;
+    }
+    .section-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      margin: 0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-header h2 i { color: #8B2EFF; font-size: 1.1rem; }
+    .see-all {
+      font-size: 0.8rem;
+      color: #8B2EFF;
+      text-decoration: none;
+      transition: opacity .2s;
+    }
+    .see-all:hover { opacity: .7; }
+
+    /* Status badges (masih dipakai utk badge "X sesi" jadwal hari ini) */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-pending  { background: #f59e0b1a; color: #f59e0b; }
+    .badge-approved { background: #10b9811a; color: #10b981; }
+    .badge-rejected { background: #ef44441a; color: #ef4444; }
+    .badge-done     { background: #3b82f61a; color: #3b82f6; }
+    .badge i { font-size: .7rem; }
+
+    /* Empty state */
+    .empty-state {
+      padding: 48px 24px;
+      text-align: center;
+      color: #5a4e7a;
+    }
+    .empty-state i { font-size: 2.5rem; margin-bottom: 10px; display: block; }
+    .empty-state p { margin: 0; font-size: 0.875rem; }
+
+    /* Skeleton rows */
+    .skeleton-row td { padding: 14px 24px; }
+    .skeleton-line { height: 14px; border-radius: 6px; }
+
+    /* ── Right column ── */
+    .right-col { display: flex; flex-direction: column; gap: 24px; }
+
+    /* Schedule list */
+    .schedule-list { padding: 8px 0; }
+    .schedule-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 24px;
+      border-bottom: 1px solid #1a1530;
+      transition: background .15s;
+    }
+    .schedule-item:last-child { border-bottom: none; }
+    .schedule-item:hover { background: #1e1635; }
+    .schedule-time {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #8B2EFF;
+      min-width: 54px;
+    }
+    .schedule-info { flex: 1; min-width: 0; }
+    .schedule-name {
+      font-size: 0.875rem;
+      color: #e2d9f3;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .schedule-type {
+      font-size: 0.75rem;
+      color: #7c6fa0;
+      margin-top: 1px;
+    }
+    .schedule-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-today   { background: #10b981; box-shadow: 0 0 0 3px #10b98122; }
+    .dot-pending { background: #f59e0b; }
+
+    /* Toast */
+    #toast-container {
+      position: fixed;
+      bottom: 28px; right: 28px;
+      display: flex; flex-direction: column; gap: 10px;
+      z-index: 9999;
+    }
+    .toast {
+      background: #1e1635;
+      border: 1px solid #2a1f4e;
+      border-left: 3px solid #8B2EFF;
+      border-radius: 10px;
+      padding: 12px 18px;
+      color: #e2d9f3;
+      font-size: 0.875rem;
+      max-width: 320px;
+      box-shadow: 0 8px 32px #00000060;
+      animation: toastIn .25s ease;
+    }
+    .toast.error { border-left-color: #ef4444; }
+    .toast.success { border-left-color: #10b981; }
+    @keyframes toastIn { from { opacity:0; transform: translateY(12px); } }
+
+    /* Chart bar */
+    .chart-wrap { padding: 20px 24px 8px; }
+    .chart-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: #7c6fa0;
+      margin-bottom: 16px;
+    }
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      height: 80px;
+    }
+    .bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+    .bar {
+      width: 100%;
+      border-radius: 5px 5px 0 0;
+      background: linear-gradient(180deg, #8B2EFF, #5b1eaa);
+      transition: height .8s cubic-bezier(.22,.68,0,1.2);
+      min-height: 4px;
+    }
+    .bar-val {
+      font-size: 0.65rem;
+      color: #7c6fa0;
+    }
+    .bar-day {
+      font-size: 0.65rem;
+      color: #5a4e7a;
+      margin-top: 4px;
+    }
+
+    /* ── Kuesioner summary ── */
+    .kuesioner-summary {
+      display: flex;
+      gap: 20px;
+      padding: 18px 24px 4px;
+    }
+    .kuesioner-summary-item { flex: 1; min-width: 0; }
+    .kuesioner-summary-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+    .kuesioner-summary-label {
+      font-size: 0.72rem;
+      color: #7c6fa0;
+      margin-top: 4px;
+    }
+    .bar-label-judul {
+      flex: 1;
+      text-align: center;
+      font-size: 0.62rem;
+      color: #5a4e7a;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 0 2px;
+    }
+    .bar-pair { display: flex; gap: 3px; align-items: flex-end; width: 100%; }
+    .bar-pair .bar { flex: 1; }
+    .bar-min {
+      background: transparent !important;
+      border: 1.5px dashed #f59e0b88;
+      border-bottom: none;
+    }
+    .chart-legend {
+      display: flex; gap: 16px; align-items: center;
+      padding: 0 24px 14px;
+      font-size: 0.7rem; color: #7c6fa0;
+    }
+    .legend-dot { width: 9px; height: 9px; border-radius: 3px; display: inline-block; margin-right: 5px; vertical-align: middle; }
+
+    /* ── Pie charts (ya/tidak) ── */
+    .pie-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 18px;
+      padding: 18px 24px 22px;
+    }
+    .pie-item { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .pie-circle {
+      width: 110px; height: 110px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .pie-title {
+      font-size: 0.72rem;
+      color: #c4b8e8;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 140px;
+    }
+    .pie-stats { font-size: 0.68rem; color: #7c6fa0; text-align: center; }
+    .pie-stats b { color: #e2d9f3; }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar" id="sidebar-container"></aside>
+  <div class="main-content">
+    <header class="topbar" id="navbar-container"></header>
+    <div class="content-wrapper">
+    <div class="content-body">
+
+      <!-- Header -->
+      <div class="page-header">
+        <h1>Selamat datang, <span class="greeting-name" id="greeting-name">...</span> 👋</h1>
+        <p id="greeting-date">Memuat data…</p>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="stats-grid" id="stats-grid">
+        <!-- Skeleton -->
+        <div class="stat-card">
+          <div class="stat-icon purple"><i class='bx bx-calendar-check'></i></div>
+          <div class="stat-info">
+            <div class="skeleton skeleton-stat-value"></div>
+            <div class="skeleton skeleton-stat-label"></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon amber"><i class='bx bx-time-five'></i></div>
+          <div class="stat-info">
+            <div class="skeleton skeleton-stat-value"></div>
+            <div class="skeleton skeleton-stat-label"></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green"><i class='bx bx-check-circle'></i></div>
+          <div class="stat-info">
+            <div class="skeleton skeleton-stat-value"></div>
+            <div class="skeleton skeleton-stat-label"></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class='bx bx-star'></i></div>
+          <div class="stat-info">
+            <div class="skeleton skeleton-stat-value"></div>
+            <div class="skeleton skeleton-stat-label"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main columns -->
+      <div class="dashboard-cols">
+
+        <!-- Left: Rata-rata Skor Kuisioner -->
+        <div style="display:flex;flex-direction:column;gap:24px;">
+
+          <!-- Rata-rata Skor Kuisioner -->
+          <div class="section-card">
+            <div class="section-header">
+              <h2><i class='bx bx-bar-chart-alt-2'></i> Rata-rata Skor Kuisioner</h2>
+              <span style="font-size:.8rem;color:#7c6fa0;">Pilihan ganda &amp; skala</span>
+            </div>
+            <div id="kuesioner-body">
+              <!-- Skeleton -->
+              <div class="kuesioner-summary">
+                <div class="kuesioner-summary-item"><div class="skeleton skeleton-stat-value"></div><div class="skeleton skeleton-stat-label"></div></div>
+                <div class="kuesioner-summary-item"><div class="skeleton skeleton-stat-value"></div><div class="skeleton skeleton-stat-label"></div></div>
+                <div class="kuesioner-summary-item"><div class="skeleton skeleton-stat-value"></div><div class="skeleton skeleton-stat-label"></div></div>
+              </div>
+              <div class="chart-wrap">
+                <div class="bar-chart" id="kuesioner-chart"></div>
+                <div style="display:flex;gap:10px;margin-top:4px;" id="kuesioner-labels"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Perbandingan Ya/Tidak -->
+          <div class="section-card">
+            <div class="section-header">
+              <h2><i class='bx bx-pie-chart-alt'></i> Perbandingan Ya / Tidak</h2>
+              <span style="font-size:.8rem;color:#7c6fa0;">Per kuesioner</span>
+            </div>
+            <div id="yatidak-body">
+              <div class="empty-state"><i class='bx bx-loader-alt bx-spin'></i><p>Memuat data…</p></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right col -->
+        <div class="right-col">
+
+          <!-- Jadwal hari ini -->
+          <div class="section-card">
+            <div class="section-header">
+              <h2><i class='bx bx-time'></i> Jadwal Hari Ini</h2>
+              <span id="today-count" class="badge badge-approved" style="font-size:.72rem;">0 sesi</span>
+            </div>
+            <div class="schedule-list" id="schedule-list">
+              <div class="skeleton-row" style="padding:12px 24px;">
+                <div class="skeleton skeleton-line" style="width:100%"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      </div><!-- /content-body -->
+    </div><!-- /main-content -->
+  </div><!-- /page-wrapper -->
+</div><!-- /app-wrapper -->
+
+
+<div id="toast-container"></div>
+
+<script type="module">
+import { supabase } from '../assets/js/supabase-client.js'
+
+// ── Auth guard ──────────────────────────────────────────────
+const { data: { user } } = await supabase.auth.getUser()
+if (!user) { window.location.href = '../auth/login.html'; throw new Error('Unauth') }
+
+// Role check
+const { data: profile } = await supabase
+  .from('profiles')
+  .select('role, nama')
+  .eq('id', user.id)
+  .single()
+
+if (!profile || profile.role !== 'konselor') {
+  window.location.href = '../mahasiswa/dashboard.html'; throw new Error('Forbidden')
+}
+
+// ── Load shared UI ──────────────────────────────────────────
+const loadUI = (id, path) =>
+  fetch(path).then(r => r.text()).then(html => { document.getElementById(id).innerHTML = html })
+
+loadUI('sidebar-container', '../shared/sidebar-konselor.html')
+fetch('../shared/navbar.html').then(r => r.text()).then(async html => {
+  const container = document.getElementById('navbar-container')
+  container.innerHTML = html
+  const titleEl = container.querySelector('#topbarTitle')
+  if (titleEl) titleEl.textContent = 'Dashboard'
+  const nameEl = container.querySelector('#navUserName')
+  const roleEl = container.querySelector('#navUserRole')
+  const avatarEl = container.querySelector('#navAvatar')
+  if (nameEl) nameEl.textContent = profile.nama || user.email
+  if (roleEl) roleEl.textContent = 'Konselor'
+  if (avatarEl && profile.avatar_url) avatarEl.src = profile.avatar_url
+  const logoutBtn = container.querySelector('#btnLogout')
+  if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut({ scope: 'local' })
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// ── Toast helper ────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const tc = document.getElementById('toast-container')
+  const el = document.createElement('div')
+  el.className = `toast ${type}`
+  el.textContent = msg
+  tc.appendChild(el)
+  setTimeout(() => el.remove(), 3500)
+}
+
+// ── Greeting ────────────────────────────────────────────────
+document.getElementById('greeting-name').textContent =
+  profile.nama?.split(' ')[0] ?? 'Konselor'
+
+const now = new Date()
+document.getElementById('greeting-date').textContent =
+  now.toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
+
+// ── Get konselor row ────────────────────────────────────────
+const { data: konselor, error: kErr } = await supabase
+  .from('konselor')
+  .select('id')
+  .eq('user_id', user.id)
+  .single()
+
+if (kErr || !konselor) {
+  toast('Gagal memuat data konselor', 'error'); throw new Error(kErr?.message)
+}
+const konselorId = konselor.id
+
+// ── Fetch stats ─────────────────────────────────────────────
+async function loadStats() {
+  const [bookingRes, pendingRes, doneRes, reviewRes] = await Promise.all([
+    supabase.from('booking').select('id', { count:'exact', head:true }).eq('konselor_id', konselorId),
+    supabase.from('booking').select('id', { count:'exact', head:true }).eq('konselor_id', konselorId).eq('status','pending'),
+    supabase.from('booking').select('id', { count:'exact', head:true }).eq('konselor_id', konselorId).eq('status','done'),
+    supabase.from('reviews').select('rating').eq('konselor_id', konselorId),
+  ])
+
+  const totalBooking = bookingRes.count ?? 0
+  const pending      = pendingRes.count  ?? 0
+  const done         = doneRes.count     ?? 0
+  const reviews      = reviewRes.data ?? []
+  const avgRating    = reviews.length
+    ? (reviews.reduce((a,r) => a + (r.rating ?? 0), 0) / reviews.length).toFixed(1)
+    : '–'
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class='bx bx-calendar-check'></i></div>
+      <div class="stat-info">
+        <div class="stat-value">${totalBooking}</div>
+        <div class="stat-label">Total Booking</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class='bx bx-time-five'></i></div>
+      <div class="stat-info">
+        <div class="stat-value">${pending}</div>
+        <div class="stat-label">Menunggu Konfirmasi</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green"><i class='bx bx-check-circle'></i></div>
+      <div class="stat-info">
+        <div class="stat-value">${done}</div>
+        <div class="stat-label">Sesi Selesai</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class='bx bx-star'></i></div>
+      <div class="stat-info">
+        <div class="stat-value">${avgRating}</div>
+        <div class="stat-label">Rata-rata Rating</div>
+      </div>
+    </div>
+  `
+}
+
+// ── Jadwal hari ini ─────────────────────────────────────────
+async function loadTodaySchedule() {
+  const start = new Date(); start.setHours(0,0,0,0)
+  const end   = new Date(); end.setHours(23,59,59,999)
+
+  const { data, error } = await supabase
+    .from('booking')
+    .select(`id, tanggal, sesi, status, profiles:mahasiswa_id ( nama )`)
+    .eq('konselor_id', konselorId)
+    .in('status', ['accepted','done'])
+    .gte('tanggal', start.toISOString().split('T')[0])
+    .lte('tanggal', end.toISOString().split('T')[0])
+    .order('tanggal')
+
+  const list  = document.getElementById('schedule-list')
+  const count = document.getElementById('today-count')
+
+  if (error) {
+    list.innerHTML = `<div class="empty-state"><i class='bx bx-error-circle'></i><p>Gagal memuat jadwal.</p></div>`
+    return
+  }
+
+  count.textContent = `${(data??[]).length} sesi`
+
+  if (!data.length) {
+    list.innerHTML = `<div class="empty-state"><i class='bx bx-calendar-check'></i><p>Tidak ada jadwal hari ini.</p></div>`
+    return
+  }
+
+  list.innerHTML = data.map(b => {
+    const time = b.sesi ?? '–'
+    const name = b.profiles?.nama ?? 'Mahasiswa'
+    const dot  = b.status === 'done' ? 'dot-today' : 'dot-pending'
+    return `
+      <div class="schedule-item">
+        <div class="schedule-time">${time}</div>
+        <div class="schedule-info">
+          <div class="schedule-name">${name}</div>
+          <div class="schedule-type">Sesi konseling</div>
+        </div>
+        <div class="schedule-dot ${dot}"></div>
+      </div>`
+  }).join('')
+}
+
+// ── Rata-rata skor kuisioner (pilihan ganda + likert, system-wide) ──
+async function loadKuesionerChart() {
+  const body = document.getElementById('kuesioner-body')
+
+  const { data, error } = await supabase
+    .from('kuesioner_hasil')
+    .select('skor_total, kuesioner:kuesioner_id ( id, judul, nilai_minimum )')
+
+  if (error) {
+    body.innerHTML = `<div class="empty-state"><i class='bx bx-error-circle'></i><p>Gagal memuat data kuisioner.</p></div>`
+    return
+  }
+
+  const rows = (data ?? []).filter(r => r.skor_total !== null && r.skor_total !== undefined)
+
+  if (!rows.length) {
+    body.innerHTML = `<div class="empty-state"><i class='bx bx-bar-chart-alt-2'></i><p>Belum ada hasil kuisioner dengan skor (pilihan ganda/skala).</p></div>`
+    return
+  }
+
+  // Group by kuesioner
+  const grouped = {}
+  rows.forEach(r => {
+    const kid = r.kuesioner?.id ?? 'unknown'
+    if (!grouped[kid]) grouped[kid] = {
+      judul: r.kuesioner?.judul ?? 'Tanpa judul',
+      nilaiMinimum: r.kuesioner?.nilai_minimum ?? null,
+      total: 0, count: 0
+    }
+    grouped[kid].total += Number(r.skor_total)
+    grouped[kid].count += 1
+  })
+
+  const entries = Object.values(grouped)
+    .map(v => ({ judul: v.judul, avg: v.total / v.count, count: v.count, min: v.nilaiMinimum }))
+    .sort((a, b) => b.avg - a.avg)
+    .slice(0, 8)
+
+  const totalKuesioner = Object.keys(grouped).length
+  const totalPengisian = rows.length
+  const overallAvg = (rows.reduce((a, r) => a + Number(r.skor_total), 0) / rows.length).toFixed(1)
+  const maxVal = Math.max(...entries.map(e => e.avg), ...entries.map(e => e.min ?? 0), 1)
+  const hasMinBar = entries.some(e => e.min !== null && e.min !== undefined)
+
+  body.innerHTML = `
+    <div class="kuesioner-summary">
+      <div class="kuesioner-summary-item">
+        <div class="kuesioner-summary-value">${totalKuesioner}</div>
+        <div class="kuesioner-summary-label">Kuesioner Memiliki Hasil</div>
+      </div>
+      <div class="kuesioner-summary-item">
+        <div class="kuesioner-summary-value">${totalPengisian}</div>
+        <div class="kuesioner-summary-label">Total Pengisian</div>
+      </div>
+      <div class="kuesioner-summary-item">
+        <div class="kuesioner-summary-value">${overallAvg}</div>
+        <div class="kuesioner-summary-label">Rata-rata Skor Keseluruhan</div>
+      </div>
+    </div>
+    ${hasMinBar ? `
+    <div class="chart-legend">
+      <span><span class="legend-dot" style="background:linear-gradient(180deg,#8B2EFF,#5b1eaa);"></span>Rata-rata skor</span>
+      <span><span class="legend-dot" style="border:1.5px dashed #f59e0b88;background:transparent;"></span>Nilai minimum</span>
+    </div>` : ''}
+    <div class="chart-wrap">
+      <div class="bar-chart">
+        ${entries.map(e => {
+          const hAvg = Math.round((e.avg / maxVal) * 70) || 4
+          const hMin = e.min !== null && e.min !== undefined ? (Math.round((e.min / maxVal) * 70) || 2) : 0
+          return `
+            <div class="bar-col">
+              <div class="bar-val">${e.avg.toFixed(1)}</div>
+              <div class="bar-pair">
+                <div class="bar" style="height:${hAvg}px;"></div>
+                ${e.min !== null && e.min !== undefined ? `<div class="bar bar-min" style="height:${hMin}px;"></div>` : ''}
+              </div>
+            </div>`
+        }).join('')}
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        ${entries.map(e => `<div class="bar-label-judul" title="${e.judul}">${e.judul}</div>`).join('')}
+      </div>
+    </div>`
+}
+
+// ── Perbandingan Ya/Tidak per kuesioner (system-wide) ────────
+async function loadYaTidakChart() {
+  const body = document.getElementById('yatidak-body')
+
+  const [soalRes, hasilRes] = await Promise.all([
+    supabase
+      .from('kuesioner_soal')
+      .select('id, kuesioner_id, kuesioner:kuesioner_id ( judul )')
+      .eq('tipe_soal', 'ya_tidak'),
+    supabase
+      .from('kuesioner_hasil')
+      .select('jawaban, kuesioner_id'),
+  ])
+
+  if (soalRes.error || hasilRes.error) {
+    body.innerHTML = `<div class="empty-state"><i class='bx bx-error-circle'></i><p>Gagal memuat data ya/tidak.</p></div>`
+    return
+  }
+
+  const soalList = soalRes.data ?? []
+  if (!soalList.length) {
+    body.innerHTML = `<div class="empty-state"><i class='bx bx-pie-chart-alt'></i><p>Belum ada soal bertipe ya/tidak.</p></div>`
+    return
+  }
+
+  // Map kuesioner_id -> { judul, soalIds: Set }
+  const kuesionerMap = {}
+  soalList.forEach(s => {
+    if (!kuesionerMap[s.kuesioner_id]) {
+      kuesionerMap[s.kuesioner_id] = { judul: s.kuesioner?.judul ?? 'Tanpa judul', soalIds: new Set(), ya: 0, tidak: 0 }
+    }
+    kuesionerMap[s.kuesioner_id].soalIds.add(s.id)
+  })
+
+  ;(hasilRes.data ?? []).forEach(h => {
+    const k = kuesionerMap[h.kuesioner_id]
+    if (!k || !h.jawaban) return
+    k.soalIds.forEach(soalId => {
+      const val = h.jawaban[soalId]
+      if (val === 'Ya') k.ya++
+      else if (val === 'Tidak') k.tidak++
+    })
+  })
+
+  const entries = Object.values(kuesionerMap).filter(k => k.ya + k.tidak > 0)
+
+  if (!entries.length) {
+    body.innerHTML = `<div class="empty-state"><i class='bx bx-pie-chart-alt'></i><p>Belum ada jawaban ya/tidak.</p></div>`
+    return
+  }
+
+  body.innerHTML = `<div class="pie-grid">
+    ${entries.map(e => {
+      const total = e.ya + e.tidak
+      const yaPct = Math.round((e.ya / total) * 100)
+      const simpulan = yaPct >= 80
+        ? { label: 'Kebanyakan mengetahui', cls: 'badge-approved' }
+        : yaPct >= 60
+          ? { label: 'Cukup mengetahui', cls: 'badge-pending' }
+          : { label: 'Kurang mengetahui', cls: 'badge-rejected' }
+      return `
+        <div class="pie-item">
+          <div class="pie-circle" style="background: conic-gradient(#8B2EFF 0 ${yaPct}%, #2a1f4e ${yaPct}% 100%);"></div>
+          <div class="pie-title" title="${e.judul}">${e.judul}</div>
+          <div class="pie-stats"><b>${yaPct}%</b> Ya · <b>${100 - yaPct}%</b> Tidak</div>
+          <span class="badge ${simpulan.cls}">${simpulan.label}</span>
+        </div>`
+    }).join('')}
+  </div>`
+}
+
+// ── Run all ─────────────────────────────────────────────────
+try {
+  await Promise.all([loadStats(), loadTodaySchedule(), loadKuesionerChart(), loadYaTidakChart()])
+} catch (e) {
+  toast('Terjadi kesalahan saat memuat data.', 'error')
+  console.error(e)
+}
+</script>
+</body>
+</html>

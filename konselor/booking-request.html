@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Request — PeerSpace</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <style>
+    .page-header { margin-bottom:28px; }
+    .page-header h1 { font-size:1.6rem; font-weight:700; color:#fff; margin:0 0 4px; }
+    .page-header p { color:#9b8ec4; font-size:.88rem; margin:0; }
+
+    /* Filter bar */
+    .filter-bar {
+      display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap; align-items:center;
+    }
+    .filter-btn {
+      background:#16112b; border:1px solid #2a1f4e; color:#9b8ec4;
+      border-radius:99px; padding:7px 18px; font-size:.82rem; cursor:pointer;
+      transition:all .18s;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background:#8B2EFF22; border-color:#8B2EFF; color:#c084fc;
+    }
+    .filter-btn.active { font-weight:600; color:#8B2EFF; }
+    .search-wrap { margin-left:auto; position:relative; }
+    .search-wrap input {
+      background:#16112b; border:1px solid #2a1f4e; color:#e2d9f3;
+      border-radius:99px; padding:7px 16px 7px 38px; font-size:.82rem; outline:none;
+      width:220px; transition:border-color .18s;
+    }
+    .search-wrap input:focus { border-color:#8B2EFF55; }
+    .search-wrap i {
+      position:absolute; left:12px; top:50%; transform:translateY(-50%);
+      color:#7c6fa0; font-size:1rem; pointer-events:none;
+    }
+
+    /* Cards grid */
+    .booking-grid {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:20px;
+    }
+
+    .booking-card {
+      background:#16112b; border:1px solid #2a1f4e; border-radius:16px;
+      overflow:hidden; transition:border-color .2s, transform .2s;
+    }
+    .booking-card:hover { border-color:#8B2EFF44; transform:translateY(-2px); }
+
+    .card-top {
+      padding:18px 20px 14px;
+      border-bottom:1px solid #1a1530;
+      display:flex; align-items:center; gap:14px;
+    }
+    .avatar {
+      width:44px; height:44px; border-radius:50%;
+      background:#8B2EFF33; color:#8B2EFF;
+      display:flex; align-items:center; justify-content:center;
+      font-size:.9rem; font-weight:700; flex-shrink:0; text-transform:uppercase;
+    }
+    .card-name { font-size:.95rem; font-weight:600; color:#e2d9f3; }
+    .card-email { font-size:.75rem; color:#7c6fa0; margin-top:2px; }
+
+    .badge {
+      margin-left:auto; flex-shrink:0;
+      display:inline-flex; align-items:center; gap:4px;
+      padding:3px 10px; border-radius:99px; font-size:.72rem; font-weight:600;
+    }
+    .badge-pending  { background:#f59e0b1a; color:#f59e0b; }
+    .badge-approved { background:#10b9811a; color:#10b981; }
+    .badge-rejected { background:#ef44441a; color:#ef4444; }
+    .badge-done     { background:#3b82f61a; color:#3b82f6; }
+
+    .card-body { padding:14px 20px; display:flex; flex-direction:column; gap:8px; }
+    .card-row {
+      display:flex; align-items:center; gap:8px;
+      font-size:.82rem; color:#9b8ec4;
+    }
+    .card-row i { color:#8B2EFF; font-size:.95rem; flex-shrink:0; }
+    .card-row span { color:#c4b8e8; }
+    .card-note {
+      margin-top:4px; font-size:.8rem; color:#7c6fa0;
+      background:#1a1530; border-radius:8px; padding:10px 12px;
+      border-left:2px solid #2a1f4e; line-height:1.5;
+    }
+
+    .card-actions {
+      padding:14px 20px;
+      border-top:1px solid #1a1530;
+      display:flex; gap:10px;
+    }
+    .btn-approve, .btn-reject, .btn-done {
+      flex:1; padding:8px; border-radius:10px; font-size:.82rem;
+      font-weight:600; cursor:pointer; border:none; transition:opacity .18s, transform .15s;
+      display:flex; align-items:center; justify-content:center; gap:6px;
+    }
+    .btn-approve:hover, .btn-reject:hover, .btn-done:hover { opacity:.85; transform:scale(.98); }
+    .btn-approve { background:#8B2EFF; color:#fff; }
+    .btn-reject  { background:#1a1530; border:1px solid #ef444433; color:#ef4444; }
+    .btn-done    { background:#10b98122; border:1px solid #10b98133; color:#10b981; }
+    .btn-disabled {
+      flex:1; padding:8px; border-radius:10px; font-size:.82rem;
+      color:#5a4e7a; background:#1a1530; border:1px solid #1e1a35;
+      text-align:center;
+    }
+
+    /* Detail modal */
+    .modal-overlay {
+      position:fixed; inset:0; background:#00000088; z-index:1000;
+      display:flex; align-items:center; justify-content:center; padding:20px;
+      opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    .modal-overlay.open { opacity:1; pointer-events:all; }
+    .modal {
+      background:#16112b; border:1px solid #2a1f4e; border-radius:20px;
+      width:100%; max-width:480px; transform:translateY(16px);
+      transition:transform .2s; overflow:hidden;
+    }
+    .modal-overlay.open .modal { transform:translateY(0); }
+    .modal-header {
+      padding:20px 24px 16px;
+      border-bottom:1px solid #1a1530;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .modal-header h3 { font-size:1.05rem; font-weight:700; color:#fff; margin:0; }
+    .modal-close {
+      background:none; border:none; color:#7c6fa0; font-size:1.4rem;
+      cursor:pointer; line-height:1; transition:color .15s;
+    }
+    .modal-close:hover { color:#e2d9f3; }
+    .modal-body { padding:20px 24px; display:flex; flex-direction:column; gap:14px; }
+    .modal-row { display:flex; gap:12px; }
+    .modal-label { font-size:.75rem; color:#7c6fa0; text-transform:uppercase; letter-spacing:.05em; margin-bottom:3px; }
+    .modal-val { font-size:.9rem; color:#e2d9f3; }
+    .modal-footer { padding:16px 24px; border-top:1px solid #1a1530; display:flex; gap:10px; }
+
+    /* Skeleton */
+    .skeleton {
+      background:linear-gradient(90deg,#1e1635 25%,#2a1f4e 50%,#1e1635 75%);
+      background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:8px;
+    }
+    @keyframes shimmer { to { background-position:-200% 0; } }
+
+    /* Empty / loading */
+    .empty-state {
+      grid-column:1/-1; text-align:center;
+      padding:64px 24px; color:#5a4e7a;
+    }
+    .empty-state i { font-size:3rem; display:block; margin-bottom:12px; }
+    .empty-state p { margin:0; font-size:.9rem; }
+
+    /* Toast */
+    #toast-container {
+      position:fixed; bottom:28px; right:28px;
+      display:flex; flex-direction:column; gap:10px; z-index:9999;
+    }
+    .toast {
+      background:#1e1635; border:1px solid #2a1f4e; border-left:3px solid #8B2EFF;
+      border-radius:10px; padding:12px 18px; color:#e2d9f3; font-size:.875rem;
+      max-width:320px; box-shadow:0 8px 32px #00000060; animation:toastIn .25s ease;
+    }
+    .toast.error   { border-left-color:#ef4444; }
+    .toast.success { border-left-color:#10b981; }
+    @keyframes toastIn { from { opacity:0; transform:translateY(12px); } }
+
+    /* Loading spinner inside button */
+    .spinner {
+      width:14px; height:14px; border:2px solid #ffffff44;
+      border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar" id="sidebar-container"></aside>
+  <div class="main-content">
+    <header class="topbar" id="navbar-container"></header>
+    <div class="content-wrapper">
+    <div class="content-body">
+
+      <div class="page-header">
+        <h1>Booking Request</h1>
+        <p>Kelola permintaan sesi konseling dari mahasiswa</p>
+      </div>
+
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all">Semua</button>
+        <button class="filter-btn" data-filter="pending">Pending</button>
+        <button class="filter-btn" data-filter="accepted">Disetujui</button>
+        <button class="filter-btn" data-filter="rejected">Ditolak</button>
+        <button class="filter-btn" data-filter="done">Selesai</button>
+        <div class="search-wrap">
+          <i class='bx bx-search'></i>
+          <input type="text" id="search-input" placeholder="Cari nama mahasiswa…" />
+        </div>
+      </div>
+
+      <div class="booking-grid" id="booking-grid">
+        <!-- skeleton -->
+        <div class="booking-card">
+          <div class="card-top">
+            <div class="skeleton" style="width:44px;height:44px;border-radius:50%;flex-shrink:0"></div>
+            <div style="flex:1">
+              <div class="skeleton" style="height:14px;width:60%;margin-bottom:6px"></div>
+              <div class="skeleton" style="height:11px;width:80%"></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="skeleton" style="height:12px;width:70%"></div>
+            <div class="skeleton" style="height:12px;width:55%"></div>
+            <div class="skeleton" style="height:44px;width:100%;border-radius:8px"></div>
+          </div>
+          <div class="card-actions">
+            <div class="skeleton" style="flex:1;height:36px;border-radius:10px"></div>
+            <div class="skeleton" style="flex:1;height:36px;border-radius:10px"></div>
+          </div>
+        </div>
+        <div class="booking-card">
+          <div class="card-top">
+            <div class="skeleton" style="width:44px;height:44px;border-radius:50%;flex-shrink:0"></div>
+            <div style="flex:1">
+              <div class="skeleton" style="height:14px;width:60%;margin-bottom:6px"></div>
+              <div class="skeleton" style="height:11px;width:80%"></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="skeleton" style="height:12px;width:70%"></div>
+            <div class="skeleton" style="height:12px;width:55%"></div>
+            <div class="skeleton" style="height:44px;width:100%;border-radius:8px"></div>
+          </div>
+          <div class="card-actions">
+            <div class="skeleton" style="flex:1;height:36px;border-radius:10px"></div>
+            <div class="skeleton" style="flex:1;height:36px;border-radius:10px"></div>
+          </div>
+        </div>
+        <div class="booking-card">
+          <div class="card-top">
+            <div class="skeleton" style="width:44px;height:44px;border-radius:50%;flex-shrink:0"></div>
+            <div style="flex:1">
+              <div class="skeleton" style="height:14px;width:60%;margin-bottom:6px"></div>
+              <div class="skeleton" style="height:11px;width:80%"></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="skeleton" style="height:12px;width:70%"></div>
+            <div class="skeleton" style="height:12px;width:55%"></div>
+            <div class="skeleton" style="height:44px;width:100%;border-radius:8px"></div>
+          </div>
+          <div class="card-actions">
+            <div class="skeleton" style="flex:1;height:36px;border-radius:10px"></div>
+            <div class="skeleton" style="flex:1;height:36px;border-radius:10px"></div>
+          </div>
+        </div>
+        <div class="booking-card">
+          <div class="card-top">
+            <div class="skeleton" style="width:44px;height:44px;border-radius:50%;flex-shrink:0"></div>
+            <div style="flex:1">
+              <div class="skeleton" style="height:14px;width:60%;margin-bottom:6px"></div>
+              <div class="skeleton" style="height:11px;width:80%"></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="skeleton" style="height:12px;width:70%"></div>
+            <div class="skeleton" style="height:12px;width:55%"></div>
+            <div class="skeleton" style="height:44px;width:100%;border-radius:8px"></div>
+          </div>
+          <div class="card-actions">
+            <div class="skeleton" style="flex:1;height:36px;border-radius:10px"></div>
+            <div class="skeleton" style="flex:1;height:36px;border-radius:10px"></div>
+          </div>
+        </div>
+        <div class="booking-card">
+          <div class="card-top">
+            <div class="skeleton" style="width:44px;height:44px;border-radius:50%;flex-shrink:0"></div>
+            <div style="flex:1">
+              <div class="skeleton" style="height:14px;width:60%;margin-bottom:6px"></div>
+              <div class="skeleton" style="height:11px;width:80%"></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="skeleton" style="height:12px;width:70%"></div>
+            <div class="skeleton" style="height:12px;width:55%"></div>
+            <div class="skeleton" style="height:44px;width:100%;border-radius:8px"></div>
+          </div>
+          <div class="card-actions">
+            <div class="skeleton" style="flex:1;height:36px;border-radius:10px"></div>
+            <div class="skeleton" style="flex:1;height:36px;border-radius:10px"></div>
+          </div>
+        </div>
+        <div class="booking-card">
+          <div class="card-top">
+            <div class="skeleton" style="width:44px;height:44px;border-radius:50%;flex-shrink:0"></div>
+            <div style="flex:1">
+              <div class="skeleton" style="height:14px;width:60%;margin-bottom:6px"></div>
+              <div class="skeleton" style="height:11px;width:80%"></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="skeleton" style="height:12px;width:70%"></div>
+            <div class="skeleton" style="height:12px;width:55%"></div>
+            <div class="skeleton" style="height:44px;width:100%;border-radius:8px"></div>
+          </div>
+          <div class="card-actions">
+            <div class="skeleton" style="flex:1;height:36px;border-radius:10px"></div>
+            <div class="skeleton" style="flex:1;height:36px;border-radius:10px"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content-body -->
+    </div><!-- /content-wrapper -->
+  </div><!-- /main-content -->
+</div><!-- /app-wrapper -->
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <h3>Detail Booking</h3>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script type="module">
+import { supabase } from '../assets/js/supabase-client.js'
+
+const { data: { user } } = await supabase.auth.getUser()
+if (!user) { window.location.href = '../auth/login.html'; throw new Error() }
+
+const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+if (!profile || profile.role !== 'konselor') { window.location.href = '../mahasiswa/dashboard.html'; throw new Error() }
+
+// Load sidebar + set active link
+fetch('../shared/sidebar-konselor.html').then(r => r.text()).then(html => {
+  document.getElementById('sidebar-container').innerHTML = html
+  const links = document.querySelectorAll('#sidebar-container .menu-link')
+  links.forEach(a => {
+    if (a.getAttribute('href') === 'booking-request.html') {
+      a.closest('.menu-item')?.classList.add('active')
+    }
+  })
+})
+
+// Load navbar + inject title & user info
+fetch('../shared/navbar.html').then(r => r.text()).then(html => {
+  const container = document.getElementById('navbar-container')
+  container.innerHTML = html
+  const titleEl  = container.querySelector('#topbarTitle')
+  const nameEl   = container.querySelector('#navUserName')
+  const roleEl   = container.querySelector('#navUserRole')
+  const avatarEl = container.querySelector('#navAvatar')
+  if (titleEl)  titleEl.textContent  = 'Booking Request'
+  if (nameEl)   nameEl.textContent   = profile.nama || user.email
+  if (roleEl)   roleEl.textContent   = 'Konselor'
+  if (avatarEl && profile.avatar_url) avatarEl.src = profile.avatar_url
+  else if (avatarEl) {
+    const name = encodeURIComponent(profile.nama || 'U')
+    avatarEl.src = `https://ui-avatars.com/api/?name=${name}&background=8B2EFF&color=fff`
+  }
+  const logoutBtn = container.querySelector('#btnLogout')
+  if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut({ scope: 'local' })
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// Toast
+function toast(msg, type = 'info') {
+  const el = Object.assign(document.createElement('div'), { className:`toast ${type}`, textContent:msg })
+  document.getElementById('toast-container').appendChild(el)
+  setTimeout(() => el.remove(), 3500)
+}
+
+// State
+let allBookings = []
+let currentFilter = 'all'
+let searchQuery   = ''
+
+// Get konselor id
+const { data: konselor } = await supabase.from('konselor').select('id').eq('user_id', user.id).single()
+if (!konselor) { toast('Data konselor tidak ditemukan','error'); throw new Error() }
+const konselorId = konselor.id
+
+// Fetch all bookings
+async function fetchBookings() {
+  const { data, error } = await supabase
+    .from('booking')
+    .select(`
+      id, tanggal, sesi, status, keluhan, created_at,
+      profiles:mahasiswa_id ( id, nama, email, avatar_url )
+    `)
+    .eq('konselor_id', konselorId)
+    .order('created_at', { ascending: false })
+
+  if (error) { toast('Gagal memuat data booking', 'error'); return }
+  allBookings = data ?? []
+  renderCards()
+}
+
+// Render
+function renderCards() {
+  const grid = document.getElementById('booking-grid')
+  let list = [...allBookings]
+
+  if (currentFilter !== 'all') list = list.filter(b => b.status === currentFilter)
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase()
+    list = list.filter(b => (b.profiles?.nama ?? '').toLowerCase().includes(q))
+  }
+
+  if (!list.length) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <i class='bx bx-calendar-x'></i>
+        <p>Tidak ada booking ditemukan.</p>
+      </div>`
+    return
+  }
+
+  const statusMap = {
+    pending:  { cls:'badge-pending',  icon:'bx-time-five',     label:'Pending'   },
+    accepted: { cls:'badge-approved', icon:'bx-check',         label:'Disetujui' },
+    rejected: { cls:'badge-rejected', icon:'bx-x',             label:'Ditolak'   },
+    done:     { cls:'badge-done',     icon:'bx-check-double',  label:'Selesai'   },
+  }
+
+  grid.innerHTML = list.map(b => {
+    const name    = b.profiles?.nama ?? 'Mahasiswa'
+    const email   = b.profiles?.email ?? ''
+    const initials= name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase()
+    const st      = statusMap[b.status] ?? { cls:'', icon:'bx-circle', label: b.status }
+    const dateStr = b.tanggal
+      ? new Date(b.tanggal).toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) + ' • ' + (b.sesi ?? '')
+      : '–'
+    const createdStr = new Date(b.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})
+
+    let actions = ''
+    if (b.status === 'pending') {
+      actions = `
+        <button class="btn-approve" onclick="handleAction('${b.id}','accepted')">
+          <i class='bx bx-check'></i> Terima
+        </button>
+        <button class="btn-reject" onclick="handleAction('${b.id}','rejected')">
+          <i class='bx bx-x'></i> Tolak
+        </button>`
+    } else if (b.status === 'accepted') {
+      actions = `
+        <button class="btn-done" onclick="handleAction('${b.id}','done')">
+          <i class='bx bx-check-double'></i> Tandai Selesai
+        </button>
+        <button class="btn-disabled">Sudah disetujui</button>`
+    } else {
+      actions = `<div class="btn-disabled">Tidak ada aksi</div>`
+    }
+
+    return `
+      <div class="booking-card" id="card-${b.id}">
+        <div class="card-top">
+          <div class="avatar">${initials}</div>
+          <div>
+            <div class="card-name">${name}</div>
+            <div class="card-email">${email}</div>
+          </div>
+          <span class="badge ${st.cls}"><i class='bx ${st.icon}'></i>${st.label}</span>
+        </div>
+        <div class="card-body">
+          <div class="card-row"><i class='bx bx-calendar'></i><span>${dateStr}</span></div>
+          <div class="card-row"><i class='bx bx-plus-circle'></i><span>Diajukan ${createdStr}</span></div>
+          ${b.note ? `<div class="card-note"><i class='bx bx-message-detail' style="color:#8B2EFF;margin-right:4px"></i>${b.note}</div>` : ''}
+        </div>
+        <div class="card-actions">
+          ${actions}
+        </div>
+      </div>`
+  }).join('')
+}
+
+// Handle approve / reject / done
+window.handleAction = async function(bookingId, newStatus) {
+  const card    = document.getElementById(`card-${bookingId}`)
+  const buttons = card?.querySelectorAll('button')
+  buttons?.forEach(b => { b.disabled = true; b.innerHTML = `<div class="spinner"></div>` })
+
+  const { error } = await supabase.from('booking').update({ status: newStatus }).eq('id', bookingId)
+  if (error) {
+    toast('Gagal memperbarui status', 'error')
+    buttons?.forEach(b => { b.disabled = false })
+    return
+  }
+  const idx = allBookings.findIndex(b => b.id === bookingId)
+  if (idx !== -1) allBookings[idx].status = newStatus
+
+  const labels = { accepted:'Booking disetujui ✓', rejected:'Booking ditolak', done:'Sesi ditandai selesai ✓' }
+  const types  = { accepted:'success', rejected:'error', done:'success' }
+  toast(labels[newStatus] ?? 'Status diperbarui', types[newStatus] ?? 'info')
+  renderCards()
+}
+
+// Filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    currentFilter = btn.dataset.filter
+    renderCards()
+  })
+})
+
+// Search
+document.getElementById('search-input').addEventListener('input', e => {
+  searchQuery = e.target.value.trim()
+  renderCards()
+})
+
+// Modal
+document.getElementById('modal-close').addEventListener('click', () => {
+  document.getElementById('modal-overlay').classList.remove('open')
+})
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open')
+})
+
+// Check URL param ?id=
+const urlId = new URLSearchParams(location.search).get('id')
+if (urlId) {
+  // scroll to card after load
+  setTimeout(() => {
+    const card = document.getElementById(`card-${urlId}`)
+    card?.scrollIntoView({ behavior:'smooth', block:'center' })
+    card?.style.setProperty('border-color','#8B2EFF')
+  }, 800)
+}
+
+await fetchBookings()
+</script>
+</body>
+</html>

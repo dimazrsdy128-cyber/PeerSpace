@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Review Mahasiswa — PeerSpace</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <style>
+    .content-area { padding: 2rem 2.5rem; }
+
+    /* ── Summary bar ── */
+    .review-summary {
+      display: flex; align-items: center; gap: 20px;
+      background: var(--surface-color); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); padding: 16px 24px;
+      margin-bottom: 1.8rem; flex-wrap: wrap;
+    }
+    .summary-score {
+      font-size: 2.8rem; font-weight: 800; color: #FFAB00; line-height: 1;
+    }
+    .summary-stars { display: flex; gap: 3px; font-size: 1.3rem; color: #FFAB00; margin-bottom: 4px; }
+    .summary-stars .empty { color: rgba(255,255,255,.2); }
+    .summary-meta { font-size: .82rem; color: var(--text-secondary); }
+
+    /* ── Filter bar ── */
+    .filter-bar {
+      display: flex; gap: .8rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center;
+    }
+    .filter-select {
+      padding: .5rem 1rem;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px; color: #fff; font-size: .85rem; cursor: pointer;
+    }
+    .filter-select:focus { outline: none; border-color: #8B2EFF; }
+    .filter-select option { background: #1a0a2e; }
+    .filter-label { font-size: .85rem; color: var(--text-secondary); }
+
+    /* ── Review grid ── */
+    .review-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.2rem;
+    }
+
+    .review-card {
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px; padding: 1.4rem;
+      display: flex; flex-direction: column; gap: .8rem;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .review-card:hover {
+      border-color: rgba(139,46,255,.3);
+      box-shadow: 0 4px 20px rgba(139,46,255,.1);
+    }
+
+    .rc-stars { display: flex; gap: 2px; font-size: 1rem; color: #FFAB00; }
+    .rc-stars .empty { color: rgba(255,255,255,.2); }
+
+    .rc-komentar {
+      font-size: .9rem; color: rgba(255,255,255,.75);
+      line-height: 1.65; font-style: italic; flex: 1;
+    }
+    .rc-komentar.kosong { color: rgba(255,255,255,.3); font-style: normal; }
+
+    .rc-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: .6rem; border-top: 1px solid rgba(255,255,255,.07);
+    }
+    .rc-author { display: flex; align-items: center; gap: .5rem; font-size: .82rem; color: var(--text-secondary); }
+    .rc-author img { width: 26px; height: 26px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); }
+    .rc-date { font-size: .75rem; color: rgba(255,255,255,.3); }
+
+    /* ── Skeleton ── */
+    .skeleton { background: rgba(255,255,255,.07); border-radius: 6px; animation: shimmer 1.4s infinite; }
+    @keyframes shimmer {
+      0%,100% { opacity: 1; } 50% { opacity: .45; }
+    }
+
+    /* ── Empty / error state ── */
+    .empty-state {
+      grid-column: 1/-1; text-align: center; padding: 4rem 2rem;
+      color: rgba(255,255,255,.3);
+    }
+    .empty-state i { font-size: 3rem; display: block; margin-bottom: .8rem; }
+    .empty-state p { font-size: .95rem; }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar" id="sidebar-container"></aside>
+
+  <div class="main-content">
+    <header class="topbar" id="navbar-container"></header>
+
+    <div class="content-wrapper">
+    <div class="content-area">
+
+      <!-- Page Header -->
+      <div class="page-header" style="margin-bottom:1.4rem">
+        <h1>Review <span style="color:#8B2EFF">Mahasiswa</span></h1>
+        <p style="color:var(--text-secondary);font-size:.9rem;margin:0">Apa kata mereka tentang sesi konseling bersama kamu.</p>
+      </div>
+
+      <!-- Summary -->
+      <div class="review-summary" id="reviewSummary">
+        <div class="skeleton" style="width:60px;height:48px;border-radius:8px"></div>
+        <div style="display:flex;flex-direction:column;gap:.4rem">
+          <div class="skeleton" style="width:120px;height:18px"></div>
+          <div class="skeleton" style="width:80px;height:13px"></div>
+        </div>
+      </div>
+
+      <!-- Filter -->
+      <div class="filter-bar">
+        <span class="filter-label">Filter:</span>
+        <select class="filter-select" id="filterRating">
+          <option value="">Semua Rating</option>
+          <option value="5">⭐⭐⭐⭐⭐ 5</option>
+          <option value="4">⭐⭐⭐⭐ 4</option>
+          <option value="3">⭐⭐⭐ 3</option>
+          <option value="2">⭐⭐ 2</option>
+          <option value="1">⭐ 1</option>
+        </select>
+        <select class="filter-select" id="filterKomentar">
+          <option value="">Semua Review</option>
+          <option value="ada">Ada Komentar</option>
+          <option value="kosong">Tanpa Komentar</option>
+        </select>
+      </div>
+
+      <!-- Grid -->
+      <div class="review-grid" id="reviewGrid">
+        <!-- skeleton cards -->
+        <div class="review-card">
+          <div class="skeleton" style="width:90px;height:16px"></div>
+          <div class="skeleton" style="width:100%;height:60px;border-radius:8px"></div>
+          <div class="skeleton" style="width:120px;height:13px"></div>
+        </div>
+        <div class="review-card">
+          <div class="skeleton" style="width:90px;height:16px"></div>
+          <div class="skeleton" style="width:100%;height:60px;border-radius:8px"></div>
+          <div class="skeleton" style="width:120px;height:13px"></div>
+        </div>
+        <div class="review-card">
+          <div class="skeleton" style="width:90px;height:16px"></div>
+          <div class="skeleton" style="width:100%;height:60px;border-radius:8px"></div>
+          <div class="skeleton" style="width:120px;height:13px"></div>
+        </div>
+      </div>
+
+    </div><!-- /content-area -->
+    </div><!-- /content-wrapper -->
+  </div><!-- /main-content -->
+</div><!-- /app-wrapper -->
+
+<script type="module">
+import { supabase } from '../assets/js/supabase-client.js'
+
+// ── Auth guard ──
+const { data: { user } } = await supabase.auth.getUser()
+if (!user) { window.location.href = '../auth/login.html'; throw new Error() }
+
+const { data: profile } = await supabase
+  .from('profiles').select('nama, role, avatar_url').eq('id', user.id).single()
+if (profile?.role !== 'konselor') { window.location.href = '../auth/login.html'; throw new Error() }
+
+// ── Load sidebar ──
+fetch('../shared/sidebar-konselor.html').then(r => r.text()).then(html => {
+  document.getElementById('sidebar-container').innerHTML = html
+  document.querySelectorAll('#sidebar-container .menu-link').forEach(a => {
+    if (a.getAttribute('href') === 'review.html') {
+      a.closest('.menu-item')?.classList.add('active')
+    }
+  })
+  const btnLogout = document.getElementById('btnLogout')
+  if (btnLogout) btnLogout.addEventListener('click', async (e) => {
+    e.preventDefault()
+    await supabase.auth.signOut({ scope: 'local' })
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// ── Load navbar ──
+fetch('../shared/navbar.html').then(r => r.text()).then(html => {
+  const container = document.getElementById('navbar-container')
+  container.innerHTML = html
+  const q = s => container.querySelector(s)
+  if (q('#topbarTitle'))  q('#topbarTitle').textContent = 'Review Mahasiswa'
+  if (q('#navUserName'))  q('#navUserName').textContent = profile.nama || user.email
+  if (q('#navUserRole'))  q('#navUserRole').textContent = 'Konselor'
+  if (q('#navAvatar'))    q('#navAvatar').src = profile.avatar_url
+    || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.nama || 'U')}&background=8B2EFF&color=fff`
+  const logoutBtn = q('#btnLogout')
+  if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut({ scope: 'local' })
+    window.location.href = '../auth/login.html'
+  })
+})
+
+// ── Get konselor ID ──
+const { data: konselorData } = await supabase
+  .from('konselor').select('id').eq('user_id', user.id).single()
+const konselorId = konselorData?.id
+if (!konselorId) {
+  document.getElementById('reviewGrid').innerHTML =
+    `<div class="empty-state"><i class='bx bx-error-circle'></i><p>Data konselor tidak ditemukan.</p></div>`
+  throw new Error()
+}
+
+// ── Fetch semua reviews ──
+const { data: reviews, error } = await supabase
+  .from('reviews')
+  .select(`
+    id, rating, komentar, created_at,
+    profiles!reviews_mahasiswa_id_fkey (nama, avatar_url)
+  `)
+  .eq('konselor_id', konselorId)
+  .order('created_at', { ascending: false })
+
+if (error) {
+  document.getElementById('reviewGrid').innerHTML =
+    `<div class="empty-state"><i class='bx bx-error-circle'></i><p>Gagal memuat review.</p></div>`
+  throw error
+}
+
+// ── State ──
+let allReviews = reviews || []
+let displayed  = [...allReviews]
+
+// ── Helpers ──
+function starsHtml(rating, size = '1rem') {
+  let html = `<div class="rc-stars" style="font-size:${size}">`
+  for (let i = 1; i <= 5; i++) {
+    html += i <= rating
+      ? `<i class='bx bxs-star'></i>`
+      : `<i class='bx bx-star empty'></i>`
+  }
+  return html + '</div>'
+}
+
+function formatDate(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function avgRating(list) {
+  if (!list.length) return 0
+  return list.reduce((s, r) => s + r.rating, 0) / list.length
+}
+
+// ── Render summary ──
+function renderSummary(list) {
+  const avg   = avgRating(list)
+  const total = list.length
+  const dist  = [5,4,3,2,1].map(n => ({ n, count: list.filter(r => r.rating === n).length }))
+
+  document.getElementById('reviewSummary').innerHTML = `
+    <div class="summary-score">${avg ? avg.toFixed(1) : '—'}</div>
+    <div>
+      ${starsHtml(Math.round(avg), '1.2rem')}
+      <div class="summary-meta">${total} review${total !== 1 ? '' : ''}</div>
+    </div>
+    <div style="flex:1;max-width:260px;display:flex;flex-direction:column;gap:.3rem;margin-left:1rem">
+      ${dist.map(({ n, count }) => {
+        const pct = total ? Math.round(count / total * 100) : 0
+        return `
+        <div style="display:flex;align-items:center;gap:.5rem;font-size:.78rem">
+          <span style="color:#FFAB00;min-width:14px">${n}</span>
+          <div style="flex:1;height:6px;background:rgba(255,255,255,.08);border-radius:3px">
+            <div style="width:${pct}%;height:100%;background:#FFAB00;border-radius:3px;transition:width .4s"></div>
+          </div>
+          <span style="color:var(--text-secondary);min-width:24px">${count}</span>
+        </div>`
+      }).join('')}
+    </div>
+  `
+}
+
+// ── Render cards ──
+function renderCards(list) {
+  const grid = document.getElementById('reviewGrid')
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state"><i class='bx bx-comment-x'></i><p>Belum ada review${
+      document.getElementById('filterRating').value || document.getElementById('filterKomentar').value
+        ? ' yang sesuai filter' : ' saat ini'
+    }.</p></div>`
+    return
+  }
+
+  grid.innerHTML = list.map(r => {
+    const mhs     = r.profiles
+    const nama    = mhs?.nama || 'Anonim'
+    const avatar  = mhs?.avatar_url
+      || `https://ui-avatars.com/api/?name=${encodeURIComponent(nama)}&background=444&color=fff&size=40`
+    const komentar = r.komentar?.trim()
+
+    return `
+    <div class="review-card">
+      ${starsHtml(r.rating)}
+      <p class="rc-komentar${komentar ? '' : ' kosong'}">
+        ${komentar ? `"${komentar}"` : 'Tidak ada komentar.'}
+      </p>
+      <div class="rc-footer">
+        <div class="rc-author">
+          <img src="${avatar}" alt="${nama}" onerror="this.src='https://ui-avatars.com/api/?name=U&background=444&color=fff&size=40'">
+          ${nama}
+        </div>
+        <span class="rc-date">${formatDate(r.created_at)}</span>
+      </div>
+    </div>`
+  }).join('')
+}
+
+// ── Initial render ──
+renderSummary(allReviews)
+renderCards(allReviews)
+
+// ── Filter handler ──
+function applyFilter() {
+  const ratingVal   = document.getElementById('filterRating').value
+  const komentarVal = document.getElementById('filterKomentar').value
+
+  displayed = allReviews.filter(r => {
+    if (ratingVal && r.rating !== parseInt(ratingVal)) return false
+    if (komentarVal === 'ada'    && !r.komentar?.trim()) return false
+    if (komentarVal === 'kosong' &&  r.komentar?.trim()) return false
+    return true
+  })
+  renderCards(displayed)
+}
+
+document.getElementById('filterRating').addEventListener('change', applyFilter)
+document.getElementById('filterKomentar').addEventListener('change', applyFilter)
+</script>
+</body>
+</html>

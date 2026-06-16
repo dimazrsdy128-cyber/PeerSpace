@@ -1,0 +1,83 @@
+<div class="sidebar-logo" style="padding: 15px 24px; margin-bottom: 5px;">
+    <i class='bx bxs-chat'></i>
+    <span>PeerSpace.</span>
+</div>
+
+<ul class="sidebar-menu" style="display: flex; flex-direction: column; gap: 0px !important; margin: 0; padding: 0;">
+    <li class="menu-item" style="margin-bottom: 2px;">
+        <a href="dashboard.html" class="menu-link" style="padding: 8px 24px;">
+            <i class='bx bx-grid-alt'></i>
+            <span style="font-size: 0.9rem;">Dashboard</span>
+        </a>
+    </li>
+    <li class="menu-item" style="margin-bottom: 2px;">
+        <a href="booking-request.html" class="menu-link" style="padding: 8px 24px;">
+            <i class='bx bx-bell'></i>
+            <span style="font-size: 0.9rem;">Booking Request</span>
+        </a>
+    </li>
+    <li class="menu-item" style="margin-bottom: 2px;">
+        <a href="chat-konseling.html" class="menu-link" style="padding: 8px 24px;">
+            <i class='bx bx-message-rounded-dots'></i>
+            <span style="font-size: 0.9rem;">Sesi Konseling (Chat)</span>
+        </a>
+    </li>
+    <li class="menu-item" style="margin-bottom: 2px;">
+        <a href="kelola-kuesioner.html" class="menu-link" style="padding: 8px 24px;">
+            <i class='bx bx-poll'></i>
+            <span style="font-size: 0.9rem;">Kelola Kuesioner</span>
+        </a>
+    </li>
+    <li class="menu-item" style="margin-bottom: 2px;">
+        <a href="kelola-forum.html" class="menu-link" style="padding: 8px 24px;">
+            <i class='bx bx-chat'></i>
+            <span style="font-size: 0.9rem;">Kelola Forum</span>
+        </a>
+    </li>
+    <li class="menu-item" style="margin-bottom: 2px;">
+        <a href="riwayat.html" class="menu-link" style="padding: 8px 24px;">
+            <i class='bx bx-history'></i>
+            <span style="font-size: 0.9rem;">Riwayat Sesi</span>
+        </a>
+    </li>
+    <li class="menu-item" style="margin-bottom: 2px;">
+        <a href="review.html" class="menu-link" style="padding: 8px 24px;">
+            <i class='bx bx-star'></i>
+            <span style="font-size: 0.9rem;">Review Mahasiswa</span>
+        </a>
+    </li>
+    <li class="menu-item" style="margin-bottom: 2px;">
+        <a href="artikel.html" class="menu-link" style="padding: 8px 24px;">
+            <i class='bx bx-edit'></i>
+            <span style="font-size: 0.9rem;">Kelola Artikel</span>
+        </a>
+    </li>
+    <li class="menu-item" style="margin-bottom: 2px;">
+        <a href="profile.html" class="menu-link" style="padding: 8px 24px;">
+            <i class='bx bx-user-pin'></i>
+            <span style="font-size: 0.9rem;">Profil Saya</span>
+        </a>
+    </li>
+</ul>
+
+<ul class="sidebar-menu" style="margin-top: auto; flex-grow: 0; padding-bottom: 10px; list-style: none; padding-left: 0;">
+    <li class="menu-item">
+        <a id="btnLogout" href="#" class="menu-link" style="color: #ff4757; padding: 10px 24px; cursor: pointer;">
+            <i class='bx bx-log-out'></i>
+            <span style="font-size: 0.9rem;">Keluar</span>
+        </a>
+    </li>
+</ul>
+
+<script type="module">
+    import { supabase } from '../assets/js/supabase-client.js'
+
+    document.getElementById('btnLogout').addEventListener('click', async (e) => {
+        e.preventDefault()
+        await supabase.auth.signOut({ scope: 'local' })
+        Object.keys(localStorage)
+            .filter(k => k.startsWith('sb-'))
+            .forEach(k => localStorage.removeItem(k))
+        window.location.href = '../auth/login.html'
+    })
+</script>
