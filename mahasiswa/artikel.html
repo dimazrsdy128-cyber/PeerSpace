@@ -351,7 +351,7 @@
         .from('articles')
         .select(`
           id, judul, konten, cover_url, tags, views, created_at,
-          author:author_id ( id, full_name, avatar_url )
+          author:author_id ( id, nama, avatar_url )
         `, { count: 'exact' })
         .eq('status', 'published')
         .range(from, to)
@@ -418,7 +418,7 @@
 
       allArticles.forEach((art, idx) => {
         const profile = art.author || {}
-        const name = profile.nama || 'Konselor'
+        const name = profile.nama || art.author?.nama || 'Konselor'
         const initials = name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()
         const avatarUrl = profile.avatar_url
         const isFeatured = idx === 0 && reset && !activeCategory && !searchQuery
@@ -441,8 +441,16 @@
             ${firstTag ? `<span class="card-category">${escHtml(firstTag)}</span>` : ''}
             <h2 class="card-title">${escHtml(art.judul)}</h2>
             <p class="card-excerpt">${escHtml(stripHtml(art.konten || ''))}</p>
-            ...
-            <span class="card-stat"><i class='bx bx-show'></i>${fmtNum(views)}</span>
+            <div class="card-footer">
+              <div class="card-author-avatar">
+                ${avatarUrl
+                  ? `<img src="${avatarUrl}" alt="${escHtml(name)}">`
+                  : escHtml(initials)}
+              </div>
+              <span class="card-author-name">${escHtml(name)}</span>
+              <div class="card-meta-right">
+                <span class="card-stat"><i class='bx bx-calendar'></i>${dateStr}</span>
+                <span class="card-stat"><i class='bx bx-show'></i>${fmtNum(views)}</span>
               </div>
             </div>
           </div>`
