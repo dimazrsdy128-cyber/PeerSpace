@@ -109,7 +109,7 @@
             try {
                 const email = nimOrEmail.includes('@')
                     ? nimOrEmail
-                    : `${nimOrEmail}@peerspace.ac.id`
+                    : `${nimOrEmail}@conselerin.ac.id`
 
                 const { data, error } = await supabase.auth.signInWithPassword({ email, password })
                 if (error) throw error
