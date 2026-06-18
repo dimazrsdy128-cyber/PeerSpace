@@ -70,9 +70,11 @@
             display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;
             flex-shrink: 0;
         }
-        .conv-info { overflow: hidden; }
+        .conv-info { overflow: hidden; flex: 1; }
         .conv-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .conv-sub { font-size: 0.72rem; color: #71717a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .conv-sub { font-size: 0.72rem; color: #71717a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
+        .conv-sub.need-rating { color: #fbbf24; }
+        .conv-sub.reviewed { color: #22c55e; }
         .conv-empty { padding: 30px 20px; color: #71717a; font-size: 0.8rem; text-align: center; }
 
         /* --- CHAT AREA --- */
@@ -101,6 +103,11 @@
         .bubble.in { align-self: flex-start; background: #1a1a1a; border-bottom-left-radius: 2px; }
         .bubble.out { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 2px; }
 
+        .system-bubble {
+            align-self: center; background: rgba(255,255,255,0.05); color: #a1a1aa;
+            font-size: 0.75rem; padding: 6px 16px; border-radius: 20px; text-align: center;
+        }
+
         .input-area { padding: 15px 30px; border-top: 1px solid var(--border); }
         .input-group {
             background: #111; border: 1px solid var(--border);
@@ -109,6 +116,35 @@
         }
         .input-group input { flex: 1; background: transparent; border: none; color: #fff; outline: none; padding: 10px 0; }
         .btn-send { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        /* --- RATING AREA --- */
+        .rating-area { text-align: center; }
+        .rating-title { font-size: 0.85rem; color: #e4e4e7; margin-bottom: 12px; font-weight: 600; }
+        .star-rating { display: flex; justify-content: center; gap: 8px; margin-bottom: 14px; }
+        .star-rating i {
+            font-size: 1.8rem; color: #52525b; cursor: pointer; transition: color 0.15s ease, transform 0.1s ease;
+        }
+        .star-rating i:hover { transform: scale(1.12); }
+        .star-rating i.filled { color: #fbbf24; }
+        .rating-comment {
+            width: 100%; max-width: 480px; margin: 0 auto 12px; display: block;
+            background: #111; border: 1px solid var(--border); border-radius: 14px;
+            color: #fff; padding: 10px 14px; font-size: 0.82rem; font-family: inherit;
+            resize: none; outline: none;
+        }
+        .rating-comment::placeholder { color: #71717a; }
+        .btn-submit-rating {
+            background: var(--accent); color: #fff; border: none; border-radius: 20px;
+            padding: 9px 26px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+        }
+        .btn-submit-rating:hover { opacity: 0.9; }
+        .btn-submit-rating:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .rating-submitted {
+            text-align: center; color: #a1a1aa; font-size: 0.8rem;
+        }
+        .rating-submitted .stars-readonly { font-size: 1.4rem; color: #fbbf24; margin-bottom: 6px; }
+        .rating-submitted .comment-readonly { font-style: italic; color: #71717a; margin-top: 4px; font-size: 0.78rem; }
     </style>
 </head>
 <body>
@@ -137,7 +173,7 @@
                 <div class="conv-avatar" id="tplAvatar"></div>
                 <div>
                     <h4 style="font-size: 0.9rem; margin-bottom: 2px;" id="tplName"></h4>
-                    <span style="font-size: 0.7rem; color: #22c55e;"><i class='bx bxs-circle'></i> Online</span>
+                    <span style="font-size: 0.7rem; color: #22c55e;" id="tplStatusLabel"><i class='bx bxs-circle'></i> Online</span>
                 </div>
             </div>
             <div style="display:flex; align-items:center; gap:10px;">
@@ -150,7 +186,7 @@
 
         <div class="chat-feed" id="chatFeed"></div>
 
-        <div class="input-area">
+        <div class="input-area" id="inputArea">
             <div class="input-group">
                 <input type="text" id="chatMsg" placeholder="Tulis pesan untuk konselor...">
                 <button class="btn-send" onclick="sendMsg()"><i class='bx bxs-send'></i></button>
@@ -173,7 +209,14 @@
 
         let currentSessionId = null
         let currentChannel = null
+        let currentSessionChannel = null
         let myUserId = null
+
+        // Konteks percakapan yang sedang dibuka (dibutuhkan untuk submit rating)
+        let currentBookingId = null
+        let currentKonselorId = null
+        let currentKonselorName = null
+        let selectedRating = 0
 
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) { location.href = '../auth/login.html'; throw new Error('not logged in') }
@@ -190,7 +233,7 @@
                     )
                 `)
                 .eq('mahasiswa_id', myUserId)
-                .eq('status', 'accepted')
+                .in('status', ['accepted', 'done'])
                 .order('created_at', { ascending: false })
 
             if (error) {
@@ -198,10 +241,34 @@
                 console.error(error)
                 return
             }
-            renderConvList(data ?? [])
+
+            const bookings = data ?? []
+            if (bookings.length === 0) {
+                renderConvList(bookings, new Map(), new Set())
+                return
+            }
+
+            const bookingIds = bookings.map(b => b.id)
+
+            // Ambil status sesi (aktif/berakhir) untuk tiap booking
+            const { data: sessions } = await supabase
+                .from('chat_sessions')
+                .select('booking_id, is_active')
+                .in('booking_id', bookingIds)
+            const sessionMap = new Map((sessions ?? []).map(s => [s.booking_id, s.is_active]))
+
+            // Ambil booking yang sudah pernah direview oleh mahasiswa ini
+            const { data: reviews } = await supabase
+                .from('reviews')
+                .select('booking_id')
+                .eq('mahasiswa_id', myUserId)
+                .in('booking_id', bookingIds)
+            const reviewedSet = new Set((reviews ?? []).map(r => r.booking_id))
+
+            renderConvList(bookings, sessionMap, reviewedSet)
         }
 
-        function renderConvList(bookings) {
+        function renderConvList(bookings, sessionMap, reviewedSet) {
             const list = document.getElementById('convList')
             if (bookings.length === 0) {
                 list.innerHTML = `<div class="conv-empty">Belum ada konselor yang menerima booking kamu.</div>`
@@ -211,54 +278,129 @@
                 const prof = b.konselor?.profiles
                 const name = prof?.nama ?? 'Konselor'
                 const wa = b.konselor?.whatsapp ?? ''
+                const konselorId = b.konselor?.id ?? ''
                 const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+
+                const isActive = sessionMap.has(b.id) ? sessionMap.get(b.id) : (b.status !== 'done')
+                const sessionEnded = !isActive
+                const reviewed = reviewedSet.has(b.id)
+
+                let subText = 'Booking diterima'
+                let subClass = ''
+                if (sessionEnded) {
+                    if (reviewed) {
+                        subText = '<i class="bx bxs-star"></i> Sudah direview'
+                        subClass = 'reviewed'
+                    } else {
+                        subText = '<i class="bx bx-star"></i> Sesi selesai, beri rating'
+                        subClass = 'need-rating'
+                    }
+                }
+
                 return `
-                    <div class="conv-item" data-booking-id="${b.id}" data-name="${name}" data-initials="${initials}" onclick="openConversation('${b.id}', '${name.replace(/'/g, "\\'")}', '${initials}', this, '${wa}')">
+                    <div class="conv-item" data-booking-id="${b.id}" data-konselor-id="${konselorId}" onclick="openConversation('${b.id}', '${name.replace(/'/g, "\\'")}', '${initials}', this, '${wa.replace(/'/g, "\\'")}', '${konselorId}')">
                         <div class="conv-avatar">${initials}</div>
                         <div class="conv-info">
                             <div class="conv-name">${name}</div>
-                            <div class="conv-sub">Booking diterima</div>
+                            <div class="conv-sub ${subClass}">${subText}</div>
                         </div>
                     </div>`
             }).join('')
         }
 
-        window.openConversation = async function (bookingId, name, initials, el, wa) {
+        window.openConversation = async function (bookingId, name, initials, el, wa, konselorId) {
             document.querySelectorAll('.conv-item').forEach(i => i.classList.remove('active'))
             el?.classList.add('active')
 
-            // cari atau buat chat_session untuk booking ini
+            currentBookingId = bookingId
+            // Ambil dari data-attribute sebagai fallback jika parameter string kosong
+            currentKonselorId = konselorId || el?.dataset?.konselorId || null
+            currentKonselorName = name
+            selectedRating = 0
+
+            // Ambil status booking untuk tahu apakah sesi sudah done
+            const { data: bookingRow } = await supabase
+                .from('booking')
+                .select('status, konselor_id')
+                .eq('id', bookingId)
+                .single()
+
+            // Gunakan konselor_id dari DB sebagai fallback terpercaya
+            if (bookingRow?.konselor_id) currentKonselorId = bookingRow.konselor_id
+            const bookingDone = bookingRow?.status === 'done'
+
+            // Cari chat_session untuk booking ini
             let { data: session, error: sErr } = await supabase
                 .from('chat_sessions')
-                .select('id')
+                .select('id, is_active, ended_at')
                 .eq('booking_id', bookingId)
                 .maybeSingle()
 
             if (sErr) { console.error(sErr); return }
 
-            if (!session) {
+            // Jika sesi belum ada DAN booking belum done → buat baru
+            // Jika booking sudah done tapi sesi tidak ada → tampilkan sesi ended tanpa buat baru
+            if (!session && !bookingDone) {
                 const { data: newSession, error: cErr } = await supabase
                     .from('chat_sessions')
                     .insert({ booking_id: bookingId })
-                    .select('id')
+                    .select('id, is_active, ended_at')
                     .single()
                 if (cErr) { console.error(cErr); return }
                 session = newSession
             }
 
-            currentSessionId = session.id
-            renderChatWindow(name, initials, wa)
-            await loadMessages(currentSessionId)
-            subscribeToMessages(currentSessionId)
+            currentSessionId = session?.id ?? null
+            // Sesi dianggap selesai jika: is_active false, atau booking sudah done, atau tidak ada sesi
+            const sessionEnded = !session || session.is_active === false || bookingDone
+
+            // Cek apakah mahasiswa sudah pernah memberi rating untuk booking ini
+            const { data: existingReview } = await supabase
+                .from('reviews')
+                .select('rating, komentar')
+                .eq('booking_id', bookingId)
+                .eq('mahasiswa_id', myUserId)
+                .maybeSingle()
+
+            renderChatWindow(name, initials, wa, sessionEnded)
+
+            if (currentSessionId) {
+                await loadMessages(currentSessionId, sessionEnded)
+            } else {
+                // Tidak ada sesi sama sekali tapi booking done → tampilkan info saja
+                const feed = document.getElementById('chatFeed')
+                if (feed) {
+                    feed.innerHTML = `<div class="system-bubble">Sesi konseling telah diakhiri oleh konselor</div>`
+                }
+            }
+
+            if (sessionEnded) {
+                if (existingReview) {
+                    showRatingSubmitted(existingReview.rating, existingReview.komentar)
+                } else {
+                    showRatingForm()
+                }
+            }
+
+            if (currentSessionId) {
+                subscribeToMessages(currentSessionId)
+                subscribeToSessionUpdates(currentSessionId)
+            }
         }
 
-        function renderChatWindow(name, initials, wa) {
+        function renderChatWindow(name, initials, wa, sessionEnded) {
             const tpl = document.getElementById('chatWindowTemplate')
             const win = document.getElementById('chatWindow')
             win.innerHTML = ''
             win.appendChild(tpl.content.cloneNode(true))
             document.getElementById('tplName').textContent = name
             document.getElementById('tplAvatar').textContent = initials
+
+            const statusLabel = document.getElementById('tplStatusLabel')
+            if (sessionEnded) {
+                statusLabel.innerHTML = `<i class='bx bxs-circle' style="color:#71717a;"></i> Sesi selesai`
+                statusLabel.style.color = '#71717a'
+            }
 
             const waBtn = document.getElementById('tplWaBtn')
             if (wa && wa.trim() !== '') {
@@ -270,12 +412,12 @@
                 waBtn.style.display = 'none'
             }
 
-            document.getElementById('chatMsg').addEventListener('keypress', (e) => {
+            document.getElementById('chatMsg')?.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') sendMsg()
             })
         }
 
-        async function loadMessages(sessionId) {
+        async function loadMessages(sessionId, sessionEnded) {
             const { data, error } = await supabase
                 .from('chat_messages')
                 .select('id, sender_id, isi, created_at')
@@ -285,6 +427,9 @@
             if (error) { console.error(error); return }
             const feed = document.getElementById('chatFeed')
             feed.innerHTML = (data ?? []).map(renderBubble).join('')
+            if (sessionEnded) {
+                feed.insertAdjacentHTML('beforeend', `<div class="system-bubble">Sesi konseling telah diakhiri oleh konselor</div>`)
+            }
             feed.scrollTop = feed.scrollHeight
         }
 
@@ -315,8 +460,71 @@
                 .subscribe()
         }
 
+        // Pantau jika konselor mengakhiri sesi SAAT mahasiswa masih membuka chat ini,
+        // supaya kolom input langsung berubah jadi form rating tanpa perlu reload.
+        let sessionPollInterval = null
+
+        function subscribeToSessionUpdates(sessionId) {
+            if (currentSessionChannel) supabase.removeChannel(currentSessionChannel)
+            if (sessionPollInterval) clearInterval(sessionPollInterval)
+
+            currentSessionChannel = supabase
+                .channel(`chat_session_${sessionId}`)
+                .on('postgres_changes', {
+                    event: 'UPDATE', schema: 'public', table: 'chat_sessions',
+                    filter: `id=eq.${sessionId}`
+                }, (payload) => {
+                    if (payload.new?.is_active === false) {
+                        handleSessionEnded()
+                    }
+                })
+                .subscribe((status) => {
+                    // Fallback polling jika Realtime belum diaktifkan di Supabase
+                    if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                        startSessionPolling(sessionId)
+                    }
+                })
+
+            // Polling sebagai safety net (jaga-jaga Realtime terlambat atau tidak aktif)
+            startSessionPolling(sessionId)
+        }
+
+        function startSessionPolling(sessionId) {
+            if (sessionPollInterval) clearInterval(sessionPollInterval)
+            sessionPollInterval = setInterval(async () => {
+                const { data } = await supabase
+                    .from('chat_sessions')
+                    .select('is_active')
+                    .eq('id', sessionId)
+                    .single()
+                if (data?.is_active === false) {
+                    clearInterval(sessionPollInterval)
+                    sessionPollInterval = null
+                    handleSessionEnded()
+                }
+            }, 5000)
+        }
+
+        function handleSessionEnded() {
+            // Guard: jangan trigger ganda jika form rating sudah tampil
+            if (document.getElementById('inputArea')?.querySelector('.rating-area, .rating-submitted')) return
+
+            const feed = document.getElementById('chatFeed')
+            if (feed) {
+                feed.insertAdjacentHTML('beforeend', `<div class="system-bubble">Sesi konseling telah diakhiri oleh konselor</div>`)
+                feed.scrollTop = feed.scrollHeight
+            }
+            const statusLabel = document.getElementById('tplStatusLabel')
+            if (statusLabel) {
+                statusLabel.innerHTML = `<i class='bx bxs-circle' style="color:#71717a;"></i> Sesi selesai`
+                statusLabel.style.color = '#71717a'
+            }
+            showRatingForm()
+        }
+
         window.sendMsg = async function () {
             const input = document.getElementById('chatMsg')
+            if (!input) return
             const text = input.value.trim()
             if (text === '' || !currentSessionId) return
             input.value = ''
@@ -327,6 +535,103 @@
 
             if (error) console.error(error)
             // bubble sendiri akan muncul lewat realtime subscribe di atas
+        }
+
+        // --- RATING FEATURE ---
+
+        function showRatingForm() {
+            const area = document.getElementById('inputArea')
+            if (!area) return
+            selectedRating = 0
+            area.innerHTML = `
+                <div class="rating-area">
+                    <div class="rating-title">Bagaimana sesi konseling kamu dengan ${currentKonselorName ?? 'konselor'}?</div>
+                    <div class="star-rating" id="starRating">
+                        ${[1,2,3,4,5].map(v => `<i class='bx bx-star' data-value="${v}" onclick="setRating(${v})"></i>`).join('')}
+                    </div>
+                    <textarea class="rating-comment" id="ratingComment" rows="2" placeholder="Tulis komentar (opsional)..."></textarea>
+                    <button class="btn-submit-rating" onclick="submitRating()">Kirim Rating</button>
+                </div>
+            `
+        }
+
+        window.setRating = function (value) {
+            selectedRating = value
+            document.querySelectorAll('#starRating i').forEach(star => {
+                const v = parseInt(star.dataset.value)
+                star.classList.toggle('filled', v <= value)
+                star.classList.toggle('bx-star', v > value)
+                star.classList.toggle('bxs-star', v <= value)
+            })
+        }
+
+        window.submitRating = async function () {
+            if (!selectedRating) {
+                alert('Pilih jumlah bintang dulu ya, Kak.')
+                return
+            }
+            if (!currentBookingId) {
+                alert('Terjadi kesalahan: booking tidak dikenali.')
+                return
+            }
+            // Fallback: ambil konselor_id langsung dari DB jika state hilang
+            if (!currentKonselorId) {
+                const { data: bk } = await supabase
+                    .from('booking')
+                    .select('konselor_id')
+                    .eq('id', currentBookingId)
+                    .single()
+                if (bk?.konselor_id) {
+                    currentKonselorId = bk.konselor_id
+                } else {
+                    alert('Terjadi kesalahan: data konselor tidak ditemukan.')
+                    return
+                }
+            }
+
+            const btn = document.querySelector('.btn-submit-rating')
+            if (btn) { btn.disabled = true; btn.textContent = 'Mengirim...' }
+
+            const komentar = document.getElementById('ratingComment')?.value.trim() || null
+
+            const { error } = await supabase
+                .from('reviews')
+                .insert({
+                    booking_id: currentBookingId,
+                    mahasiswa_id: myUserId,
+                    konselor_id: currentKonselorId,
+                    rating: selectedRating,
+                    komentar: komentar
+                })
+
+            if (error) {
+                console.error(error)
+                alert('Gagal mengirim rating. Coba lagi ya.')
+                if (btn) { btn.disabled = false; btn.textContent = 'Kirim Rating' }
+                return
+            }
+
+            showRatingSubmitted(selectedRating, komentar)
+
+            // refresh label di list percakapan kiri
+            const activeItem = document.querySelector(`.conv-item[data-booking-id="${currentBookingId}"] .conv-sub`)
+            if (activeItem) {
+                activeItem.className = 'conv-sub reviewed'
+                activeItem.innerHTML = `<i class="bx bxs-star"></i> Sudah direview`
+            }
+        }
+
+        function showRatingSubmitted(rating, komentar) {
+            const area = document.getElementById('inputArea')
+            if (!area) return
+            const stars = Array.from({ length: 5 }, (_, i) => i < rating ? `<i class='bx bxs-star'></i>` : `<i class='bx bx-star' style="color:#52525b;"></i>`).join('')
+            area.innerHTML = `
+                <div class="rating-submitted">
+                    <div class="stars-readonly">${stars}</div>
+                    <div>Terima kasih sudah memberi rating untuk sesi ini 🙏</div>
+                    ${komentar ? `<div class="comment-readonly">"${escapeHtml(komentar)}"</div>` : ''}
+                </div>
+            `
         }
 
         fetchConversations()

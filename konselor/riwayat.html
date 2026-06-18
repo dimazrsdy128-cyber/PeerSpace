@@ -497,12 +497,12 @@ function avatarHtml (p) {
 // ── Fetch ──
 async function fetchRiwayat () {
   try {
-    const { data, error } = await supabase
+    // Step 1: Ambil data booking beserta profil mahasiswa
+    const { data: bookings, error } = await supabase
       .from('booking')
       .select(`
         id, tanggal, sesi, keluhan, status, catatan_konselor, created_at,
-        profiles!booking_mahasiswa_id_fkey ( nama, avatar_url, nim_nip ),
-        reviews ( rating, komentar )
+        profiles!booking_mahasiswa_id_fkey ( nama, avatar_url, nim_nip )
       `)
       .eq('konselor_id', konselorId)
       .in('status', ['done', 'cancelled', 'rejected'])
@@ -510,7 +510,31 @@ async function fetchRiwayat () {
 
     if (error) throw error
 
-    allData = data || []
+    const bookingList = bookings || []
+
+    // Step 2: Ambil semua reviews untuk konselor ini secara terpisah
+    // (lebih reliable daripada join otomatis yang bergantung pada nama FK)
+    let reviewsMap = {}
+    if (bookingList.length > 0) {
+      const bookingIds = bookingList.map(b => b.id)
+      const { data: reviews, error: revErr } = await supabase
+        .from('reviews')
+        .select('booking_id, rating, komentar')
+        .in('booking_id', bookingIds)
+
+      if (revErr) console.warn('Gagal fetch reviews:', revErr.message)
+      else {
+        // Map booking_id → review
+        ;(reviews || []).forEach(r => { reviewsMap[r.booking_id] = r })
+      }
+    }
+
+    // Step 3: Merge reviews ke dalam data booking
+    allData = bookingList.map(b => ({
+      ...b,
+      reviews: reviewsMap[b.id] ? [reviewsMap[b.id]] : []
+    }))
+
     buildMonthFilter()
     renderSummary()
     applyFilter()

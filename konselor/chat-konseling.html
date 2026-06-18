@@ -431,25 +431,35 @@
             if (!activeSessionId || !activeBookingId) return
             if (!confirm('Selesaikan sesi ini?')) return
 
-            try {
-                if (realtimeCh) supabase.removeChannel(realtimeCh)
+            const btn = document.getElementById('btnAkhiri')
+            if (btn) { btn.disabled = true; btn.textContent = 'Mengakhiri...' }
 
-                await supabase.from('chat_sessions')
+            try {
+                // Step 1: Update chat_sessions — ini yang men-trigger Realtime ke mahasiswa
+                const { error: csErr } = await supabase
+                    .from('chat_sessions')
                     .update({ is_active: false, ended_at: new Date().toISOString() })
                     .eq('id', activeSessionId)
 
-                const { error } = await supabase.from('booking')
+                if (csErr) throw new Error('Gagal update sesi chat: ' + csErr.message)
+
+                // Step 2: Update booking status — wajib agar RLS review bisa di-insert mahasiswa
+                const { error: bkErr } = await supabase
+                    .from('booking')
                     .update({ status: 'done' })
                     .eq('id', activeBookingId)
 
-                if (error) throw error
+                if (bkErr) throw new Error('Gagal update status booking: ' + bkErr.message)
+
+                if (realtimeCh) supabase.removeChannel(realtimeCh)
 
                 toast('Sesi berhasil diselesaikan!', 'success')
                 setTimeout(() => window.location.href = 'riwayat.html', 1200)
             } catch (err) {
-                toast('Gagal: ' + err.message, 'error')
+                toast(err.message, 'error')
+                if (btn) { btn.disabled = false; btn.textContent = 'AKHIRI' }
             }
         }
     </script>
 </body>
-</html> 
+</html>
